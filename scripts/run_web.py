@@ -13,4 +13,4 @@ from gam_ai.ui.web import run_web_server
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     engine = ChatEngine("gam_ai_data.db")
-    run_web_server(engine, host="127.0.0.1", port=port)
+    run_web_server(engine, host="0.0.0.0", port=port)

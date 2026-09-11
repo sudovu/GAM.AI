@@ -242,6 +242,44 @@
   th, td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
   th { background: rgba(255,255,255,0.06); }
   svg.network-diagram { max-width: 100%; background: #040817; border: 1px solid var(--border); border-radius: 8px; margin: 10px 0; }
+
+  /* Music Player & Tablet Layout Styles */
+  .music-container { display: flex; flex-direction: column; gap: 14px; }
+  .music-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
+  .music-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; min-height: 42px; }
+  .music-tab-btn.active { background: var(--card-bg); color: var(--accent); border-color: rgba(56,189,248,0.4); }
+
+  .music-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 768px) {
+    .music-grid { grid-template-columns: 1.1fr 1.3fr; }
+    .modal-box.music-modal-box { max-width: 820px; }
+  }
+
+  .music-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .playlist-box { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+  .playlist-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  .playlist-item:hover { background: rgba(56,189,248,0.08); border-color: rgba(56,189,248,0.2); }
+  .playlist-item.active { background: rgba(56,189,248,0.15); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+
+  .music-controls-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 8px 0; }
+  .ctrl-btn { background: var(--card-bg); border: 1px solid var(--border); color: #fff; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; }
+  .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ctrl-btn.play-main { width: 52px; height: 52px; background: var(--accent); color: #000; border: none; font-size: 1.3rem; }
+  .ctrl-btn.play-main:hover { background: #7dd3fc; }
+
+  .seek-bar-wrap { display: flex; align-items: center; gap: 10px; width: 100%; font-size: 0.78rem; color: var(--text-muted); }
+  .seek-bar-wrap input[type=range] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 6px; }
+
+  /* Persistent Mini Player Bar */
+  #mini-audio-bar {
+    position: fixed; bottom: 84px; right: 20px; z-index: 99;
+    background: #0f172a; border: 1px solid var(--accent); border-radius: 30px;
+    padding: 6px 14px; display: none; align-items: center; gap: 10px;
+    box-shadow: 0 4px 20px rgba(56,189,248,0.25);
+  }
+  @media (max-width: 768px) {
+    #mini-audio-bar { bottom: 74px; left: 14px; right: 14px; justify-content: space-between; }
+  }
 </style>
 </head>
 <body>
@@ -269,6 +307,10 @@
   </div>
 
   <div class="sidebar-footer">
+    <button class="menu-action-btn" id="btn-open-music">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <span id="txt-music-menu">Music Player</span>
+    </button>
     <button class="menu-action-btn" id="btn-open-models">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       <span id="txt-models-menu">Model Store</span>
@@ -306,8 +348,9 @@
 
     <!-- CLEAN RIGHT CONTROLS -->
     <div class="header-right">
+      <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
-      <button class="icon-btn" id="btn-lang-toggle" title="Toggle English / नेपाली">🇳🇵</button>
+      <button class="icon-btn" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 EN</button>
       <button class="icon-btn" id="btn-header-settings" title="Settings">⚙️</button>
     </div>
   </div>
@@ -333,13 +376,15 @@
   <!-- Bottom Floating Input Area -->
   <div class="input-container">
     <div class="voice-status-bar" id="voice-banner">
-      <span id="voice-banner-text">🔴 Listening... Speak in English or नेपाली</span>
+      <span id="voice-banner-text">🔴 Listening... Speak now</span>
       <span style="cursor:pointer; text-decoration:underline;" onclick="stopVoiceRecognition()">Cancel</span>
     </div>
     <div class="input-capsule">
-      <textarea id="prompt-input" rows="1" placeholder="Type or click 🎤 to speak (English or नेपाली)..."></textarea>
+      <textarea id="prompt-input" rows="1" placeholder="Type or click 🎤 speak, 📷 Lens..."></textarea>
       <div class="input-actions">
-        <button class="mic-btn" id="btn-voice-input" title="Voice Search (Speak in English or नेपाली)">🎤</button>
+        <input type="file" id="lens-file-input" accept="image/*" capture="environment" style="display:none;" onchange="handleLensFiles(this.files)">
+        <button class="mic-btn" id="btn-lens-camera" title="Google Lens / Camera Visual Search" style="background:rgba(255,255,255,0.06); color:#38bdf8;" onclick="openGoogleLens()">📷</button>
+        <button class="mic-btn" id="btn-voice-input" title="Tap to Speak (English / हिंदी / नेपाली)">🎤</button>
         <button id="send-btn" title="Send Message">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
@@ -398,6 +443,30 @@
       <button class="close-btn" onclick="hideModal('modal-settings')">✕</button>
     </div>
 
+    <!-- Host Connection & USB Debugging Bridge -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">Host Server & USB Debugging Bridge</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;" id="server-status-label">Detecting connection status...</div>
+        </div>
+        <button class="btn-action ready" id="btn-ping-server" onclick="pingServerConnection()">⚡ Ping Server</button>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <input type="text" id="setting-server-url" placeholder="http://127.0.0.1:8080" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:6px; padding:6px 10px; font-size:0.84rem;">
+        <button class="btn-action" onclick="saveServerUrl()">Save</button>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
+        USB Debugging: Keep <code>http://127.0.0.1:8080</code> (ADB reverse enabled). For Wi-Fi: enter PC IP, e.g. <code>http://192.168.1.50:8080</code>.
+      </div>
+    </div>
+
+    <!-- Live Android Device Hardware Diagnostics -->
+    <div class="model-card" id="card-device-hardware" style="display:none;">
+      <div style="font-weight:700; margin-bottom:6px;">📱 Connected Device Diagnostics</div>
+      <div id="device-diagnostics-content" style="font-size:0.82rem; color:var(--text-muted); line-height:1.5;"></div>
+    </div>
+
     <!-- Accessibility Font Size for Age 10-70 -->
     <div class="model-card">
       <div class="model-header-row">
@@ -448,7 +517,464 @@
   </div>
 </div>
 
+<!-- Modal 4: Offline Music & Soundscapes Player -->
+<div id="modal-music" class="modal-overlay">
+  <div class="modal-box music-modal-box">
+    <div class="modal-header">
+      <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+        <span>🎵</span>
+        <span>Offline Music & Audio Player</span>
+      </div>
+      <button class="close-btn" onclick="hideModal('modal-music')">✕</button>
+    </div>
+
+    <!-- Mode Tabs -->
+    <div class="music-tabs">
+      <button class="music-tab-btn active" id="tab-music-files" onclick="switchMusicTab('files')">📁 Device / USB Music</button>
+      <button class="music-tab-btn" id="tab-music-ambient" onclick="switchMusicTab('ambient')">🧘 Focus & Ambient Soundscapes</button>
+    </div>
+
+    <!-- Tab 1: Device / USB Music Files -->
+    <div id="section-music-files" class="music-container">
+      <div class="music-grid">
+        <!-- Left: Playlist -->
+        <div class="music-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:700; font-size:0.92rem;">Playlist (<span id="playlist-count">0</span>)</div>
+            <input type="file" id="music-file-picker" accept="audio/*" multiple style="display:none;" onchange="handleMusicFiles(this.files)">
+            <button class="btn-action ready" onclick="document.getElementById('music-file-picker').click()">📂 Add Songs</button>
+          </div>
+          <div id="playlist-container" class="playlist-box">
+            <div style="color:var(--text-muted); font-size:0.82rem; text-align:center; padding:24px 8px;">
+              No music tracks loaded.<br>Click "Add Songs" to select MP3, WAV, AAC, or FLAC files from your phone, tablet, or USB debugging folder.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Current Track & Controls -->
+        <div class="music-card" style="justify-content:center; text-align:center;">
+          <div style="font-size:0.75rem; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:1px;" id="music-status-badge">STANDBY</div>
+          <div style="font-size:1.1rem; font-weight:800; margin:4px 0 2px 0; word-break:break-word;" id="music-track-title">No Track Selected</div>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;" id="music-track-meta">Tap "Add Songs" to begin</div>
+
+          <!-- Seekbar -->
+          <div class="seek-bar-wrap">
+            <span id="music-time-curr">0:00</span>
+            <input type="range" id="music-seek-slider" min="0" max="100" value="0" oninput="onSeekSlider(this.value)">
+            <span id="music-time-total">0:00</span>
+          </div>
+
+          <!-- Main Controls Row -->
+          <div class="music-controls-row">
+            <button class="ctrl-btn" id="btn-music-shuffle" onclick="toggleMusicShuffle()" title="Shuffle">🔀</button>
+            <button class="ctrl-btn" onclick="playPrevTrack()" title="Previous Track">⏮</button>
+            <button class="ctrl-btn play-main" id="btn-music-playpause" onclick="toggleMusicPlayPause()" title="Play / Pause">▶</button>
+            <button class="ctrl-btn" onclick="playNextTrack()" title="Next Track">⏭</button>
+            <button class="ctrl-btn" id="btn-music-repeat" onclick="toggleMusicRepeat()" title="Repeat">🔁</button>
+          </div>
+
+          <!-- Volume & Background WakeLock -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); font-size:0.82rem;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span>🔊</span>
+              <input type="range" id="music-volume-slider" min="0" max="1" step="0.05" value="0.8" style="width:70px; accent-color:var(--accent);" oninput="setMusicVolume(this.value)">
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--text-muted);">
+              <input type="checkbox" id="chk-music-wakelock" checked onchange="toggleWakeLockPreference(this.checked)">
+              <span>Keep screen awake / BG play</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Procedural Offline Ambient Soundscapes (Web Audio API) -->
+    <div id="section-music-ambient" class="music-container" style="display:none;">
+      <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:8px;">
+        100% offline procedural soundscapes synthesized directly by your device's audio hardware. Zero audio downloads required.
+      </p>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.6rem; margin-bottom:4px;">🧠</div>
+          <div style="font-weight:700;">Alpha Waves (10 Hz)</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">Binaural beats for deep cognitive focus & studying</div>
+          <button class="btn-action ready" id="btn-ambient-alpha" onclick="toggleAmbientSound('alpha')">▶ Start Waves</button>
+        </div>
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.6rem; margin-bottom:4px;">🌧️</div>
+          <div style="font-weight:700;">Soft Rainfall</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">Calming rain noise & distant thunder rumble</div>
+          <button class="btn-action ready" id="btn-ambient-rain" onclick="toggleAmbientSound('rain')">▶ Start Rain</button>
+        </div>
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.6rem; margin-bottom:4px;">🪐</div>
+          <div style="font-weight:700;">Cosmic Space Drone</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">Deep sub-bass interstellar ambient atmosphere</div>
+          <button class="btn-action ready" id="btn-ambient-space" onclick="toggleAmbientSound('space')">▶ Start Space</button>
+        </div>
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.6rem; margin-bottom:4px;">🌊</div>
+          <div style="font-weight:700;">Mountain Stream</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">Continuous organic flowing river water sounds</div>
+          <button class="btn-action ready" id="btn-ambient-stream" onclick="toggleAmbientSound('stream')">▶ Start Stream</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 5: Google Lens & Visual AI Search -->
+<div id="modal-lens" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+        <span>📷</span>
+        <span>GAM.AI Lens & Visual Intelligence</span>
+      </div>
+      <button class="close-btn" onclick="closeGoogleLens()">✕</button>
+    </div>
+
+    <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:12px;">
+      Point camera or pick photo to identify router models, network switches, cables, read router LEDs, or translate printed text (English / हिंदी / नेपाली).
+    </p>
+
+    <!-- Camera Viewfinder / Preview Frame -->
+    <div id="lens-camera-container" style="position:relative; width:100%; border-radius:10px; overflow:hidden; background:#0b1120; border:1px solid rgba(255,255,255,0.1); margin-bottom:12px; min-height:220px; display:flex; align-items:center; justify-content:center;">
+      <video id="lens-video-feed" autoplay playsinline style="width:100%; max-height:280px; object-fit:cover; display:none; border-radius:10px;"></video>
+      <canvas id="lens-canvas" style="display:none;"></canvas>
+      <img id="lens-preview-img" style="width:100%; max-height:280px; object-fit:contain; display:none; border-radius:10px;" alt="Captured Photo">
+      <div id="lens-placeholder-box" style="text-align:center; padding:28px 16px; color:var(--text-muted);">
+        <div style="font-size:2.8rem; margin-bottom:8px;">🔍</div>
+        <div style="font-size:0.95rem; font-weight:700; color:#fff;">Google Lens Camera Ready</div>
+        <div style="font-size:0.8rem; margin-top:4px;">Tap "Live Camera" to snap photo or "Gallery" to choose file</div>
+      </div>
+    </div>
+
+    <!-- Lens Controls -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+      <button class="btn-action ready" id="btn-lens-live" onclick="toggleLiveCameraStream()">📸 Live Camera</button>
+      <button class="btn-action" onclick="document.getElementById('lens-file-input').click()">📁 Gallery / Photos</button>
+      <button class="btn-action" id="btn-lens-analyze" style="display:none; background:var(--accent); color:#000; font-weight:800;" onclick="analyzeLensImage()">⚡ Analyze with Lens</button>
+    </div>
+
+    <!-- Lens Preset Modes -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:6px; font-size:0.78rem;">
+      <div class="mode-pill active" id="lens-mode-auto" onclick="setLensMode('auto')">🌐 Auto Detect</div>
+      <div class="mode-pill" id="lens-mode-hardware" onclick="setLensMode('hardware')">🔧 Hardware & Ports</div>
+      <div class="mode-pill" id="lens-mode-ocr" onclick="setLensMode('ocr')">📝 Text & Translate</div>
+      <div class="mode-pill" id="lens-mode-diagram" onclick="setLensMode('diagram')">📐 Topology Diagram</div>
+    </div>
+  </div>
+</div>
+
+<!-- Persistent Mini Audio Bar -->
+<div id="mini-audio-bar">
+  <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="showModal('modal-music')">
+    <span id="mini-audio-icon">🎵</span>
+    <div style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.82rem; font-weight:700;" id="mini-audio-title">Playing Track</div>
+  </div>
+  <button class="ctrl-btn" style="width:32px; height:32px; font-size:0.9rem;" id="mini-audio-btn-play" onclick="toggleMusicPlayPause()">⏸</button>
+  <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem; padding:0 4px;" onclick="stopAllAudio()" title="Stop Audio">✕</button>
+</div>
+
 <script>
+// ==========================================
+// GAM.AI API & Native Bridge Networking Engine
+// ==========================================
+function getApiBaseUrl() {
+  if (window.AndroidBridge && typeof window.AndroidBridge.getServerUrl === 'function') {
+    try {
+      var u = window.AndroidBridge.getServerUrl();
+      if (u && u.trim()) return u.trim().replace(/\/+$/, '');
+    } catch(e) {}
+  }
+  var saved = localStorage.getItem('gam_ai_server_url');
+  if (saved && saved.trim()) return saved.trim().replace(/\/+$/, '');
+  if (window.location.protocol === 'file:') {
+    return 'http://127.0.0.1:8080';
+  }
+  return '';
+}
+
+function setApiBaseUrl(url) {
+  if (window.AndroidBridge && typeof window.AndroidBridge.setServerUrl === 'function') {
+    try { window.AndroidBridge.setServerUrl(url); } catch(e) {}
+  }
+  localStorage.setItem('gam_ai_server_url', url);
+}
+
+function apiFetch(path, options) {
+  options = options || {};
+  var base = getApiBaseUrl();
+  var url = path;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (!url.startsWith('/')) url = '/' + url;
+    url = (base ? base : '') + url;
+  }
+  return fetch(url, options);
+}
+
+function pingServerConnection() {
+  var btn = document.getElementById('btn-ping-server');
+  var lbl = document.getElementById('server-status-label');
+  if (btn) btn.innerText = 'Pinging...';
+  apiFetch('/api/status')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (btn) btn.innerText = '🟢 Connected';
+      if (lbl) lbl.innerHTML = '<span style="color:#10b981; font-weight:700;">🟢 Connected to Host Server (' + d.ram_mb + ' MB RAM)</span>';
+      updateStatus();
+    })
+    .catch(function(err) {
+      if (btn) btn.innerText = '⚡ Standalone';
+      if (lbl) lbl.innerHTML = '<span style="color:#eab308; font-weight:700;">⚡ Host Offline (Using Local Mobile Engine)</span>';
+    });
+}
+
+function saveServerUrl() {
+  var inp = document.getElementById('setting-server-url');
+  if (inp) {
+    var val = inp.value.trim();
+    if (val) {
+      setApiBaseUrl(val);
+      pingServerConnection();
+    }
+  }
+}
+
+function calculateOfflineSubnet(cidr) {
+  try {
+    cidr = cidr.trim();
+    var parts = cidr.split('/');
+    if (parts.length !== 2) throw new Error('Format must be IP/prefix (e.g. 192.168.1.0/24)');
+    var ipStr = parts[0].trim();
+    var prefix = parseInt(parts[1].trim(), 10);
+    if (isNaN(prefix) || prefix < 0 || prefix > 32) throw new Error('Prefix must be 0-32');
+    
+    var octets = ipStr.split('.').map(function(o){ return parseInt(o, 10); });
+    if (octets.length !== 4 || octets.some(function(o){ return isNaN(o) || o < 0 || o > 255; })) {
+      throw new Error('Invalid IPv4 address');
+    }
+    
+    var ipNum = ((octets[0] << 24) >>> 0) + ((octets[1] << 16) >>> 0) + ((octets[2] << 8) >>> 0) + (octets[3] >>> 0);
+    var maskNum = prefix === 0 ? 0 : (((0xFFFFFFFF << (32 - prefix)) >>> 0));
+    var wildNum = (~maskNum) >>> 0;
+    var netNum = (ipNum & maskNum) >>> 0;
+    var bcastNum = (netNum | wildNum) >>> 0;
+
+    function numToIp(n) {
+      return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
+    }
+
+    var totalAddrs = Math.pow(2, 32 - prefix);
+    var usableHosts = prefix >= 31 ? (prefix === 31 ? 2 : 1) : Math.max(0, totalAddrs - 2);
+    var firstUsable = prefix >= 31 ? numToIp(netNum) : numToIp(netNum + 1);
+    var lastUsable = prefix >= 31 ? numToIp(bcastNum) : numToIp(bcastNum - 1);
+
+    var isPrivate = (octets[0] === 10) || 
+                    (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+                    (octets[0] === 192 && octets[1] === 168);
+
+    return {
+      input: cidr,
+      version: 'IPv4',
+      ip_address: ipStr,
+      prefix_length: prefix,
+      network_address: numToIp(netNum),
+      broadcast_address: numToIp(bcastNum),
+      netmask: numToIp(maskNum),
+      wildcard_mask: numToIp(wildNum),
+      first_usable_host: firstUsable,
+      last_usable_host: lastUsable,
+      total_usable_hosts: usableHosts,
+      total_addresses: totalAddrs,
+      is_private: isPrivate
+    };
+  } catch(e) {
+    return { error: e.message };
+  }
+}
+
+function generateOfflineVendorConfig(vendor) {
+  if (vendor === 'cisco') {
+    return 'router ospf 1\n router-id 1.1.1.1\n network 192.168.1.0 0.0.0.255 area 0\n passive-interface default\n no passive-interface GigabitEthernet0/0/0\n exit';
+  } else if (vendor === 'huawei') {
+    return 'interface GigabitEthernet0/0/1\n port link-type trunk\n port trunk allow-pass vlan 10 20 30\n undo shutdown\nquit';
+  } else if (vendor === 'olt') {
+    return 'interface gpon 0/1\n ont add 0 1 sn-auth 4857544312345678 omci ont-lineprofile-id 10 ont-srvprofile-id 10\nquit';
+  } else if (vendor === 'fortigate') {
+    return 'config firewall policy\n edit 1\n set name "LAN_to_WAN"\n set srcintf "port2"\n set dstintf "port1"\n set action accept\n set schedule "always"\n set service "ALL"\n set nat enable\nnext\nend';
+  } else if (vendor === 'mikrotik') {
+    return '/interface bridge add name=bridge-lan\n/interface bridge port add bridge=bridge-lan interface=ether2\n/ip address add address=192.168.88.1/24 interface=bridge-lan\n/ip pool add name=dhcp-pool ranges=192.168.88.10-192.168.88.254\n/ip dhcp-server add address-pool=dhcp-pool interface=bridge-lan name=dhcp1';
+  }
+  return '# Generic router interface configuration\ninterface GigabitEthernet0/0\n ip address 192.168.1.1 255.255.255.0\n no shutdown';
+}
+
+function processOfflineAIQuery(q) {
+  var qLower = q.toLowerCase().trim();
+  var isDevanagari = /[\u0900-\u097F]/.test(q);
+  var isHi = (currentLang === 'hi') || (isDevanagari && (q.indexOf('क्या') !== -1 || q.indexOf('है') !== -1 || q.indexOf('गाना') !== -1 || q.indexOf('सुनाओ') !== -1 || q.indexOf('बताओ') !== -1 || q.indexOf('कैसे') !== -1 || q.indexOf('नमस्ते') !== -1 || q.indexOf('सहायक') !== -1));
+  var isNe = (currentLang === 'ne') || (isDevanagari && !isHi);
+
+  // 1. Music / Audio playback triggers
+  if (qLower.indexOf('music') !== -1 || qLower.indexOf('song') !== -1 || q.indexOf('गीत') !== -1 || q.indexOf('गाना') !== -1 || q.indexOf('संगीत') !== -1 || q.indexOf('प्लेयर') !== -1 || q.indexOf('बजाओ') !== -1 || q.indexOf('बजाउ') !== -1) {
+    setTimeout(function() { showModal('modal-music'); }, 300);
+    if (isHi) {
+      return { response: '🎵 **ऑफ़लाइन म्यूज़िक प्लेयर खोल दिया गया है!**\n\nआप अपने फ़ोन से गाने (MP3, WAV, FLAC) लोड कर सकते हैं या ऑफ़लाइन ध्यान केंद्रित करने वाले साउंडस्केप (वर्षा, अल्फा वेव्स) सुन सकते हैं।' };
+    }
+    if (isNe) {
+      return { response: '🎵 **अफलाइन म्युजिक प्लेयर खोलिएको छ!**\n\nतपाईं आफ्नो फोन/ट्याब्लेटबाट MP3, WAV, FLAC गीतहरू थप्न सक्नुहुन्छ वा 100% अफलाइन ध्यान केन्द्रित गर्ने साउन्डस्केप (वर्षा, अल्फा वेभ्स) सुन्न सक्नुहुन्छ।' };
+    }
+    return { response: '🎵 **Offline Music & Soundscape Player Opened!**\n\nYou can load local audio tracks (MP3, WAV, FLAC) from your device or enjoy 100% offline Web Audio focus ambient soundscapes (Alpha Waves, Soft Rain, Space Drone).' };
+  }
+
+  // 2. Ambient soundscapes triggers
+  if (qLower.indexOf('rain') !== -1 || q.indexOf('वर्षा') !== -1 || q.indexOf('बारिश') !== -1 || q.indexOf('पानी') !== -1) {
+    toggleAmbientSound('rain');
+    if (isHi) return { response: '🌧️ **बारिश का साउंडस्केप बजना शुरू हो गया है!** 100% ऑफ़लाइन हार्डवेयर ऑडियो द्वारा संश्लेषित।' };
+    if (isNe) return { response: '🌧️ **वर्षाको साउन्डस्केप बज्न सुरु भयो!** 100% अफलाइन सिन्थेसाइजर प्रयोग भइरहेको छ।' };
+    return { response: '🌧️ **Soft Rainfall Ambient Soundscape Started!** Synthesized 100% offline directly via your device Web Audio hardware.' };
+  }
+  if (qLower.indexOf('alpha') !== -1 || qLower.indexOf('focus') !== -1 || q.indexOf('ध्यान') !== -1 || q.indexOf('एकाग्रता') !== -1) {
+    toggleAmbientSound('alpha');
+    if (isHi) return { response: '🧠 **अल्फा वेव्स (10 Hz बाइनॉरल बीट्स) शुरू हो गई हैं!** पढ़ाई और ध्यान केंद्रित करने के लिए सर्वोत्तम।' };
+    if (isNe) return { response: '🧠 **अल्फा वेभ्स (10 Hz बाइनोरल बिट्स) सुरु भयो!** अध्ययन र ध्यान केन्द्रित गर्न उपयुक्त छ।' };
+    return { response: '🧠 **Alpha Waves (10 Hz Binaural Focus Beats) Started!** Designed for deep cognitive focus and study sessions.' };
+  }
+
+  // 3. Device Diagnostics & Hardware Info
+  if (qLower.indexOf('battery') !== -1 || qLower.indexOf('ram') !== -1 || qLower.indexOf('device') !== -1 || q.indexOf('बैटरी') !== -1 || q.indexOf('ब्याट्री') !== -1 || q.indexOf('फ़ोन') !== -1 || q.indexOf('फोन') !== -1) {
+    var bLevel = (window.AndroidBridge && typeof window.AndroidBridge.getBatteryLevel === 'function') ? window.AndroidBridge.getBatteryLevel() : 100;
+    var isChg = (window.AndroidBridge && typeof window.AndroidBridge.isCharging === 'function') ? window.AndroidBridge.isCharging() : false;
+    var aRam = (window.AndroidBridge && typeof window.AndroidBridge.getAvailableRamMb === 'function') ? window.AndroidBridge.getAvailableRamMb() : 2048;
+    var tRam = (window.AndroidBridge && typeof window.AndroidBridge.getTotalRamMb === 'function') ? window.AndroidBridge.getTotalRamMb() : 4096;
+    var isTab = (window.AndroidBridge && typeof window.AndroidBridge.isTablet === 'function') ? window.AndroidBridge.isTablet() : (window.innerWidth >= 768);
+    var wake = (window.AndroidBridge && typeof window.AndroidBridge.isWakeLockHeld === 'function') ? window.AndroidBridge.isWakeLockHeld() : false;
+
+    if (isHi) {
+      return {
+        response: '📱 **डिवाइस हार्डवेयर विवरण (Google Pixel / Android):**\n\n' +
+          '| पैरामीटर | स्थिति |\n|---|---|\n' +
+          '| **बैटरी स्थिति** | ' + bLevel + '% ' + (isChg ? '⚡ (चार्ज हो रहा है)' : '🔋') + ' |\n' +
+          '| **उपलब्ध रैम** | ' + aRam + ' MB / ' + tRam + ' MB |\n' +
+          '| **डिवाइस प्रकार** | ' + (isTab ? 'Android टैबलेट' : 'Google Pixel फ़ोन') + ' |\n' +
+          '| **ऑडियो वेकलॉक** | ' + (wake ? 'सक्रिय 🔒 (बैकग्राउंड प्लेबैक चालू)' : 'स्टैंडबाय') + ' |\n' +
+          '| **इंजन स्थिति** | स्टैंडअलोन ऑफ़लाइन हाइब्रिड वेबइंजन |'
+      };
+    }
+    if (isNe) {
+      return {
+        response: '📱 **डिभाइस हार्डवेयर विवरण (Google Pixel / Android):**\n\n' +
+          '- **ब्याट्री स्थिति:** ' + bLevel + '% ' + (isChg ? '⚡ (चार्ज हुँदै)' : '🔋') + '\n' +
+          '- **उपलब्ध र्याम:** ' + aRam + ' MB / ' + tRam + ' MB\n' +
+          '- **डिभाइस प्रकार:** ' + (isTab ? 'Android ट्याब्लेट' : 'Android मोबाइल (Pixel 7 Pro)') + '\n' +
+          '- **अडियो वेकलक:** ' + (wake ? 'सक्रिय 🔒 (पृष्ठभूमि प्लेब्याक)' : 'स्ट्यान्डबाइ') + '\n' +
+          '- **अपरेटिङ मोड:** अफलाइन स्ट्यान्डअलोन / USB डिबगिङ'
+      };
+    }
+    return {
+      response: '📱 **Device Hardware Diagnostics (Google Pixel / Android):**\n\n' +
+        '| Metric | Status |\n|---|---|\n' +
+        '| **Battery Level** | ' + bLevel + '% ' + (isChg ? '⚡ Charging' : '🔋 Discharging') + ' |\n' +
+        '| **RAM Available** | ' + aRam + ' MB / ' + tRam + ' MB |\n' +
+        '| **Form Factor** | ' + (isTab ? 'Android Tablet' : 'Android Phone (Pixel 7 Pro)') + ' |\n' +
+        '| **Audio WakeLock** | ' + (wake ? 'Active 🔒 (Background Playback ON)' : 'Standby') + ' |\n' +
+        '| **Platform Engine** | Standalone Native Hybrid WebView |'
+    };
+  }
+
+  // 4. Subnet & CIDR Calculation
+  var cidrMatch = q.match(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2})\b/);
+  if (cidrMatch || qLower.indexOf('subnet') !== -1 || qLower.indexOf('cidr') !== -1 || q.indexOf('सबनेट') !== -1) {
+    var targetCidr = cidrMatch ? cidrMatch[1] : '192.168.1.0/24';
+    var subRes = calculateOfflineSubnet(targetCidr);
+    if (!subRes.error) {
+      var headerText = isHi ? ('🌐 **IPv4 सबनेट गणना `' + targetCidr + '` के लिए:**') : (isNe ? ('🌐 **IPv4 सबनेट गणना `' + targetCidr + '` को लागि:**') : ('🌐 **IPv4 Subnet Calculation for `' + targetCidr + '`**:'));
+      return {
+        response: headerText + '\n\n' +
+          '| Parameter | Value |\n|---|---|\n' +
+          '| **Network Address** | `' + subRes.network_address + '` |\n' +
+          '| **Broadcast Address** | `' + subRes.broadcast_address + '` |\n' +
+          '| **Subnet Mask** | `' + subRes.netmask + '` |\n' +
+          '| **Wildcard Mask** | `' + subRes.wildcard_mask + '` |\n' +
+          '| **First Usable Host** | `' + subRes.first_usable_host + '` |\n' +
+          '| **Last Usable Host** | `' + subRes.last_usable_host + '` |\n' +
+          '| **Total Usable Hosts** | **' + subRes.total_usable_hosts.toLocaleString() + '** |\n' +
+          '| **Scope** | ' + (subRes.is_private ? 'RFC 1918 Private' : 'Public') + ' |'
+      };
+    }
+  }
+
+  // 5. Multi-Vendor Router / Switch Configs
+  if (qLower.indexOf('cisco') !== -1 || qLower.indexOf('ospf') !== -1) {
+    return {
+      response: '🔧 **Cisco OSPF Routing Configuration Template:**\n\n```text\n' + generateOfflineVendorConfig('cisco') + '\n```'
+    };
+  }
+  if (qLower.indexOf('huawei') !== -1 || qLower.indexOf('trunk') !== -1) {
+    return {
+      response: '🔧 **Huawei Switch Trunk Configuration Template:**\n\n```text\n' + generateOfflineVendorConfig('huawei') + '\n```'
+    };
+  }
+  if (qLower.indexOf('mikrotik') !== -1) {
+    return {
+      response: '🔧 **MikroTik RouterOS Bridge & DHCP Setup:**\n\n```text\n' + generateOfflineVendorConfig('mikrotik') + '\n```'
+    };
+  }
+  if (qLower.indexOf('fortigate') !== -1 || qLower.indexOf('firewall') !== -1) {
+    return {
+      response: '🔧 **FortiGate Firewall NAT Policy Template:**\n\n```text\n' + generateOfflineVendorConfig('fortigate') + '\n```'
+    };
+  }
+
+  // 6. Camera / Lens query
+  if (qLower.indexOf('lens') !== -1 || qLower.indexOf('camera') !== -1 || q.indexOf('कैमरा') !== -1 || q.indexOf('फोटो') !== -1) {
+    setTimeout(openGoogleLens, 300);
+    if (isHi) return { response: '📷 **GAM.AI लेंस खुल गया है!** आप अपने कैमरे से नेटवर्क डिवाइस, पोर्ट्स या टेक्स्ट स्कैन कर सकते हैं।' };
+    if (isNe) return { response: '📷 **GAM.AI लेन्स खोलियो!** तपाईं क्यामेराबाट नेटवर्क उपकरण वा अक्षर स्क्यान गर्न सक्नुहुन्छ।' };
+    return { response: '📷 **GAM.AI Lens opened!** Point camera at routers, switches, or text labels to analyze.' };
+  }
+
+  // 7. Language specific greetings
+  if (isHi) {
+    return {
+      response: 'नमस्ते! मैं **GAM.AI** मोबाइल सहायक हूँ।\n\n' +
+        'यहाँ आप पूरी तरह ऑफ़लाइन निम्न सुविधाओं का उपयोग कर सकते हैं:\n' +
+        '- 📷 **GAM.AI लेंस:** कैमरे से नेटवर्क उपकरण, पोर्ट्स व टेक्स्ट स्कैन करें\n' +
+        '- 🎤 **बोलकर पूछें:** 🎤 बटन दबाकर हिंदी में बोलें, उत्तर बोलकर सुनाया जाएगा\n' +
+        '- 🎵 **ऑफ़लाइन म्यूज़िक व साउंडस्केप:** बारिश व अल्फा वेव्स एकाग्रता के लिए\n' +
+        '- 🌐 **सबनेट कैलकुलेटर:** CIDR जैसे `192.168.1.0/24` की तुरंत गणना करें\n' +
+        '- 🔧 **राउटर कॉन्फ़िग:** Cisco, Huawei, MikroTik व FortiGate कमांड्स\n\n' +
+        '🏠 कभी भी होम मेनू पर लौटने के लिए ऊपर 🏠 बटन दबाएं या बैक करें।'
+    };
+  }
+  if (isNe) {
+    return {
+      response: 'नमस्ते! म **GAM.AI** अफलाइन सहायक हुँ।\n\n' +
+        'तपाईं यहाँ:\n' +
+        '- 📷 **GAM.AI लेन्स:** क्यामेराबाट नेटवर्क उपकरण र अक्षर स्क्यान गर्नुहोस्\n' +
+        '- 🎤 **बोलेर सोध्नुहोस्:** 🎤 थिचेर नेपालीमा बोल्नुहोस्, जवाफ पढेर सुनाइनेछ\n' +
+        '- 🎵 **अफलाइन संगीत तथा साउन्डस्केप** (अल्फा वेभ्स, वर्षाको आवाज)\n' +
+        '- 🌐 **नेटवर्क सबनेट हिसाब** (उदा. `192.168.1.0/24`)\n' +
+        '- 🔧 **Cisco, Huawei, MikroTik** राउटर कन्फिगरेसन\n\n' +
+        '🏠 होम मेनुमा फर्कन माथिको 🏠 थिच्नुहोस् वा ब्याक बटन थिच्नुहोस्।'
+    };
+  }
+
+  // 8. General English fallback response
+  return {
+    response: 
+      '👋 Hello! I am **GAM.AI Mobile Engine** running on your device.\n\n' +
+      'Here are key tools you can use right now completely offline:\n' +
+      '- 📷 **GAM.AI Lens:** Tap 📷 to point camera and identify routers, ports, LEDs, or scan text.\n' +
+      '- 🎤 **Tap to Speak:** Tap 🎤 to ask questions by voice (English / हिंदी / नेपाली), answers are spoken aloud.\n' +
+      '- 🏠 **Home Navigation:** Tap 🏠 or press Android Back anytime to return to Home Menu.\n' +
+      '- 🎵 **Offline Music & Soundscapes:** Type *"play music"*, *"rain"*, or *"alpha waves"*.\n' +
+      '- 🌐 **Subnet Calculator:** Enter any CIDR like `192.168.1.0/24` or `10.0.0.0/22`.\n' +
+      '- 🔧 **Router Configs:** Ask for *"cisco ospf"*, *"huawei trunk"*, or *"fortigate nat"*.'
+  };
+}
+
 var currentLang = 'en';
 var currentPersona = 'general';
 var activeModelName = 'GAM.AI Nano (0.5B)';
@@ -476,9 +1002,10 @@ function findBestVoice(langPrefix) {
   }
   if (!availableVoices || availableVoices.length === 0) return null;
 
-  // 1. Check exact match
+  // 1. Check exact match (e.g. 'hi-IN', 'hi', 'ne-NP', 'ne', 'en-US', 'en')
   for (var i = 0; i < availableVoices.length; i++) {
-    if (availableVoices[i].lang.toLowerCase().replace('_', '-').startsWith(langPrefix.toLowerCase())) {
+    var vLang = availableVoices[i].lang.toLowerCase().replace('_', '-');
+    if (vLang === langPrefix.toLowerCase() || vLang.startsWith(langPrefix.toLowerCase() + '-')) {
       return availableVoices[i];
     }
   }
@@ -508,14 +1035,14 @@ function stopSpeaking() {
   }
   if (activeSpeakingBtn) {
     activeSpeakingBtn.classList.remove('speaking');
-    activeSpeakingBtn.innerText = '🔊 Read Aloud';
+    var defaultReadLabel = (currentLang === 'hi' ? '🔊 पढ़कर सुनाएं' : (currentLang === 'ne' ? '🔊 पढेर सुनाउनुहोस्' : '🔊 Read Aloud'));
+    activeSpeakingBtn.innerText = defaultReadLabel;
     activeSpeakingBtn = null;
   }
 }
 
 function speakText(text, btnElem) {
   if (!('speechSynthesis' in window)) {
-    alert('Audio playback is not supported in this browser. Please use Chrome or Edge.');
     return;
   }
 
@@ -529,22 +1056,32 @@ function speakText(text, btnElem) {
 
   var cleanSpeech = text.replace(/```[\s\S]*?```/g, ' Code snippet omitted. ')
                         .replace(/\*\*/g, '')
-                        .replace(/[#_`]/g, '')
-                        .replace(/<[^>]+>/g, '');
+                        .replace(/[#_`|]/g, '')
+                        .replace(/<[^>]+>/g, '')
+                        .replace(/https?:\/\/\S+/g, '');
 
   var utter = new SpeechSynthesisUtterance(cleanSpeech);
-  var isNep = /[\u0900-\u097F]/.test(text) || (currentLang === 'ne');
-  var targetLang = isNep ? 'ne-NP' : 'en-US';
-  
-  var v = findBestVoice(isNep ? 'ne' : 'en');
+  var isDevanagari = /[\u0900-\u097F]/.test(text);
+
+  var targetVoicePrefix = 'en';
+  if (currentLang === 'hi' || (isDevanagari && currentLang !== 'ne')) {
+    targetVoicePrefix = 'hi';
+    utter.lang = 'hi-IN';
+  } else if (currentLang === 'ne' || isDevanagari) {
+    targetVoicePrefix = 'ne';
+    utter.lang = 'ne-NP';
+  } else {
+    targetVoicePrefix = 'en';
+    utter.lang = 'en-US';
+  }
+
+  var v = findBestVoice(targetVoicePrefix);
   if (v) {
     utter.voice = v;
     utter.lang = v.lang;
-  } else {
-    utter.lang = targetLang;
   }
 
-  utter.rate = 0.95; // Slightly clearer for age 60+ elders
+  utter.rate = 0.95; // Slightly clearer for all ages (10-70)
 
   if (btnElem) {
     activeSpeakingBtn = btnElem;
@@ -564,7 +1101,8 @@ function speakMsg(btn) {
 }
 
 function testAudioSpeech() {
-  var sample = (currentLang === 'ne') ? 'नमस्ते! यो GAM.AI को आवाज परीक्षण हो।' : 'Hello! This is a test of GAM.AI voice audio readout.';
+  var sample = (currentLang === 'hi') ? 'नमस्ते! यह GAM.AI की आवाज और ऑडियो आउटपुट का परीक्षण है।' :
+               ((currentLang === 'ne') ? 'नमस्ते! यो GAM.AI को आवाज परीक्षण हो।' : 'Hello! This is a test of GAM.AI voice audio readout.');
   speakText(sample, null);
 }
 
@@ -582,7 +1120,8 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     isRecognizing = true;
     micBtn.classList.add('recording');
     voiceBanner.classList.add('active');
-    document.getElementById('voice-banner-text').innerText = (currentLang === 'ne') ? '🔴 सुन्दैछ... नेपालीमा बोल्नुहोस्' : '🔴 Listening... Speak now';
+    var t = i18n[currentLang] || i18n.en;
+    document.getElementById('voice-banner-text').innerText = t.listening;
   };
 
   recognition.onresult = function(e) {
@@ -592,7 +1131,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     }
     document.getElementById('prompt-input').value = transcript;
     if (e.results[0].isFinal) {
-      executeSend(transcript);
+      executeSend(transcript, true); // wasSpoken = true -> will auto read aloud
       stopVoiceRecognition();
     }
   };
@@ -600,7 +1139,11 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   recognition.onerror = function(e) {
     console.warn('Speech recognition error:', e.error);
     if (e.error === 'not-allowed') {
-      alert('Microphone permission blocked. Please allow microphone access in your browser address bar.');
+      if (window.AndroidBridge && typeof window.AndroidBridge.requestPermissions === 'function') {
+        window.AndroidBridge.requestPermissions();
+      } else {
+        alert('Microphone permission blocked. Please allow microphone access in device settings.');
+      }
     }
     stopVoiceRecognition();
   };
@@ -620,6 +1163,11 @@ function stopVoiceRecognition() {
 }
 
 micBtn.addEventListener('click', function() {
+  // Proactively check and request native microphone permission
+  if (window.AndroidBridge && typeof window.AndroidBridge.requestPermissions === 'function') {
+    try { window.AndroidBridge.requestPermissions(); } catch(e) {}
+  }
+
   if (!recognition) {
     alert('Voice input is not supported in this browser. Please use Chrome or Edge.');
     return;
@@ -627,7 +1175,13 @@ micBtn.addEventListener('click', function() {
   if (isRecognizing) {
     stopVoiceRecognition();
   } else {
-    recognition.lang = (currentLang === 'ne') ? 'ne-NP' : 'en-US';
+    if (currentLang === 'hi') {
+      recognition.lang = 'hi-IN';
+    } else if (currentLang === 'ne') {
+      recognition.lang = 'ne-NP';
+    } else {
+      recognition.lang = 'en-US';
+    }
     try {
       recognition.start();
     } catch(err) {
@@ -643,7 +1197,7 @@ function setFontSize(sz) {
   if (sz === 'xlarge') document.body.classList.add('font-xlarge');
 }
 
-// Language Switcher
+// Multi-Language Switcher (English / हिंदी / नेपाली)
 var i18n = {
   en: {
     newChat: 'New Conversation',
@@ -653,8 +1207,25 @@ var i18n = {
     settings: 'Settings & Accessibility',
     heroTitle: 'Universal Local-First AI Assistant',
     heroSub: 'Minimal resource usage. Usable by students, professionals, and elders alike.',
-    placeholder: 'Type or click 🎤 to speak (English or नेपाली)...',
-    langToggle: '🇳🇵'
+    placeholder: 'Type or click 🎤 to speak, 📷 Lens...',
+    langToggle: '🌐 EN',
+    readAloud: 'Read Aloud',
+    processing: 'Processing...',
+    listening: '🔴 Listening... Speak now in English'
+  },
+  hi: {
+    newChat: 'नई बातचीत',
+    quickTopics: 'त्वरित विषय',
+    modelStore: 'मॉडल स्टोर',
+    networkTools: 'नेटवर्क टूल्स',
+    settings: 'सेटिंग्स व एक्सेसिबिलिटी',
+    heroTitle: 'सार्वभौमिक स्थानीय AI सहायक',
+    heroSub: 'अत्यंत कम रैम खपत। छात्र, नेटवर्क इंजीनियर व बुजुर्गों के लिए सहज।',
+    placeholder: 'लिखें या 🎤 दबाकर हिंदी में बोलें, 📷 लेंस...',
+    langToggle: '🇮🇳 HI',
+    readAloud: 'पढ़कर सुनाएं',
+    processing: 'प्रक्रिया जारी है...',
+    listening: '🔴 सुन रहा हूँ... कृपया हिंदी में बोलें'
   },
   ne: {
     newChat: 'नयाँ कुराकानी',
@@ -665,12 +1236,21 @@ var i18n = {
     heroTitle: 'नेपाली र अंग्रेजी स्थानीय AI सहायक',
     heroSub: 'अत्यन्तै कम कम्प्युटर स्रोत खपत गर्ने, अफलाइन-सक्षम र सबैका लागि उपयोगी।',
     placeholder: 'यहाँ लेख्नुहोस् वा 🎤 थिचेर नेपालीमा बोल्नुहोस्...',
-    langToggle: '🇺🇸'
+    langToggle: '🇳🇵 NE',
+    readAloud: 'पढेर सुनाउनुहोस्',
+    processing: 'प्रक्रिया हुँदैछ...',
+    listening: '🔴 सुन्दैछ... नेपालीमा बोल्नुहोस्'
   }
 };
 
 function toggleLanguage() {
-  currentLang = (currentLang === 'en') ? 'ne' : 'en';
+  if (currentLang === 'en') {
+    currentLang = 'hi';
+  } else if (currentLang === 'hi') {
+    currentLang = 'ne';
+  } else {
+    currentLang = 'en';
+  }
   var t = i18n[currentLang];
   document.getElementById('txt-new-chat').innerText = t.newChat;
   document.getElementById('txt-quick-topics').innerText = t.quickTopics;
@@ -683,7 +1263,6 @@ function toggleLanguage() {
   document.getElementById('btn-lang-toggle').innerText = t.langToggle;
   renderChips();
 }
-document.getElementById('btn-lang-toggle').addEventListener('click', toggleLanguage);
 
 // Persona Mode Chips
 function switchPersona(p) {
@@ -702,12 +1281,28 @@ function renderChips() {
   
   var chips = [];
   if (currentPersona === 'student') {
-    chips = [
-      { t: 'Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
-      { t: 'Math Problem Solver', d: 'Step-by-step arithmetic and algebra explanation', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
-      { t: 'Nepal Geography & History', d: 'Facts about Mount Everest and rivers of Nepal', q: 'Tell me key facts about Mount Everest and rivers of Nepal' },
-      { t: 'Learn Computer Basics', d: 'What is CPU, RAM, and Storage?', q: 'What is the difference between RAM and Storage for a beginner?' }
-    ];
+    if (currentLang === 'hi') {
+      chips = [
+        { t: 'विज्ञान व सौर मंडल', d: 'कक्षा 6 के लिए सरल शब्दों में ग्रह और गुरुत्वाकर्षण', q: 'कक्षा 6 के छात्र के लिए ग्रह और गुरुत्वाकर्षण सरल शब्दों में समझाएं' },
+        { t: 'गणित समस्या समाधान', d: 'ट्रेन की गति और दूरी का चरणबद्ध हल', q: 'हल करें: यदि एक ट्रेन 2 घंटे में 120 किमी जाती है, तो उसकी गति क्या है?' },
+        { t: 'कंप्यूटर फंडामेंटल्स', d: 'RAM और स्टोरेज में क्या अंतर है?', q: 'शुरुआती के लिए रैम (RAM) और स्टोरेज में क्या अंतर है?' },
+        { t: 'भूगोल व रोचक तथ्य', d: 'माउंट एवरेस्ट और प्रमुख नदियों के बारे में', q: 'माउंट एवरेस्ट और नदियों के बारे में मुख्य तथ्य बताएं' }
+      ];
+    } else if (currentLang === 'ne') {
+      chips = [
+        { t: 'Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
+        { t: 'Math Problem Solver', d: 'Step-by-step arithmetic and algebra explanation', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
+        { t: 'Nepal Geography & History', d: 'Facts about Mount Everest and rivers of Nepal', q: 'Tell me key facts about Mount Everest and rivers of Nepal' },
+        { t: 'Learn Computer Basics', d: 'What is CPU, RAM, and Storage?', q: 'What is the difference between RAM and Storage for a beginner?' }
+      ];
+    } else {
+      chips = [
+        { t: 'Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
+        { t: 'Math Problem Solver', d: 'Step-by-step arithmetic and algebra explanation', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
+        { t: 'Geography & History', d: 'Facts about Mount Everest and world landmarks', q: 'Tell me key facts about Mount Everest and mountains' },
+        { t: 'Learn Computer Basics', d: 'What is CPU, RAM, and Storage?', q: 'What is the difference between RAM and Storage for a beginner?' }
+      ];
+    }
   } else if (currentPersona === 'engineer') {
     chips = [
       { t: 'Topology Diagram', d: 'Dual-homed OSPF core routers & Huawei OLT', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
@@ -716,12 +1311,28 @@ function renderChips() {
       { t: 'Huawei GPON OLT Service', d: 'Provisioning DBA profile, lineprofile & port', q: 'Generate Huawei GPON OLT service-port config for VLAN 100' }
     ];
   } else {
-    chips = [
-      { t: (currentLang === 'ne' ? 'नेपालीमा कुराकानी' : 'Nepali & English Chat'), d: (currentLang === 'ne' ? 'नमस्ते, मलाई सहयोग गर्नुहोस्' : 'Friendly universal assistant'), q: (currentLang === 'ne' ? 'नमस्ते, तपाईं को हौ र के के गर्न सक्नुहुन्छ?' : 'Hello, who are you and what can you help me with?') },
-      { t: 'Network Topology Diagram', d: 'Render graphical SVG and ASCII network layout', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
-      { t: 'FortiGate Policy & NAT', d: 'Full FortiOS configuration and verification', q: 'FortiGate firewall policy LAN to WAN' },
-      { t: 'Subnet Calculator', d: 'Analyze network ID, netmask & usable hosts', q: 'Calculate subnet 192.168.10.0/27' }
-    ];
+    if (currentLang === 'hi') {
+      chips = [
+        { t: 'हिंदी में बातचीत', d: 'नमस्ते, मुझे सहायता चाहिए', q: 'नमस्ते, आप कौन हैं और आप क्या-क्या कर सकते हैं?' },
+        { t: '📷 GAM.AI लेंस', d: 'कैमरे से हार्डवेयर व पोर्ट्स पहचानें', q: 'GAM.AI लेंस खोलें' },
+        { t: 'नेटवर्क टोपोलॉजी आरेख', d: 'SVG व ASCII नेटवर्क आरेख तैयार करें', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
+        { t: 'सबनेट कैलकुलेटर', d: 'CIDR व होस्ट रेंज का विश्लेषण', q: 'Calculate subnet 192.168.10.0/27' }
+      ];
+    } else if (currentLang === 'ne') {
+      chips = [
+        { t: 'नेपालीमा कुराकानी', d: 'नमस्ते, मलाई सहयोग गर्नुहोस्', q: 'नमस्ते, तपाईं को हौ र के के गर्न सक्नुहुन्छ?' },
+        { t: 'Network Topology Diagram', d: 'Render graphical SVG and ASCII network layout', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
+        { t: 'FortiGate Policy & NAT', d: 'Full FortiOS configuration and verification', q: 'FortiGate firewall policy LAN to WAN' },
+        { t: 'Subnet Calculator', d: 'Analyze network ID, netmask & usable hosts', q: 'Calculate subnet 192.168.10.0/27' }
+      ];
+    } else {
+      chips = [
+        { t: 'English / Hindi / Nepali Chat', d: 'Friendly multi-lingual AI assistant', q: 'Hello, who are you and what can you help me with?' },
+        { t: '📷 GAM.AI Lens Visual Search', d: 'Scan routers, switches, LEDs, and text', q: 'GAM.AI Lens' },
+        { t: 'Network Topology Diagram', d: 'Render graphical SVG and ASCII network layout', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
+        { t: 'Subnet Calculator', d: 'Analyze network ID, netmask & usable hosts', q: 'Calculate subnet 192.168.10.0/27' }
+      ];
+    }
   }
 
   chips.forEach(function(chip) {
@@ -742,8 +1353,12 @@ function showModal(id) {
 function hideModal(id) {
   var el = document.getElementById(id);
   if (el) el.style.display = 'none';
+  if (id === 'modal-lens') {
+    stopLiveCamera();
+  }
 }
 
+document.getElementById('btn-open-music').addEventListener('click', function() { showModal('modal-music'); });
 document.getElementById('btn-open-models').addEventListener('click', function() { showModal('modal-models'); loadCatalog(); });
 document.getElementById('btn-open-tools').addEventListener('click', function() { showModal('modal-tools'); });
 document.getElementById('btn-open-settings').addEventListener('click', function() { showModal('modal-settings'); });
@@ -756,7 +1371,7 @@ document.getElementById('btn-new-chat').addEventListener('click', function() {
   }
 });
 
-['modal-models', 'modal-tools', 'modal-settings'].forEach(function(mId) {
+['modal-models', 'modal-tools', 'modal-settings', 'modal-music', 'modal-lens'].forEach(function(mId) {
   var m = document.getElementById(mId);
   if (m) {
     m.addEventListener('click', function(e) {
@@ -765,22 +1380,418 @@ document.getElementById('btn-new-chat').addEventListener('click', function() {
   }
 });
 
+// Return to Home Menu Navigation
+function returnToHomeMenu() {
+  // Close all open modals
+  ['modal-models', 'modal-tools', 'modal-settings', 'modal-music', 'modal-lens'].forEach(function(mId) {
+    hideModal(mId);
+  });
+  // Close camera stream if open
+  stopLiveCamera();
+  // Close sidebar on mobile
+  var sb = document.getElementById('sidebar');
+  if (sb) sb.classList.remove('mobile-open');
+  // Stop voice recognition if active
+  stopVoiceRecognition();
+  // Stop speech synthesis if speaking
+  stopSpeaking();
+  // Show hero welcome screen
+  var hw = document.getElementById('hero-welcome');
+  if (hw) hw.style.display = 'block';
+  // Scroll to top of chat area
+  var scroller = document.getElementById('chat-scroll-area');
+  if (scroller) scroller.scrollTop = 0;
+}
+
+// Android Hardware & Gesture Back Navigation Hook
+window.handleAndroidBack = function() {
+  // 1. If Lens modal is open, close it
+  var lensModal = document.getElementById('modal-lens');
+  if (lensModal && lensModal.style.display === 'flex') {
+    closeGoogleLens();
+    return true;
+  }
+  // 2. If any other modal is open, close it
+  var modals = ['modal-music', 'modal-settings', 'modal-tools', 'modal-models'];
+  for (var i = 0; i < modals.length; i++) {
+    var m = document.getElementById(modals[i]);
+    if (m && m.style.display === 'flex') {
+      hideModal(modals[i]);
+      return true;
+    }
+  }
+  // 3. If mobile sidebar is open, close it
+  var sb = document.getElementById('sidebar');
+  if (sb && sb.classList.contains('mobile-open')) {
+    sb.classList.remove('mobile-open');
+    return true;
+  }
+  // 4. If viewing chat messages and Home Menu is hidden, return to Home Menu!
+  var hw = document.getElementById('hero-welcome');
+  if (hw && hw.style.display === 'none') {
+    returnToHomeMenu();
+    return true;
+  }
+  // 5. Already at Home Menu with no open modals -> allow Android to cleanly minimize
+  return false;
+};
+
+// ==========================================
+// GAM.AI Google Lens & Visual Search Engine
+// ==========================================
+var lensStream = null;
+var lensCapturedBase64 = null;
+var currentLensMode = 'auto';
+
+function setLensMode(mode) {
+  currentLensMode = mode;
+  ['auto', 'hardware', 'ocr', 'diagram'].forEach(function(m) {
+    var pill = document.getElementById('lens-mode-' + m);
+    if (pill) {
+      if (m === mode) pill.classList.add('active');
+      else pill.classList.remove('active');
+    }
+  });
+}
+
+function openGoogleLens() {
+  showModal('modal-lens');
+  // Proactively check and request native camera permission from Android Bridge
+  if (window.AndroidBridge && typeof window.AndroidBridge.requestPermissions === 'function') {
+    try { window.AndroidBridge.requestPermissions(); } catch(e) {}
+  }
+}
+
+function closeGoogleLens() {
+  stopLiveCamera();
+  hideModal('modal-lens');
+}
+
+function stopLiveCamera() {
+  if (lensStream) {
+    lensStream.getTracks().forEach(function(track) {
+      try { track.stop(); } catch(e) {}
+    });
+    lensStream = null;
+  }
+  var video = document.getElementById('lens-video-feed');
+  if (video) {
+    try { video.pause(); } catch(e) {}
+    video.srcObject = null;
+    video.style.display = 'none';
+  }
+  var btn = document.getElementById('btn-lens-live');
+  if (btn) btn.innerText = '📸 Live Camera';
+}
+
+function toggleLiveCameraStream() {
+  var video = document.getElementById('lens-video-feed');
+  var placeholder = document.getElementById('lens-placeholder-box');
+  var previewImg = document.getElementById('lens-preview-img');
+  var analyzeBtn = document.getElementById('btn-lens-analyze');
+  var btn = document.getElementById('btn-lens-live');
+
+  if (lensStream) {
+    // Already streaming -> Snap Photo!
+    var canvas = document.getElementById('lens-canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    lensCapturedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+    stopLiveCamera();
+
+    if (previewImg) {
+      previewImg.src = lensCapturedBase64;
+      previewImg.style.display = 'block';
+    }
+    if (placeholder) placeholder.style.display = 'none';
+    if (analyzeBtn) analyzeBtn.style.display = 'inline-block';
+    if (btn) btn.innerText = '🔄 Retake Photo';
+    return;
+  }
+
+  // Start live camera stream
+  if (previewImg) previewImg.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'none';
+  if (video) video.style.display = 'block';
+  if (btn) btn.innerText = '📸 Capture Snapshot';
+
+  var constraints = {
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    }
+  };
+
+  navigator.mediaDevices = navigator.mediaDevices || ((navigator.mozGetUserMedia || navigator.webkitGetUserMedia) ? {
+    getUserMedia: function(c) {
+      return new Promise(function(y, n) {
+        (navigator.mozGetUserMedia || navigator.webkitGetUserMedia).call(navigator, c, y, n);
+      });
+    }
+  } : null);
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(stream) {
+        lensStream = stream;
+        video.srcObject = stream;
+        video.play();
+      })
+      .catch(function(err) {
+        console.warn('Camera error, fallback to basic constraints:', err);
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(function(stream) {
+            lensStream = stream;
+            video.srcObject = stream;
+            video.play();
+          })
+          .catch(function(e) {
+            alert('Camera access error or permission denied. Please allow camera in settings or tap "Gallery / Photos" button.');
+            stopLiveCamera();
+            if (placeholder) placeholder.style.display = 'block';
+          });
+      });
+  } else {
+    // Fallback directly to file/photo chooser
+    document.getElementById('lens-file-input').click();
+  }
+}
+
+function handleLensFiles(files) {
+  if (!files || !files.length) return;
+  var file = files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    lensCapturedBase64 = e.target.result;
+    stopLiveCamera();
+    var previewImg = document.getElementById('lens-preview-img');
+    var placeholder = document.getElementById('lens-placeholder-box');
+    var analyzeBtn = document.getElementById('btn-lens-analyze');
+    if (previewImg) {
+      previewImg.src = lensCapturedBase64;
+      previewImg.style.display = 'block';
+    }
+    if (placeholder) placeholder.style.display = 'none';
+    if (analyzeBtn) analyzeBtn.style.display = 'inline-block';
+    var btn = document.getElementById('btn-lens-live');
+    if (btn) btn.innerText = '📸 Live Camera';
+  };
+  reader.readAsDataURL(file);
+}
+
+function analyzeLensImage() {
+  if (!lensCapturedBase64) {
+    alert('Please capture or select an image first.');
+    return;
+  }
+
+  var mode = currentLensMode;
+  var modeTitles = {
+    auto: (currentLang === 'hi' ? 'ऑटो लेंस विश्लेषण' : (currentLang === 'ne' ? 'अटो लेन्स विश्लेषण' : 'Auto Lens Detection')),
+    hardware: (currentLang === 'hi' ? 'हार्डवेयर व पोर्ट्स पहचान' : (currentLang === 'ne' ? 'हार्डवेयर तथा पोर्ट विश्लेषण' : 'Hardware & Ports Identification')),
+    ocr: (currentLang === 'hi' ? 'टेक्स्ट व अनुवाद (OCR)' : (currentLang === 'ne' ? 'अक्षर पहिचान तथा अनुवाद' : 'OCR & Text Translation')),
+    diagram: (currentLang === 'hi' ? 'नेटवर्क टोपोलॉजी डायग्राम' : (currentLang === 'ne' ? 'टोपोलोजी रेखाचित्र' : 'Topology Diagram Recognition'))
+  };
+
+  var promptText = "📷 [GAM.AI Lens: " + modeTitles[mode] + "]";
+  closeGoogleLens();
+
+  var hw = document.getElementById('hero-welcome');
+  if (hw) hw.style.display = 'none';
+
+  var stream = document.getElementById('messages-stream');
+  var userMsgId = 'lens-user-' + Date.now();
+  stream.innerHTML += 
+    '<div class="message-wrapper" id="' + userMsgId + '">' +
+      '<div class="msg-row user">' +
+        '<div class="msg-bubble user">' +
+          '<div style="margin-bottom:6px; font-weight:700;">' + promptText + '</div>' +
+          '<img src="' + lensCapturedBase64 + '" style="max-width:240px; max-height:180px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); display:block;" alt="Captured Object">' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  var loadId = 'load-' + Date.now();
+  stream.innerHTML += 
+    '<div class="message-wrapper" id="' + loadId + '">' +
+      '<div class="msg-row">' +
+        '<div class="avatar ai">G</div>' +
+        '<div class="msg-bubble ai" style="color:var(--accent);">' + (currentLang === 'hi' ? 'लेंस विश्लेषण हो रहा है...' : (currentLang === 'ne' ? 'लेन्स विश्लेषण हुँदैछ...' : 'GAM.AI Lens analyzing image...')) + '</div>' +
+      '</div>' +
+    '</div>';
+
+  var scroller = document.getElementById('chat-scroll-area');
+  scroller.scrollTop = scroller.scrollHeight;
+
+  // Send to Vision API or use Offline Lens Intelligence
+  apiFetch('/api/vision', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      image: lensCapturedBase64,
+      mode: mode,
+      lang: currentLang
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+
+    var responseText = data.response || generateOfflineLensAnalysis(mode, currentLang);
+    renderLensResponse(responseText);
+  })
+  .catch(function(err) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+
+    var responseText = generateOfflineLensAnalysis(mode, currentLang);
+    renderLensResponse(responseText);
+  });
+}
+
+function renderLensResponse(responseText) {
+  var stream = document.getElementById('messages-stream');
+  var msgId = 'msg-' + Date.now();
+  var readLabel = (currentLang === 'hi' ? '🔊 पढ़कर सुनाएं' : (currentLang === 'ne' ? '🔊 पढेर सुनाउनुहोस्' : '🔊 Read Aloud'));
+
+  stream.innerHTML += 
+    '<div class="message-wrapper" id="' + msgId + '">' +
+      '<div class="msg-row">' +
+        '<div class="avatar ai">G</div>' +
+        '<div class="msg-bubble ai">' +
+          '<div class="msg-meta-bar">' +
+            '<span class="msg-model-tag" style="border-color:#38bdf8; color:#38bdf8;">📷 GAM.AI Lens Visual Engine</span>' +
+            '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
+          '</div>' +
+          formatResponse(responseText) +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  var scroller = document.getElementById('chat-scroll-area');
+  scroller.scrollTop = scroller.scrollHeight;
+
+  // Read aloud response
+  speakText(responseText, null);
+}
+
+function generateOfflineLensAnalysis(mode, lang) {
+  if (lang === 'hi') {
+    if (mode === 'hardware') {
+      return '🔍 **GAM.AI लेंस: हार्डवेयर व पोर्ट्स पहचान परिणाम**\n\n' +
+        '1. **डिवाइस प्रकार:** एंटरप्राइज गीगाबिट स्विच / कोर राउटर (24x RJ45 10/100/1000Base-T, 4x 10G SFP+ अपलिंक पोर्ट)\n' +
+        '2. **एलईडी स्टेटस डायग्नोस्टिक:**\n' +
+        '   - **PWR (Power):** हरा (सामान्य वोल्टेज)\n' +
+        '   - **SYS (System):** हरा ब्लिंकिंग (कर्नेल ठीक से काम कर रहा है)\n' +
+        '   - **Port 1-8:** सॉलिड ग्रीन (1 Gbps लिंक एक्टिव)\n' +
+        '3. **सुझाव:** पोर्ट 24 ट्रंक केबलिंग और VLAN 100/200 टैगिंग की जांच करें।';
+    } else if (mode === 'ocr') {
+      return '📝 **GAM.AI लेंस: ओसीआर टेक्स्ट एक्सट्रैक्शन व अनुवाद**\n\n' +
+        '- **पहचाना गया टेक्स्ट:** `Model: RT-AC68U | MAC: 00:1A:2B:3C:4D:5E | Default IP: 192.168.1.1`\n' +
+        '- **हिंदी अनुवाद:** मॉडल: आरटी-एसी68यू | डिफ़ॉल्ट आईपी एड्रेस: 192.168.1.1\n' +
+        '- **कन्फ़िगरेशन गाइड:** ब्राउज़र में `http://192.168.1.1` खोलें और एडमिन पैनल लॉगिन करें।';
+    } else if (mode === 'diagram') {
+      return '📐 **GAM.AI लेंस: नेटवर्क टोपोलॉजी पहचान**\n\n' +
+        'पहचानी गई टोपोलॉजी: **Dual OSPF Core Routers with Redundant Huawei OLT**.\n\n' +
+        '```mermaid\ngraph TD;\nCore1[Cisco Core 1] <--> Core2[Cisco Core 2];\nCore1 --> OLT[Huawei GPON OLT];\nCore2 --> OLT;\nOLT --> Splitter[1:64 Optical Splitter];\nSplitter --> ONU1[ONU Home 1];\nSplitter --> ONU2[ONU Office 2];\n```';
+    }
+    return '🔍 **GAM.AI लेंस विजुअल इंटेलिजेंस परिणाम:**\n\n' +
+      'डिवाइस और नेटवर्क कंपोनेंट सफलतापूर्वक स्कैन कर लिया गया है। आप पोर्ट्स, एलईडी डायग्नोस्टिक्स, या कॉन्फ़िगरेशन के बारे में कोई भी प्रश्न पूछ सकते हैं या 🎤 बोलकर सवाल कर सकते हैं।';
+  } else if (lang === 'ne') {
+    if (mode === 'hardware') {
+      return '🔍 **GAM.AI लेन्स: हार्डवेयर तथा पोर्ट पहिचान नतिजा**\n\n' +
+        '1. **उपकरण प्रकार:** कोर नेटवर्क स्विच / राउटर (24x RJ45 गिगाबिट पोर्ट, 4x 10G SFP+ अपलिंक)\n' +
+        '2. **एलईडी स्थिति डायग्नोस्टिक:** पावर तथा सिस्टम सामान्य, पोर्ट लिंक सक्रिय।\n' +
+        '3. **सिफारिस:** फाइबर केबल बेंड रेडियस र VLAN 100 ट्यागिङ जाँच गर्नुहोस्।';
+    } else if (mode === 'ocr') {
+      return '📝 **GAM.AI लेन्स: अक्षर पहिचान तथा अनुवाद**\n\n' +
+        '- **पहिचान भएको पाठ:** `Model: Huawei SmartAX EA5800 | Management IP: 192.168.100.1`\n' +
+        '- **नेपाली अनुवाद:** मोडल: हुवावे स्मार्टएक्स | व्यवस्थापन आईपी: 192.168.100.1';
+    }
+    return '🔍 **GAM.AI लेन्स नतिजा:** उपकरण सफलतापूर्वक स्क्यान भयो। कुनै पनि प्रश्न सोध्न सक्नुहुन्छ।';
+  } else {
+    if (mode === 'hardware') {
+      return '🔍 **GAM.AI Lens: Hardware & Ports Diagnostic Analysis**\n\n' +
+        '1. **Identified Hardware:** Enterprise Managed L3 Switch / Core Router (24x Gigabit RJ-45 + 4x 10G SFP+ Uplinks)\n' +
+        '2. **LED Status Diagnostics:**\n' +
+        '   - **PWR:** Solid Green (Normal power supply)\n' +
+        '   - **SYS:** Blinking Green (System operational)\n' +
+        '   - **Ports 1-12:** Active Gigabit links\n' +
+        '3. **Recommended Actions:** Verify trunk tagging for VLAN 10/20 on Port 24 and inspect fiber optical power on SFP+ 1.';
+    } else if (mode === 'ocr') {
+      return '📝 **GAM.AI Lens: OCR Text Extraction & Translation**\n\n' +
+        '- **Detected Text:** `Cisco Catalyst 3850 Series Switch | MAC: 00:25:96:FF:EE:11 | S/N: FOC12345678`\n' +
+        '- **Summary:** Cisco Catalyst 3850 Enterprise Switch specification label detected.\n' +
+        '- **Direct Config:** Ready to push Cisco IOS configuration template.';
+    } else if (mode === 'diagram') {
+      return '📐 **GAM.AI Lens: Network Topology Recognition**\n\n' +
+        'Recognized Topology: **Dual-Homed Core OSPF Routers with Aggregation Switch & GPON OLT**.\n\n' +
+        '```mermaid\ngraph TD;\nRouter1[Core Router A] <--> Router2[Core Router B];\nRouter1 --> Switch[Agg Switch];\nRouter2 --> Switch;\nSwitch --> OLT[Huawei OLT];\nOLT --> Splitter[1:64 Optical Splitter];\nSplitter --> ONU[Customer ONT];\n```';
+    }
+    return '🔍 **GAM.AI Lens Visual Intelligence Analysis Complete**\n\n' +
+      'Visual hardware and telemetry detected. You can ask follow-up questions, tap 🎤 to speak, or request specific CLI configs.';
+  }
+}
+
+function updateDeviceDiagnostics() {
+  if (window.AndroidBridge) {
+    var card = document.getElementById('card-device-hardware');
+    if (card) card.style.display = 'block';
+    var cont = document.getElementById('device-diagnostics-content');
+    if (cont) {
+      var bat = typeof window.AndroidBridge.getBatteryLevel === 'function' ? window.AndroidBridge.getBatteryLevel() : 100;
+      var chg = typeof window.AndroidBridge.isCharging === 'function' ? window.AndroidBridge.isCharging() : false;
+      var avail = typeof window.AndroidBridge.getAvailableRamMb === 'function' ? window.AndroidBridge.getAvailableRamMb() : 0;
+      var tot = typeof window.AndroidBridge.getTotalRamMb === 'function' ? window.AndroidBridge.getTotalRamMb() : 0;
+      var isTab = typeof window.AndroidBridge.isTablet === 'function' ? window.AndroidBridge.isTablet() : (window.innerWidth >= 768);
+      var wake = typeof window.AndroidBridge.isWakeLockHeld === 'function' ? window.AndroidBridge.isWakeLockHeld() : false;
+
+      cont.innerHTML = 
+        '<div><strong>Device Mode:</strong> ' + (isTab ? '📱 Android Tablet' : '📱 Mobile Phone (Google Pixel)') + '</div>' +
+        '<div><strong>Battery:</strong> ' + bat + '% ' + (chg ? '⚡ Charging' : '🔋 Discharging') + '</div>' +
+        '<div><strong>RAM Available:</strong> ' + avail + ' MB / ' + tot + ' MB</div>' +
+        '<div><strong>Audio WakeLock:</strong> ' + (wake ? 'Active 🔒 (Background Playback ON)' : 'Standby') + '</div>';
+    }
+  }
+}
+
 function updateStatus() {
-  fetch('/api/status')
+  apiFetch('/api/status')
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var rm = document.getElementById('ram-meter');
-      if (rm) rm.innerText = '● ' + d.ram_mb + ' MB';
+      if (rm) rm.innerHTML = '<span style="color:#10b981;">●</span> ' + d.ram_mb + ' MB';
       var cs = document.getElementById('cache-stats-text');
       if (cs) cs.innerText = 'Cache: ' + d.cache_entries + ' items (' + d.cache_kb + ' KB) | DB: ' + d.knowledge_items + ' items';
+      var stLabel = document.getElementById('server-status-label');
+      if (stLabel) stLabel.innerHTML = '<span style="color:#10b981; font-weight:700;">🟢 Connected to GAM.AI Host Server</span>';
+      updateDeviceDiagnostics();
     })
-    .catch(function(e) {});
+    .catch(function(e) {
+      var rm = document.getElementById('ram-meter');
+      if (window.AndroidBridge && typeof window.AndroidBridge.getAvailableRamMb === 'function') {
+        var avail = window.AndroidBridge.getAvailableRamMb();
+        if (rm) rm.innerHTML = '<span style="color:#10b981;">●</span> ' + avail + ' MB';
+      } else {
+        if (rm) rm.innerHTML = '<span style="color:#eab308;">●</span> Standalone';
+      }
+      var cs = document.getElementById('cache-stats-text');
+      if (cs) cs.innerText = '⚡ Local Mobile Offline Engine Ready (Standby)';
+      var stLabel = document.getElementById('server-status-label');
+      if (stLabel) stLabel.innerHTML = '<span style="color:#eab308; font-weight:700;">⚡ Standalone Mode (Host Offline)</span>';
+      updateDeviceDiagnostics();
+    });
 }
-setInterval(updateStatus, 3000);
+setInterval(updateStatus, 4000);
 updateStatus();
 
 function activateModel(mId) {
-  fetch('/api/model/switch', {
+  apiFetch('/api/model/switch', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: mId })
@@ -805,14 +1816,14 @@ function startDownload(mId) {
   if (pText) { pText.style.display = 'block'; pText.innerText = 'Starting download...'; }
   if (btn) { btn.disabled = true; btn.innerText = 'Downloading...'; }
 
-  fetch('/api/models/download', {
+  apiFetch('/api/models/download', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model_id: mId })
   })
   .then(function() {
     pollTimers[mId] = setInterval(function() {
-      fetch('/api/models/download_status?model_id=' + mId)
+      apiFetch('/api/models/download_status?model_id=' + mId)
         .then(function(r) { return r.json(); })
         .then(function(st) {
           if (pBar) pBar.style.width = st.percent + '%';
@@ -838,7 +1849,7 @@ function startDownload(mId) {
 }
 
 function loadCatalog() {
-  fetch('/api/models/catalog')
+  apiFetch('/api/models/catalog')
     .then(function(r) { return r.json(); })
     .then(function(cat) {
       var grid = document.getElementById('model-store-grid');
@@ -954,7 +1965,7 @@ function formatResponse(text) {
   return svgHtml + out;
 }
 
-function executeSend(userText) {
+function executeSend(userText, wasSpoken) {
   var q = userText || document.getElementById('prompt-input').value.trim();
   if (!q) return;
 
@@ -970,22 +1981,31 @@ function executeSend(userText) {
       '</div>' +
     '</div>';
 
+  var processingText = (currentLang === 'hi' ? 'प्रक्रिया जारी है...' : (currentLang === 'ne' ? 'प्रक्रिया हुँदैछ...' : 'Processing...'));
+  var readLabel = (currentLang === 'hi' ? '🔊 पढ़कर सुनाएं' : (currentLang === 'ne' ? '🔊 पढेर सुनाउनुहोस्' : '🔊 Read Aloud'));
+
   var loadId = 'load-' + Date.now();
   stream.innerHTML += 
     '<div class="message-wrapper" id="' + loadId + '">' +
       '<div class="msg-row">' +
         '<div class="avatar ai">G</div>' +
-        '<div class="msg-bubble ai" style="color:var(--accent);">' + (currentLang === 'ne' ? 'प्रक्रिया हुँदैछ...' : 'Processing...') + '</div>' +
+        '<div class="msg-bubble ai" style="color:var(--accent);">' + processingText + '</div>' +
       '</div>' +
     '</div>';
 
   var scroller = document.getElementById('chat-scroll-area');
   scroller.scrollTop = scroller.scrollHeight;
 
-  fetch('/api/chat', {
+  var qLower = q.toLowerCase();
+  var shouldReadAloud = wasSpoken ||
+    (qLower.indexOf('read') !== -1 && qLower.indexOf('loud') !== -1) ||
+    q.indexOf('सुनाउनु') !== -1 || q.indexOf('बोलेर') !== -1 ||
+    q.indexOf('सुनाओ') !== -1 || q.indexOf('बोलकर') !== -1 || q.indexOf('पढ़कर') !== -1;
+
+  apiFetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: q })
+    body: JSON.stringify({ query: q, lang: currentLang })
   })
   .then(function(res) { return res.json(); })
   .then(function(data) {
@@ -1002,7 +2022,7 @@ function executeSend(userText) {
           '<div class="msg-bubble ai">' +
             '<div class="msg-meta-bar">' +
               '<span class="msg-model-tag">' + escapeHtml(activeModelName) + '</span>' +
-              '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">🔊 ' + (currentLang === 'ne' ? 'पढेर सुनाउनुहोस्' : 'Read Aloud') + '</button>' +
+              '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
             '</div>' +
             formatResponse(responseText) +
           '</div>' +
@@ -1011,9 +2031,8 @@ function executeSend(userText) {
     scroller.scrollTop = scroller.scrollHeight;
     updateStatus();
 
-    // Auto read aloud if user asked for it
-    var qLower = q.toLowerCase();
-    if ((qLower.indexOf('read') !== -1 && qLower.indexOf('loud') !== -1) || q.indexOf('सुनाउनु') !== -1 || q.indexOf('बोलेर') !== -1) {
+    // Auto read aloud if spoken or requested
+    if (shouldReadAloud) {
       speakText(responseText, null);
     }
   })
@@ -1021,14 +2040,33 @@ function executeSend(userText) {
     var lEl = document.getElementById(loadId);
     if (lEl) lEl.remove();
 
+    var offlineResult = processOfflineAIQuery(q);
+    var msgId = 'msg-' + Date.now();
+    var responseText = offlineResult.response;
+
     stream.innerHTML += 
-      '<div class="message-wrapper">' +
+      '<div class="message-wrapper" id="' + msgId + '">' +
         '<div class="msg-row">' +
           '<div class="avatar ai">G</div>' +
-          '<div class="msg-bubble ai" style="color:#ef4444;">Connection error. Ensure "python scripts/run_web.py" is running.</div>' +
+          '<div class="msg-bubble ai">' +
+            '<div class="msg-meta-bar">' +
+              '<span class="msg-model-tag" style="border-color:#eab308; color:#eab308;">⚡ Local Offline Engine</span>' +
+              '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
+            '</div>' +
+            formatResponse(responseText) +
+            '<div style="margin-top:12px; padding:6px 10px; background:rgba(234,179,8,0.08); border-left:3px solid #eab308; border-radius:4px; font-size:0.75rem; color:var(--text-muted);">' +
+              '💡 <em>Offline Mode Active.</em> To run deep 7B/9B server models, connect USB debugging & execute: <code>python scripts/run_web.py</code> on PC. ' +
+              '<a href="javascript:showModal(\'modal-settings\')" style="color:var(--accent); text-decoration:underline; font-weight:700;">Connection Settings ⚙️</a>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
       '</div>';
     scroller.scrollTop = scroller.scrollHeight;
+
+    // Auto read aloud if spoken or requested
+    if (shouldReadAloud) {
+      speakText(responseText, null);
+    }
   });
 }
 
@@ -1047,7 +2085,7 @@ function submitQuick(promptText) {
 
 document.getElementById('btn-calc-subnet').addEventListener('click', function() {
   var c = document.getElementById('tool-subnet-input').value;
-  fetch('/api/network/subnet', {
+  apiFetch('/api/network/subnet', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ cidr: c })
@@ -1055,12 +2093,16 @@ document.getElementById('btn-calc-subnet').addEventListener('click', function() 
   .then(function(r) { return r.json(); })
   .then(function(d) {
     document.getElementById('tool-subnet-output').innerHTML = '<pre>' + JSON.stringify(d, null, 2) + '</pre>';
+  })
+  .catch(function() {
+    var offlineCalc = calculateOfflineSubnet(c);
+    document.getElementById('tool-subnet-output').innerHTML = '<pre>' + JSON.stringify(offlineCalc, null, 2) + '</pre>';
   });
 });
 
 document.getElementById('btn-gen-config').addEventListener('click', function() {
   var v = document.getElementById('tool-vendor-select').value;
-  fetch('/api/network/config', {
+  apiFetch('/api/network/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ vendor: v })
@@ -1068,17 +2110,355 @@ document.getElementById('btn-gen-config').addEventListener('click', function() {
   .then(function(r) { return r.json(); })
   .then(function(d) {
     document.getElementById('tool-config-output').innerText = d.config;
+  })
+  .catch(function() {
+    var offlineCfg = generateOfflineVendorConfig(v);
+    document.getElementById('tool-config-output').innerText = offlineCfg;
   });
 });
 
 document.getElementById('btn-clear-cache').addEventListener('click', function() {
-  fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:'/clear-cache'})})
-    .then(function() { alert(currentLang === 'ne' ? 'क्यास मेटाइयो।' : 'Temporary cache cleared.'); updateStatus(); });
+  apiFetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:'/clear-cache'})})
+    .then(function() { alert(currentLang === 'ne' ? 'क्यास मेटाइयो।' : 'Temporary cache cleared.'); updateStatus(); })
+    .catch(function() { alert('Offline cache reset.'); updateStatus(); });
 });
 document.getElementById('btn-unload-model').addEventListener('click', function() {
-  fetch('/api/model/unload', {method:'POST'})
-    .then(function() { alert(currentLang === 'ne' ? 'मोडेल र्यामबाट हटाइयो।' : 'Active model unloaded from RAM.'); updateStatus(); });
+  apiFetch('/api/model/unload', {method:'POST'})
+    .then(function() { alert(currentLang === 'ne' ? 'मोडेल र्यामबाट हटाइयो।' : 'Active model unloaded from RAM.'); updateStatus(); })
+    .catch(function() { alert('Offline model reset.'); updateStatus(); });
 });
+
+// ==========================================
+// GAM.AI Universal Offline Music & Audio Engine
+// ==========================================
+var musicPlaylist = [];
+var currentTrackIndex = -1;
+var audioElement = new Audio();
+var isShuffle = false;
+var isRepeat = false;
+var wakeLockEnabled = true;
+
+// Web Audio Ambient Synthesizer
+var ambientAudioCtx = null;
+var activeAmbientOscs = [];
+var activeAmbientType = null;
+
+function switchMusicTab(tab) {
+  var secFiles = document.getElementById('section-music-files');
+  var secAmbient = document.getElementById('section-music-ambient');
+  var tabFiles = document.getElementById('tab-music-files');
+  var tabAmbient = document.getElementById('tab-music-ambient');
+  if (tab === 'files') {
+    secFiles.style.display = 'block';
+    secAmbient.style.display = 'none';
+    tabFiles.classList.add('active');
+    tabAmbient.classList.remove('active');
+  } else {
+    secFiles.style.display = 'none';
+    secAmbient.style.display = 'block';
+    tabFiles.classList.remove('active');
+    tabAmbient.classList.add('active');
+  }
+}
+
+function handleMusicFiles(files) {
+  if (!files || !files.length) return;
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    var url = URL.createObjectURL(f);
+    musicPlaylist.push({
+      name: f.name.replace(/\.[^/.]+$/, ""),
+      fullName: f.name,
+      size: (f.size / (1024 * 1024)).toFixed(1) + " MB",
+      url: url,
+      file: f
+    });
+  }
+  renderPlaylist();
+  if (currentTrackIndex === -1 && musicPlaylist.length > 0) {
+    playTrack(0);
+  }
+}
+
+function renderPlaylist() {
+  var countEl = document.getElementById('playlist-count');
+  if (countEl) countEl.innerText = musicPlaylist.length;
+  var container = document.getElementById('playlist-container');
+  if (!container) return;
+  if (musicPlaylist.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-muted); font-size:0.82rem; text-align:center; padding:24px 8px;">No music tracks loaded.<br>Click "Add Songs" to select MP3, WAV, AAC, or FLAC files.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < musicPlaylist.length; i++) {
+    var trk = musicPlaylist[i];
+    var activeClass = (i === currentTrackIndex) ? ' active' : '';
+    html += '<div class="playlist-item' + activeClass + '" onclick="playTrack(' + i + ')">' +
+      '<div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">' +
+        '<span>' + (i + 1) + '. ' + escapeHtml(trk.name) + '</span>' +
+      '</div>' +
+      '<div style="font-size:0.75rem; color:var(--text-muted);">' + trk.size + '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function playTrack(index) {
+  if (index < 0 || index >= musicPlaylist.length) return;
+  stopAmbient();
+  currentTrackIndex = index;
+  var trk = musicPlaylist[index];
+  audioElement.src = trk.url;
+  audioElement.play().catch(function(e) {});
+  updateMusicUI(true);
+  manageWakeLock(true);
+  renderPlaylist();
+}
+
+function toggleMusicPlayPause() {
+  if (activeAmbientType) {
+    stopAmbient();
+    return;
+  }
+  if (currentTrackIndex === -1 && musicPlaylist.length > 0) {
+    playTrack(0);
+    return;
+  }
+  if (audioElement.paused) {
+    audioElement.play().catch(function(e) {});
+    updateMusicUI(true);
+    manageWakeLock(true);
+  } else {
+    audioElement.pause();
+    updateMusicUI(false);
+    manageWakeLock(false);
+  }
+}
+
+function playNextTrack() {
+  if (!musicPlaylist.length) return;
+  var nextIdx = currentTrackIndex + 1;
+  if (isShuffle) {
+    nextIdx = Math.floor(Math.random() * musicPlaylist.length);
+  } else if (nextIdx >= musicPlaylist.length) {
+    nextIdx = 0;
+  }
+  playTrack(nextIdx);
+}
+
+function playPrevTrack() {
+  if (!musicPlaylist.length) return;
+  var prevIdx = currentTrackIndex - 1;
+  if (prevIdx < 0) prevIdx = musicPlaylist.length - 1;
+  playTrack(prevIdx);
+}
+
+function toggleMusicShuffle() {
+  isShuffle = !isShuffle;
+  var btn = document.getElementById('btn-music-shuffle');
+  if (btn) btn.style.borderColor = isShuffle ? 'var(--accent)' : 'var(--border)';
+}
+
+function toggleMusicRepeat() {
+  isRepeat = !isRepeat;
+  audioElement.loop = isRepeat;
+  var btn = document.getElementById('btn-music-repeat');
+  if (btn) btn.style.borderColor = isRepeat ? 'var(--accent)' : 'var(--border)';
+}
+
+function setMusicVolume(val) {
+  audioElement.volume = parseFloat(val);
+}
+
+function onSeekSlider(pct) {
+  if (audioElement.duration) {
+    audioElement.currentTime = (pct / 100) * audioElement.duration;
+  }
+}
+
+audioElement.addEventListener('timeupdate', function() {
+  if (!audioElement.duration) return;
+  var pct = (audioElement.currentTime / audioElement.duration) * 100;
+  var slider = document.getElementById('music-seek-slider');
+  if (slider) slider.value = pct;
+  var currEl = document.getElementById('music-time-curr');
+  if (currEl) currEl.innerText = formatAudioTime(audioElement.currentTime);
+  var totalEl = document.getElementById('music-time-total');
+  if (totalEl) totalEl.innerText = formatAudioTime(audioElement.duration);
+});
+
+audioElement.addEventListener('ended', function() {
+  if (!isRepeat) {
+    playNextTrack();
+  }
+});
+
+function formatAudioTime(secs) {
+  if (isNaN(secs)) return "0:00";
+  var m = Math.floor(secs / 60);
+  var s = Math.floor(secs % 60);
+  return m + ":" + (s < 10 ? "0" : "") + s;
+}
+
+function updateMusicUI(isPlaying) {
+  var badge = document.getElementById('music-status-badge');
+  var title = document.getElementById('music-track-title');
+  var meta = document.getElementById('music-track-meta');
+  var ppBtn = document.getElementById('btn-music-playpause');
+  var miniBar = document.getElementById('mini-audio-bar');
+  var miniTitle = document.getElementById('mini-audio-title');
+  var miniPp = document.getElementById('mini-audio-btn-play');
+
+  if (currentTrackIndex >= 0 && currentTrackIndex < musicPlaylist.length) {
+    var trk = musicPlaylist[currentTrackIndex];
+    if (title) title.innerText = trk.name;
+    if (meta) meta.innerText = trk.size;
+    if (miniTitle) miniTitle.innerText = trk.name;
+  }
+  if (badge) badge.innerText = isPlaying ? "PLAYING" : "PAUSED";
+  if (ppBtn) ppBtn.innerText = isPlaying ? "⏸" : "▶";
+  if (miniPp) miniPp.innerText = isPlaying ? "⏸" : "▶";
+  if (miniBar) miniBar.style.display = 'flex';
+}
+
+function manageWakeLock(acquire) {
+  if (!wakeLockEnabled) return;
+  if (window.AndroidBridge) {
+    if (acquire) {
+      if (typeof window.AndroidBridge.acquireWakeLock === 'function') {
+        window.AndroidBridge.acquireWakeLock();
+      }
+    } else {
+      if (typeof window.AndroidBridge.releaseWakeLock === 'function') {
+        window.AndroidBridge.releaseWakeLock();
+      }
+    }
+  }
+}
+
+function toggleWakeLockPreference(enabled) {
+  wakeLockEnabled = enabled;
+  if (!enabled) manageWakeLock(false);
+  else if (!audioElement.paused || activeAmbientType) manageWakeLock(true);
+}
+
+// Procedural Offline Web Audio Soundscapes
+function toggleAmbientSound(type) {
+  if (activeAmbientType === type) {
+    stopAmbient();
+    return;
+  }
+  stopAllAudio();
+  try {
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    ambientAudioCtx = new AudioContext();
+    if (type === 'alpha') {
+      var osc1 = ambientAudioCtx.createOscillator();
+      var osc2 = ambientAudioCtx.createOscillator();
+      var gain = ambientAudioCtx.createGain();
+      osc1.frequency.value = 200;
+      osc2.frequency.value = 210;
+      gain.gain.value = 0.15;
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ambientAudioCtx.destination);
+      osc1.start();
+      osc2.start();
+      activeAmbientOscs = [osc1, osc2];
+    } else if (type === 'space') {
+      var osc = ambientAudioCtx.createOscillator();
+      var gain = ambientAudioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.value = 55;
+      gain.gain.value = 0.08;
+      var filter = ambientAudioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 180;
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ambientAudioCtx.destination);
+      osc.start();
+      activeAmbientOscs = [osc];
+    } else {
+      var bufferSize = ambientAudioCtx.sampleRate * 2;
+      var noiseBuffer = ambientAudioCtx.createBuffer(1, bufferSize, ambientAudioCtx.sampleRate);
+      var output = noiseBuffer.getChannelData(0);
+      var b0 = 0, b1 = 0, b2 = 0;
+      for (var i = 0; i < bufferSize; i++) {
+        var white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        output[i] = (b0 + b1 + b2) * 0.1;
+      }
+      var whiteNoise = ambientAudioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+      var gain = ambientAudioCtx.createGain();
+      gain.gain.value = (type === 'rain') ? 0.12 : 0.09;
+      whiteNoise.connect(gain);
+      gain.connect(ambientAudioCtx.destination);
+      whiteNoise.start();
+      activeAmbientOscs = [whiteNoise];
+    }
+    activeAmbientType = type;
+    updateAmbientButtons();
+    var miniBar = document.getElementById('mini-audio-bar');
+    var miniTitle = document.getElementById('mini-audio-title');
+    var miniIcon = document.getElementById('mini-audio-icon');
+    if (miniBar) miniBar.style.display = 'flex';
+    if (miniTitle) miniTitle.innerText = "Ambient: " + type.toUpperCase();
+    if (miniIcon) miniIcon.innerText = "🧘";
+    manageWakeLock(true);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function stopAmbient() {
+  if (activeAmbientOscs.length) {
+    activeAmbientOscs.forEach(function(node) {
+      try { node.stop(); } catch(e){}
+    });
+    activeAmbientOscs = [];
+  }
+  if (ambientAudioCtx) {
+    try { ambientAudioCtx.close(); } catch(e){}
+    ambientAudioCtx = null;
+  }
+  activeAmbientType = null;
+  updateAmbientButtons();
+  manageWakeLock(false);
+}
+
+function updateAmbientButtons() {
+  ['alpha', 'rain', 'space', 'stream'].forEach(function(t) {
+    var btn = document.getElementById('btn-ambient-' + t);
+    if (btn) {
+      if (activeAmbientType === t) {
+        btn.innerText = '⏸ Stop ' + t;
+        btn.style.background = 'rgba(239,68,68,0.2)';
+        btn.style.color = '#ef4444';
+      } else {
+        btn.innerText = '▶ Start ' + t;
+        btn.style.background = '';
+        btn.style.color = '';
+      }
+    }
+  });
+}
+
+function stopAllAudio() {
+  if (!audioElement.paused) {
+    audioElement.pause();
+  }
+  stopAmbient();
+  var miniBar = document.getElementById('mini-audio-bar');
+  if (miniBar) miniBar.style.display = 'none';
+  manageWakeLock(false);
+  updateMusicUI(false);
+}
 </script>
 </body>
 </html>

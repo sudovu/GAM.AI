@@ -1,15 +1,61 @@
 #!/usr/bin/env python3
 """Build and packaging script for GAM.AI Android APK.
 
-Synchronizes dashboard web assets into the Android project and triggers
-Gradle APK compilation locally (if Android SDK/JDK is present) or provides
-automated CI instructions for https://github.com/sudovu/GAM.AI.
+Synchronizes dashboard web assets into the Android project, compiles
+universal APKs locally via Gradle (auto-detecting local JDK & Android SDK),
+and optionally deploys directly to connected Android devices (e.g. Google Pixel)
+via USB debugging (`adb install`).
 """
 
 import os
 import sys
 import shutil
 import subprocess
+
+def detect_toolchain():
+    """Auto-detect JDK and Android SDK on system if environment variables are not set."""
+    user_home = os.path.expanduser("~")
+
+    # 1. Detect JAVA_HOME
+    if not os.environ.get("JAVA_HOME"):
+        candidates = [
+            os.path.join(user_home, ".jdks", "jbr-21.0.11"),
+            r"C:\Program Files\Android\Android Studio\jbr",
+            r"C:\Program Files\Java\jdk-21",
+            r"C:\Program Files\Java\jdk-17",
+        ]
+        for c in candidates:
+            if os.path.isdir(c) and os.path.exists(os.path.join(c, "bin", "java.exe" if sys.platform == "win32" else "java")):
+                os.environ["JAVA_HOME"] = c
+                bin_dir = os.path.join(c, "bin")
+                if bin_dir not in os.environ.get("PATH", ""):
+                    os.environ["PATH"] = bin_dir + os.pathsep + os.environ.get("PATH", "")
+                break
+
+    # 2. Detect ANDROID_HOME
+    if not os.environ.get("ANDROID_HOME") and not os.environ.get("ANDROID_SDK_ROOT"):
+        sdk_candidates = [
+            os.path.join(user_home, "AppData", "Local", "Android", "Sdk"),
+            os.path.join(user_home, "Android", "Sdk"),
+            r"C:\Android\sdk",
+        ]
+        for s in sdk_candidates:
+            if os.path.isdir(s):
+                os.environ["ANDROID_HOME"] = s
+                os.environ["ANDROID_SDK_ROOT"] = s
+                platform_tools = os.path.join(s, "platform-tools")
+                if os.path.isdir(platform_tools) and platform_tools not in os.environ.get("PATH", ""):
+                    os.environ["PATH"] = platform_tools + os.pathsep + os.environ.get("PATH", "")
+                break
+
+def ensure_local_properties(repo_root: str):
+    """Ensure android/local.properties points to valid Android SDK."""
+    android_home = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+    if android_home:
+        loc_prop = os.path.join(repo_root, "android", "local.properties")
+        clean_sdk_path = android_home.replace("\\", "/")
+        with open(loc_prop, "w", encoding="utf-8") as f:
+            f.write(f"sdk.dir={clean_sdk_path}\n")
 
 def sync_assets(repo_root: str) -> None:
     """Sync latest dashboard UI assets to Android project assets directory."""
@@ -52,64 +98,113 @@ def check_command(cmd: list) -> bool:
     except Exception:
         return False
 
-def build_apk():
-    print("=" * 64)
-    print("          GAM.AI ANDROID APK BUILDER & PACKAGER          ")
-    print("=" * 64)
+def get_adb_command():
+    adb_name = "adb.exe" if sys.platform == "win32" else "adb"
+    android_home = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+    if android_home:
+        pt_adb = os.path.join(android_home, "platform-tools", adb_name)
+        if os.path.exists(pt_adb):
+            return pt_adb
+    if check_command([adb_name, "version"]):
+        return adb_name
+    return None
 
+def install_via_adb(apk_path: str):
+    adb = get_adb_command()
+    if not adb:
+        print("ADB not found. Cannot perform USB debugging install.")
+        return False
+
+    print("\n[USB Debugging] Checking connected Android devices...")
+    try:
+        res = subprocess.run([adb, "devices", "-l"], stdout=subprocess.PIPE, text=True)
+        print(res.stdout.strip())
+        lines = [line for line in res.stdout.splitlines() if line.strip() and not line.startswith("List of")]
+        connected = [line.split()[0] for line in lines if "device" in line.split()]
+        if not connected:
+            print("No device authorized for USB debugging. Connect phone and enable USB Debugging.")
+            return False
+
+        target_device = connected[0]
+        print(f"\n[USB Debugging] Setting up ADB port forwarding (reverse tcp:8080 -> tcp:8080)...")
+        subprocess.run([adb, "-s", target_device, "reverse", "tcp:8080", "tcp:8080"])
+        print(f"\n[USB Debugging] Deploying to target device: {target_device}...")
+        install_res = subprocess.run([adb, "-s", target_device, "install", "-r", "-d", apk_path])
+        if install_res.returncode == 0:
+            print("\nSUCCESS: GAM.AI successfully deployed to device via USB debugging!")
+            print("[USB Debugging] Launching GAM.AI application...")
+            subprocess.run([adb, "-s", target_device, "shell", "am", "start", "-n", "com.gamai.app/.MainActivity"])
+            return True
+        else:
+            print(f"Failed to install APK. adb exit code: {install_res.returncode}")
+            return False
+    except Exception as e:
+        print(f"Error during ADB install: {e}")
+        return False
+
+def build_apk():
+    print("=" * 66)
+    print("      GAM.AI ANDROID UNIVERSAL APK BUILDER & USB DEPLOYER         ")
+    print("=" * 66)
+
+    detect_toolchain()
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     android_dir = os.path.join(repo_root, "android")
     dist_dir = os.path.join(repo_root, "dist")
     os.makedirs(dist_dir, exist_ok=True)
+    ensure_local_properties(repo_root)
 
     print("\n[1] Synchronizing Web & PWA Assets into Android Project...")
     sync_assets(repo_root)
     ensure_gradle_wrapper(repo_root)
 
-    print("\n[2] Checking Local Android Build Toolchain...")
-    has_java = check_command(["java", "-version"])
+    print("\n[2] Verifying Android Toolchain...")
+    java_home = os.environ.get("JAVA_HOME")
     android_home = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
-    has_sdk = bool(android_home and os.path.isdir(android_home))
-
-    print(f"  * Java (JDK):        {'INSTALLED' if has_java else 'NOT DETECTED'}")
-    print(f"  * Android SDK:       {android_home if has_sdk else 'NOT DETECTED'}")
+    print(f"  * JAVA_HOME:         {java_home if java_home else 'NOT SET'}")
+    print(f"  * ANDROID_HOME:      {android_home if android_home else 'NOT SET'}")
 
     is_windows = sys.platform == "win32"
     gradlew_script = os.path.join(android_dir, "gradlew.bat" if is_windows else "gradlew")
 
-    if has_java and has_sdk and os.path.exists(gradlew_script):
-        print("\n[3] Building APK with Gradle...")
-        cmd = [gradlew_script, "assembleRelease"]
+    if java_home and android_home and os.path.exists(gradlew_script):
+        print("\n[3] Building Universal Android APK with Gradle (Android 7+ API 24-34)...")
+        cmd = [gradlew_script, "assembleDebug", "--stacktrace"]
         print(f"Executing: {' '.join(cmd)}")
         try:
             res = subprocess.run(cmd, cwd=android_dir)
             if res.returncode == 0:
-                apk_src = os.path.join(android_dir, "app", "build", "outputs", "apk", "release", "app-release.apk")
-                if not os.path.exists(apk_src):
-                    apk_src = os.path.join(android_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk")
+                apk_src = os.path.join(android_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk")
                 if os.path.exists(apk_src):
-                    target_apk = os.path.join(dist_dir, "gam-ai.apk")
+                    target_apk = os.path.join(dist_dir, "gam-ai-universal-debug.apk")
                     shutil.copy2(apk_src, target_apk)
-                    print(f"\nSUCCESS: APK built successfully at: {target_apk}")
+                    shutil.copy2(apk_src, os.path.join(dist_dir, "gam-ai.apk"))
+                    print(f"\nBUILD SUCCESSFUL! Universal APK located at:\n  -> {target_apk} ({os.path.getsize(target_apk):,} bytes)")
+
+                    # Auto deploy if requested or if USB device is attached
+                    should_install = "--install" in sys.argv or "-i" in sys.argv
+                    if should_install:
+                        install_via_adb(target_apk)
+                    else:
+                        adb = get_adb_command()
+                        if adb:
+                            try:
+                                d_out = subprocess.check_output([adb, "devices"], text=True)
+                                if "device" in [line.split()[-1] for line in d_out.splitlines() if line.strip() and not line.startswith("List")]:
+                                    print("\n[USB Debugging] Connected device detected! Installing directly...")
+                                    install_via_adb(target_apk)
+                            except Exception:
+                                pass
                     return 0
         except Exception as e:
             print(f"Build failed with error: {e}")
 
-    print("\n" + "=" * 64)
-    print("    GITHUB ACTIONS AUTOMATED CLOUD BUILD READY (RECOMMENDED)    ")
-    print("=" * 64)
-    print("Your repository is connected to: https://github.com/sudovu/GAM.AI")
-    print("Because GitHub Actions runners provide pre-installed Android SDK 34,")
-    print("JDK 17, and Gradle environments, push this commit to trigger the build:")
-    print("")
+    print("\n" + "=" * 66)
+    print("    GITHUB ACTIONS CLOUD BUILD READY (CI/CD)                    ")
+    print("=" * 66)
+    print("You can also push to GitHub to generate the APK via Actions:")
     print("   git push origin main")
-    print("")
-    print("Once pushed, GitHub Actions automatically:")
-    print("  1. Validates the test suite")
-    print("  2. Compiles 'gam-ai-debug.apk' and 'gam-ai-release.apk'")
-    print("  3. Uploads the ready-to-install APK to your GitHub Actions tab:")
-    print("     https://github.com/sudovu/GAM.AI/actions")
-    print("=" * 64)
+    print("=" * 66)
     return 0
 
 if __name__ == "__main__":
