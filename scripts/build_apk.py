@@ -29,6 +29,22 @@ def sync_assets(repo_root: str) -> None:
 
     print(f"Assets synchronized successfully ({synced_count} files).")
 
+def ensure_gradle_wrapper(repo_root: str) -> None:
+    """Ensure gradle-wrapper.jar exists; download if missing."""
+    wrapper_jar = os.path.join(repo_root, "android", "gradle", "wrapper", "gradle-wrapper.jar")
+    if not os.path.exists(wrapper_jar):
+        print("  * gradle-wrapper.jar not found; fetching official Gradle 8.5 wrapper...")
+        import urllib.request
+        os.makedirs(os.path.dirname(wrapper_jar), exist_ok=True)
+        url = "https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar"
+        try:
+            urllib.request.urlretrieve(url, wrapper_jar)
+            print(f"  * Downloaded gradle-wrapper.jar ({os.path.getsize(wrapper_jar):,} bytes)")
+        except Exception as e:
+            print(f"  * Warning: Could not download gradle-wrapper.jar: {e}")
+    else:
+        print("  * gradle-wrapper.jar verified.")
+
 def check_command(cmd: list) -> bool:
     try:
         res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -48,6 +64,7 @@ def build_apk():
 
     print("\n[1] Synchronizing Web & PWA Assets into Android Project...")
     sync_assets(repo_root)
+    ensure_gradle_wrapper(repo_root)
 
     print("\n[2] Checking Local Android Build Toolchain...")
     has_java = check_command(["java", "-version"])
