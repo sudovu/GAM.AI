@@ -63,7 +63,7 @@ def sync_assets(repo_root: str) -> None:
     dst_assets = os.path.join(repo_root, "android", "app", "src", "main", "assets")
     os.makedirs(dst_assets, exist_ok=True)
 
-    files_to_sync = ["dashboard.html", "manifest.json", "sw.js"]
+    files_to_sync = ["dashboard.html", "manifest.json", "sw.js", "developer.jpg"]
     synced_count = 0
     for fname in files_to_sync:
         s = os.path.join(src_ui, fname)
@@ -128,8 +128,12 @@ def install_via_adb(apk_path: str):
         target_device = connected[0]
         print(f"\n[USB Debugging] Setting up ADB port forwarding (reverse tcp:8080 -> tcp:8080)...")
         subprocess.run([adb, "-s", target_device, "reverse", "tcp:8080", "tcp:8080"])
-        print(f"\n[USB Debugging] Deploying to target device: {target_device}...")
-        install_res = subprocess.run([adb, "-s", target_device, "install", "-r", "-d", apk_path])
+        install_res = subprocess.run([adb, "-s", target_device, "install", "-r", "-d", "-g", apk_path])
+        if install_res.returncode != 0:
+            print("\n[USB Debugging] Existing signature mismatch detected. Performing clean reinstall...")
+            subprocess.run([adb, "-s", target_device, "uninstall", "com.gamai.app"])
+            install_res = subprocess.run([adb, "-s", target_device, "install", "-r", "-d", "-g", apk_path])
+
         if install_res.returncode == 0:
             print("\nSUCCESS: GAM.AI successfully deployed to device via USB debugging!")
             print("[USB Debugging] Launching GAM.AI application...")
@@ -168,18 +172,35 @@ def build_apk():
     gradlew_script = os.path.join(android_dir, "gradlew.bat" if is_windows else "gradlew")
 
     if java_home and android_home and os.path.exists(gradlew_script):
-        print("\n[3] Building Universal Android APK with Gradle (Android 7+ API 24-34)...")
-        cmd = [gradlew_script, "assembleDebug", "--stacktrace"]
+        build_task = "assembleDebug" if "--debug" in sys.argv else "assembleRelease"
+        print(f"\n[3] Building Signed Universal Android APK with Gradle ({build_task}, Android 7+ API 24-34)...")
+        cmd = [gradlew_script, build_task, "--stacktrace"]
         print(f"Executing: {' '.join(cmd)}")
         try:
             res = subprocess.run(cmd, cwd=android_dir)
             if res.returncode == 0:
-                apk_src = os.path.join(android_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk")
+                if build_task == "assembleRelease":
+                    apk_src = os.path.join(android_dir, "app", "build", "outputs", "apk", "release", "app-release.apk")
+                    apk_dest_name = "gam-ai-universal-release.apk"
+                else:
+                    apk_src = os.path.join(android_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk")
+                    apk_dest_name = "gam-ai-universal-debug.apk"
+
+                if not os.path.exists(apk_src):
+                    # Fallback check
+                    for candidate in [
+                        os.path.join(android_dir, "app", "build", "outputs", "apk", "release", "app-release.apk"),
+                        os.path.join(android_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk"),
+                    ]:
+                        if os.path.exists(candidate):
+                            apk_src = candidate
+                            break
+
                 if os.path.exists(apk_src):
-                    target_apk = os.path.join(dist_dir, "gam-ai-universal-debug.apk")
+                    target_apk = os.path.join(dist_dir, apk_dest_name)
                     shutil.copy2(apk_src, target_apk)
                     shutil.copy2(apk_src, os.path.join(dist_dir, "gam-ai.apk"))
-                    print(f"\nBUILD SUCCESSFUL! Universal APK located at:\n  -> {target_apk} ({os.path.getsize(target_apk):,} bytes)")
+                    print(f"\nBUILD SUCCESSFUL! Signed Universal APK located at:\n  -> {target_apk} ({os.path.getsize(target_apk):,} bytes)")
 
                     # Auto deploy if requested or if USB device is attached
                     should_install = "--install" in sys.argv or "-i" in sys.argv

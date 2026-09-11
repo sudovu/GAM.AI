@@ -38,8 +38,12 @@
     #sidebar {
       position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%);
       box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+      width: 290px;
+      z-index: 1000;
     }
-    #sidebar.mobile-open { transform: translateX(0); }
+    #sidebar.mobile-open { transform: translateX(0) !important; display: flex !important; }
+    #sidebar.mobile-open ~ #sidebar-backdrop { display: block !important; }
+    .mobile-close-btn { display: inline-flex !important; }
   }
 
   .brand { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -288,7 +292,10 @@
 <div id="sidebar">
   <div class="brand">
     <div class="brand-title">GAM<span>.AI</span></div>
-    <div class="badge-nano">MICRO v3.1</div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="badge-nano">MICRO v3.1</div>
+      <button class="mobile-close-btn" id="btn-close-sidebar" onclick="closeSidebar()" style="display:none; background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;" title="Close Sidebar">✕</button>
+    </div>
   </div>
 
   <button class="new-chat-btn" id="btn-new-chat">
@@ -298,12 +305,12 @@
 
   <div class="nav-section-title" id="txt-quick-topics">Quick Topics</div>
   <div class="history-list">
-    <div class="history-item" onclick="submitQuick('Draw a network diagram of OSPF core routers with Huawei OLT')">Network Topology Diagram</div>
-    <div class="history-item" onclick="submitQuick('FortiGate firewall policy LAN to WAN')">FortiGate LAN to WAN</div>
-    <div class="history-item" onclick="submitQuick('Calculate subnet 192.168.10.0/27')">Subnet 192.168.10.0/27</div>
-    <div class="history-item" onclick="submitQuick('Generate Huawei GPON OLT service-port config')">Huawei OLT Service-Port</div>
-    <div class="history-item" onclick="submitQuick('नमस्ते, OSPF रूटिङ कसरी काम गर्छ?')">OSPF सम्बन्धी जानकारी (नेपाली)</div>
-    <div class="history-item" onclick="submitQuick('Explain gravity and solar system for grade 6 student')">Solar System (Student Mode)</div>
+    <div class="history-item" onclick="submitQuick('Draw a network diagram of OSPF core routers with Huawei OLT'); closeSidebar();">Network Topology Diagram</div>
+    <div class="history-item" onclick="submitQuick('FortiGate firewall policy LAN to WAN'); closeSidebar();">FortiGate LAN to WAN</div>
+    <div class="history-item" onclick="submitQuick('Calculate subnet 192.168.10.0/27'); closeSidebar();">Subnet 192.168.10.0/27</div>
+    <div class="history-item" onclick="submitQuick('Generate Huawei GPON OLT service-port config'); closeSidebar();">Huawei OLT Service-Port</div>
+    <div class="history-item" onclick="submitQuick('नमस्ते, OSPF रूटिङ कसरी काम गर्छ?'); closeSidebar();">OSPF सम्बन्धी जानकारी (नेपाली)</div>
+    <div class="history-item" onclick="submitQuick('Explain gravity and solar system for grade 6 student'); closeSidebar();">Solar System (Student Mode)</div>
   </div>
 
   <div class="sidebar-footer">
@@ -326,12 +333,15 @@
   </div>
 </div>
 
+<!-- Mobile Backdrop Overlay -->
+<div id="sidebar-backdrop" onclick="closeSidebar()" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.65); z-index:95; backdrop-filter:blur(3px);"></div>
+
 <!-- Main Canvas -->
 <div id="main-viewport">
   <!-- CLEAN & SPACIOUS TOP HEADER -->
   <div class="top-header">
     <div class="header-left">
-      <button class="hamburger-btn" id="btn-hamburger" aria-label="Toggle Sidebar">☰</button>
+      <button class="hamburger-btn" id="btn-hamburger" onclick="toggleSidebar()" aria-label="Toggle Sidebar">☰</button>
       
       <!-- SLEEK MODEL SELECTOR (NO CROWDED LABELS) -->
       <div class="model-pill">
@@ -512,6 +522,49 @@
           <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Unloads model weights immediately (0 MB idle)</div>
         </div>
         <button class="btn-action" style="color:#ef4444; border-color:#ef4444;" id="btn-unload-model">Unload (0 MB)</button>
+      </div>
+    </div>
+
+    <!-- Developed By Developer Profile -->
+    <div class="model-card" style="background:linear-gradient(145deg, #1e293b, #0f172a); border:1px solid rgba(56,189,248,0.35); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+      <div style="font-size:0.75rem; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+        <span>👨‍💻</span>
+        <span>Developed By & Project Architecture</span>
+      </div>
+      <div style="display:flex; gap:16px; align-items:center;">
+        <div style="position:relative; flex-shrink:0;">
+          <img src="developer.jpg" alt="Vhuwon Mathers" onerror="this.src='https://avatars.githubusercontent.com/u/sudovu'" style="width:84px; height:84px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); box-shadow:0 0 16px rgba(56,189,248,0.35);">
+          <div style="position:absolute; bottom:2px; right:2px; width:14px; height:14px; background:#10b981; border:2px solid #0f172a; border-radius:50%;" title="Active Core Maintainer"></div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:1.15rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span>Vhuwon Mathers</span>
+            <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">sudovu</span>
+          </div>
+          <div style="font-size:0.84rem; color:var(--accent); margin-top:2px; font-weight:600;">
+            Creator & Lead Architect of GAM.AI
+          </div>
+          <div style="font-size:0.78rem; color:#94a3b8; margin-top:4px; line-height:1.4;">
+            Network & Systems Professional. Pioneering universal offline edge AI, local SLMs, WebRTC, and autonomous Android agents.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:8px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <a href="https://gautambhuwan.com.np" target="_blank" class="btn-action" style="text-decoration:none; text-align:center; font-size:0.78rem; display:flex; align-items:center; justify-content:center; gap:6px; padding:7px 10px; background:rgba(56,189,248,0.08); border-color:rgba(56,189,248,0.25);">
+            <span>🌐</span>
+            <span>gautambhuwan.com.np</span>
+          </a>
+          <a href="https://github.com/sudovu/GAM.AI" target="_blank" class="btn-action" style="text-decoration:none; text-align:center; font-size:0.78rem; display:flex; align-items:center; justify-content:center; gap:6px; padding:7px 10px; background:rgba(56,189,248,0.08); border-color:rgba(56,189,248,0.25);">
+            <span>📦</span>
+            <span>GitHub Repository</span>
+          </a>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; padding:2px 4px;">
+          <span>GitHub: <strong style="color:#e2e8f0;">@sudovu</strong></span>
+          <span>Email: <strong style="color:#e2e8f0;">vhuwonmathers12@gmail.com</strong></span>
+        </div>
       </div>
     </div>
   </div>
@@ -711,7 +764,15 @@ function apiFetch(path, options) {
     if (!url.startsWith('/')) url = '/' + url;
     url = (base ? base : '') + url;
   }
-  return fetch(url, options);
+  var timeoutMs = options.timeout || 2500;
+  var controller = new AbortController();
+  var timer = setTimeout(function() {
+    try { controller.abort(); } catch(e) {}
+  }, timeoutMs);
+  var mergedOptions = Object.assign({}, options, { signal: controller.signal });
+  return fetch(url, mergedOptions).finally(function() {
+    clearTimeout(timer);
+  });
 }
 
 function pingServerConnection() {
@@ -1339,11 +1400,36 @@ function renderChips() {
     var div = document.createElement('div');
     div.className = 'chip-card';
     div.innerHTML = '<div class="chip-title">' + chip.t + '</div><div class="chip-desc">' + chip.d + '</div>';
-    div.onclick = function() { submitQuick(chip.q); };
+    div.onclick = function() {
+      if (chip.q === 'GAM.AI Lens' || chip.q === 'GAM.AI लेंस खोलें' || (chip.t && (chip.t.indexOf('Lens') !== -1 || chip.t.indexOf('लेंस') !== -1))) {
+        openGoogleLens();
+      } else {
+        submitQuick(chip.q);
+      }
+    };
     c.appendChild(div);
   });
 }
 renderChips();
+
+// Mobile Sidebar Controls
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var bd = document.getElementById('sidebar-backdrop');
+  if (sb) {
+    sb.classList.toggle('mobile-open');
+    if (bd) {
+      bd.style.display = sb.classList.contains('mobile-open') ? 'block' : 'none';
+    }
+  }
+}
+
+function closeSidebar() {
+  var sb = document.getElementById('sidebar');
+  var bd = document.getElementById('sidebar-backdrop');
+  if (sb) sb.classList.remove('mobile-open');
+  if (bd) bd.style.display = 'none';
+}
 
 // Modals
 function showModal(id) {
@@ -1358,17 +1444,15 @@ function hideModal(id) {
   }
 }
 
-document.getElementById('btn-open-music').addEventListener('click', function() { showModal('modal-music'); });
-document.getElementById('btn-open-models').addEventListener('click', function() { showModal('modal-models'); loadCatalog(); });
-document.getElementById('btn-open-tools').addEventListener('click', function() { showModal('modal-tools'); });
-document.getElementById('btn-open-settings').addEventListener('click', function() { showModal('modal-settings'); });
+document.getElementById('btn-open-music').addEventListener('click', function() { closeSidebar(); showModal('modal-music'); });
+document.getElementById('btn-open-models').addEventListener('click', function() { closeSidebar(); showModal('modal-models'); loadCatalog(); });
+document.getElementById('btn-open-tools').addEventListener('click', function() { closeSidebar(); showModal('modal-tools'); });
+document.getElementById('btn-open-settings').addEventListener('click', function() { closeSidebar(); showModal('modal-settings'); });
 document.getElementById('btn-header-settings').addEventListener('click', function() { showModal('modal-settings'); });
 document.getElementById('btn-new-chat').addEventListener('click', function() {
   document.getElementById('messages-stream').innerHTML = '';
   document.getElementById('hero-welcome').style.display = 'block';
-  if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.remove('mobile-open');
-  }
+  closeSidebar();
 });
 
 ['modal-models', 'modal-tools', 'modal-settings', 'modal-music', 'modal-lens'].forEach(function(mId) {
@@ -1389,8 +1473,7 @@ function returnToHomeMenu() {
   // Close camera stream if open
   stopLiveCamera();
   // Close sidebar on mobile
-  var sb = document.getElementById('sidebar');
-  if (sb) sb.classList.remove('mobile-open');
+  closeSidebar();
   // Stop voice recognition if active
   stopVoiceRecognition();
   // Stop speech synthesis if speaking
@@ -1423,7 +1506,7 @@ window.handleAndroidBack = function() {
   // 3. If mobile sidebar is open, close it
   var sb = document.getElementById('sidebar');
   if (sb && sb.classList.contains('mobile-open')) {
-    sb.classList.remove('mobile-open');
+    closeSidebar();
     return true;
   }
   // 4. If viewing chat messages and Home Menu is hidden, return to Home Menu!

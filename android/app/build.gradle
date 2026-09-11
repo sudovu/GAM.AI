@@ -22,6 +22,14 @@ android {
     }
 
     signingConfigs {
+        release {
+            storeFile file('../gamai-release.jks')
+            storePassword 'gamai_release_2026'
+            keyAlias 'gamai'
+            keyPassword 'gamai_release_2026'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
         debug {
             v1SigningEnabled true
             v2SigningEnabled true
@@ -31,9 +39,9 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Sign with debug key for direct USB debugging / universal sideloading
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
         debug {
             debuggable true

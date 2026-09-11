@@ -111,6 +111,20 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
 
+        elif parsed.path in ("/developer.jpg", "/developer.jpeg"):
+            dev_path = os.path.join(os.path.dirname(__file__), "developer.jpg")
+            if os.path.exists(dev_path):
+                with open(dev_path, "rb") as f:
+                    body = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/jpeg")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_response(404)
+                self.end_headers()
+
         elif parsed.path == "/api/status":
             act = self.engine.models.get_active_model()
             m_name = act.get_info().name if act else self.engine.config.default_model_tier
