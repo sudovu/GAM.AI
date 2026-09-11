@@ -140,7 +140,7 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             req_data = {}
 
         if self.path == "/api/chat":
-            query = req_data.get("query", "")
+            query = req_data.get("query") or req_data.get("message") or req_data.get("prompt") or ""
             result = self.engine.process_query(query)
             self._send_json(result)
 

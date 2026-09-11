@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#090d16">
+<meta name="description" content="GAM.AI — Universal Local-First AI Assistant">
+<link rel="manifest" href="/manifest.json">
+<title>GAM.AI — Local-First Intelligent Assistant</title>
+<style>
+  :root {
+    --bg: #090d16;
+    --sidebar-bg: #0f172a;
+    --card-bg: #1e293b;
+    --card-hover: #334155;
+    --border: #2e3d56;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.15);
+    --green: #10b981;
+    --user-msg: #1d4ed8;
+    --base-font: 15px;
+  }
+  body.font-large { --base-font: 18px; }
+  body.font-xlarge { --base-font: 21px; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif; }
+  body { background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; font-size: var(--base-font); }
+
+  /* Left Sidebar */
+  #sidebar {
+    width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 16px; flex-shrink: 0; transition: transform 0.3s ease;
+    z-index: 100;
+  }
+  @media (max-width: 768px) {
+    #sidebar {
+      position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%);
+      box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+    }
+    #sidebar.mobile-open { transform: translateX(0); }
+  }
+
+  .brand { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .brand-title { font-size: 1.2rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+  .brand-title span { color: var(--accent); }
+  .badge-nano { font-size: 0.65rem; background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 9999px; padding: 2px 8px; }
+
+  .new-chat-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    min-height: 42px; padding: 8px 14px; background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-main); font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; margin-bottom: 14px;
+  }
+  .new-chat-btn:hover { background: var(--card-hover); border-color: #475569; }
+
+  .nav-section-title { font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 8px; padding-left: 4px; }
+  .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .history-item { padding: 9px 12px; font-size: 0.85rem; color: var(--text-muted); border-radius: 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 38px; display: flex; align-items: center; }
+  .history-item:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+
+  .sidebar-footer { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .menu-action-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    min-height: 40px; padding: 8px 12px; background: none; border: none; border-radius: 6px;
+    color: var(--text-muted); font-size: 0.85rem; font-weight: 500; cursor: pointer; text-align: left;
+  }
+  .menu-action-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+
+  /* Main Canvas */
+  #main-viewport { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
+  
+  /* NEAT & CLEAN TOP HEADER */
+  .top-header {
+    height: 54px; border-bottom: 1px solid var(--border); display: flex; align-items: center;
+    justify-content: space-between; padding: 0 18px; background: rgba(9, 13, 22, 0.95);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .hamburger-btn {
+    display: none; background: none; border: none; color: var(--text-main); font-size: 1.3rem;
+    cursor: pointer; padding: 6px; min-width: 40px; min-height: 40px; align-items: center; justify-content: center;
+  }
+  @media (max-width: 768px) { .hamburger-btn { display: flex; } }
+
+  /* SINGLE SLEEK MODEL SELECTOR CAPSULE */
+  .model-pill {
+    position: relative; display: flex; align-items: center;
+    background: #1e293b; border: 1px solid var(--border); border-radius: 20px;
+    padding: 2px 8px; transition: border-color 0.2s;
+  }
+  .model-pill:hover { border-color: var(--accent); }
+  .model-pill select {
+    background: #1e293b !important; color: #f8fafc !important;
+    border: none; font-size: 0.88rem; font-weight: 600; outline: none; cursor: pointer;
+    padding: 6px 8px; border-radius: 20px; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    padding-right: 24px;
+  }
+  .model-pill::after {
+    content: "▾"; position: absolute; right: 12px; font-size: 0.85rem; color: var(--text-muted);
+    pointer-events: none;
+  }
+  .model-pill select option {
+    background-color: #1e293b !important; color: #f8fafc !important; padding: 10px; font-size: 0.9rem;
+  }
+  .model-pill select option:checked { background-color: #2563eb !important; color: #fff !important; }
+
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1);
+    color: var(--green); padding: 4px 10px; border-radius: 14px; border: 1px solid rgba(16, 185, 129, 0.25);
+    font-size: 0.78rem; font-weight: 600; cursor: default;
+  }
+  .icon-btn {
+    background: #1e293b; border: 1px solid var(--border); color: var(--text-main);
+    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+  }
+  .icon-btn:hover { background: var(--card-hover); border-color: #475569; }
+
+  #chat-scroll-area { flex: 1; overflow-y: auto; padding: 20px 0; display: flex; flex-direction: column; }
+  .chat-thread-width { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 16px; }
+
+  .hero-welcome { text-align: center; margin: 36px auto 28px auto; max-width: 600px; }
+  .hero-welcome h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
+  .hero-welcome p { font-size: 0.92rem; color: var(--text-muted); line-height: 1.5; }
+
+  .mode-switch-bar { display: flex; justify-content: center; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+  .mode-pill {
+    padding: 6px 14px; border-radius: 16px; background: var(--card-bg); border: 1px solid var(--border);
+    font-size: 0.82rem; font-weight: 600; cursor: pointer; color: var(--text-muted);
+  }
+  .mode-pill.active { background: var(--accent-glow); color: var(--accent); border-color: rgba(56,189,248,0.5); }
+
+  .quick-chips-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px; }
+  @media (max-width: 580px) { .quick-chips-grid { grid-template-columns: 1fr; } }
+  .chip-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; text-align: left; cursor: pointer; transition: all 0.2s;
+  }
+  .chip-card:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
+  .chip-title { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
+  .chip-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+  .message-wrapper { margin-bottom: 22px; display: flex; flex-direction: column; }
+  .msg-row { display: flex; gap: 12px; align-items: flex-start; }
+  .msg-row.user { justify-content: flex-end; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 800; flex-shrink: 0;
+  }
+  .avatar.ai { background: var(--accent); color: #000; }
+  .msg-bubble {
+    max-width: 85%; font-size: 0.94rem; line-height: 1.6; border-radius: 12px; padding: 14px 18px;
+    word-break: break-word;
+  }
+  .msg-bubble.user { background: var(--user-msg); color: #fff; }
+  .msg-bubble.ai { background: var(--card-bg); border: 1px solid var(--border); }
+
+  .msg-meta-bar {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+    font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px;
+  }
+  .msg-model-tag { color: var(--accent); font-weight: 600; }
+  .btn-read-aloud {
+    background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.78rem;
+    display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px;
+  }
+  .btn-read-aloud:hover { background: rgba(255,255,255,0.08); color: var(--text-main); }
+  .btn-read-aloud.speaking { color: var(--green); font-weight: 600; }
+
+  /* Bottom Floating Input Capsule */
+  .input-container { padding: 12px 16px 20px 16px; width: 100%; max-width: 820px; margin: 0 auto; }
+  
+  /* Voice recording status banner */
+  .voice-status-bar {
+    display: none; align-items: center; justify-content: space-between;
+    background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .voice-status-bar.active { display: flex; }
+
+  .input-capsule {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 26px;
+    display: flex; align-items: center; padding: 6px 12px; min-height: 52px;
+  }
+  .input-capsule:focus-within { border-color: var(--accent); }
+  textarea#prompt-input {
+    flex: 1; background: transparent; border: none; color: var(--text-main);
+    font-size: 0.95rem; line-height: 1.4; resize: none; max-height: 140px; height: 26px;
+    outline: none; padding: 4px 8px;
+  }
+  .input-actions { display: flex; align-items: center; gap: 6px; }
+  .mic-btn {
+    background: none; border: none; color: var(--text-muted); width: 36px; height: 36px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; font-size: 1.15rem;
+  }
+  .mic-btn.recording { background: #ef4444; color: #fff; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  .mic-btn:hover:not(.recording) { color: var(--accent); }
+
+  button#send-btn {
+    background: var(--accent); color: #000; border: none; width: 36px; height: 36px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  button#send-btn:hover { background: #7dd3fc; }
+
+  /* Modals */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: none; align-items: center; justify-content: center; z-index: 9999;
+  }
+  .modal-box {
+    background: var(--sidebar-bg); border: 1px solid var(--border); border-radius: 14px;
+    width: 90%; max-width: 680px; max-height: 85vh; overflow-y: auto; padding: 22px;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-title { font-size: 1.15rem; font-weight: 700; color: var(--text-main); }
+  .close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; padding: 4px 8px; min-width: 40px; min-height: 40px; }
+  .close-btn:hover { color: #fff; }
+
+  .model-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .model-header-row { display: flex; justify-content: space-between; align-items: center; }
+  .btn-action {
+    background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(56,189,248,0.4);
+    padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; min-height: 38px;
+  }
+  .btn-action.ready { background: rgba(16,185,129,0.15); color: var(--green); border-color: rgba(16,185,129,0.4); }
+
+  .prog-track { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 6px; display: none; }
+  .prog-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.3s; }
+  .prog-text { font-size: 0.78rem; color: var(--accent); margin-top: 4px; display: none; }
+
+  pre { background: #030712; border: 1px solid var(--border); padding: 12px; border-radius: 8px; overflow-x: auto; color: #38bdf8; font-family: monospace; font-size: 0.88rem; margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.88rem; }
+  th, td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
+  th { background: rgba(255,255,255,0.06); }
+  svg.network-diagram { max-width: 100%; background: #040817; border: 1px solid var(--border); border-radius: 8px; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<!-- Left Sidebar -->
+<div id="sidebar">
+  <div class="brand">
+    <div class="brand-title">GAM<span>.AI</span></div>
+    <div class="badge-nano">MICRO v3.1</div>
+  </div>
+
+  <button class="new-chat-btn" id="btn-new-chat">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    <span id="txt-new-chat">New Conversation</span>
+  </button>
+
+  <div class="nav-section-title" id="txt-quick-topics">Quick Topics</div>
+  <div class="history-list">
+    <div class="history-item" onclick="submitQuick('Draw a network diagram of OSPF core routers with Huawei OLT')">Network Topology Diagram</div>
+    <div class="history-item" onclick="submitQuick('FortiGate firewall policy LAN to WAN')">FortiGate LAN to WAN</div>
+    <div class="history-item" onclick="submitQuick('Calculate subnet 192.168.10.0/27')">Subnet 192.168.10.0/27</div>
+    <div class="history-item" onclick="submitQuick('Generate Huawei GPON OLT service-port config')">Huawei OLT Service-Port</div>
+    <div class="history-item" onclick="submitQuick('नमस्ते, OSPF रूटिङ कसरी काम गर्छ?')">OSPF सम्बन्धी जानकारी (नेपाली)</div>
+    <div class="history-item" onclick="submitQuick('Explain gravity and solar system for grade 6 student')">Solar System (Student Mode)</div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="menu-action-btn" id="btn-open-models">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <span id="txt-models-menu">Model Store</span>
+    </button>
+    <button class="menu-action-btn" id="btn-open-tools">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span id="txt-tools-menu">Network Tools</span>
+    </button>
+    <button class="menu-action-btn" id="btn-open-settings">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+      <span id="txt-settings-menu">Settings & Accessibility</span>
+    </button>
+  </div>
+</div>
+
+<!-- Main Canvas -->
+<div id="main-viewport">
+  <!-- CLEAN & SPACIOUS TOP HEADER -->
+  <div class="top-header">
+    <div class="header-left">
+      <button class="hamburger-btn" id="btn-hamburger" aria-label="Toggle Sidebar">☰</button>
+      
+      <!-- SLEEK MODEL SELECTOR (NO CROWDED LABELS) -->
+      <div class="model-pill">
+        <select id="active-model-dropdown">
+          <option value="nano" selected>GAM.AI Nano (0.5B)</option>
+          <option value="micro">GAM.AI Micro (1.5B)</option>
+          <option value="coder">GAM.AI Coder (1.5B)</option>
+          <option value="descriptive">GAM.AI Descriptive (3.0B)</option>
+          <option value="picture">GAM.AI Picture & Diagram</option>
+          <option value="neteng">GAM.AI NetEng</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CLEAN RIGHT CONTROLS -->
+    <div class="header-right">
+      <div class="status-badge" id="ram-meter">● 120 MB</div>
+      <button class="icon-btn" id="btn-lang-toggle" title="Toggle English / नेपाली">🇳🇵</button>
+      <button class="icon-btn" id="btn-header-settings" title="Settings">⚙️</button>
+    </div>
+  </div>
+
+  <div id="chat-scroll-area">
+    <div class="chat-thread-width">
+      <div class="hero-welcome" id="hero-welcome">
+        <h2 id="hero-title">Universal Local-First AI Assistant</h2>
+        <p id="hero-subtitle">Minimal resource usage. Usable by students, professionals, and elders alike.</p>
+        
+        <div class="mode-switch-bar">
+          <div class="mode-pill active" onclick="switchPersona('general')">General Mode</div>
+          <div class="mode-pill" onclick="switchPersona('student')">Student Mode (Age 10-18)</div>
+          <div class="mode-pill" onclick="switchPersona('engineer')">Network Engineer Mode</div>
+        </div>
+
+        <div class="quick-chips-grid" id="chips-container"></div>
+      </div>
+      <div id="messages-stream"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Floating Input Area -->
+  <div class="input-container">
+    <div class="voice-status-bar" id="voice-banner">
+      <span id="voice-banner-text">🔴 Listening... Speak in English or नेपाली</span>
+      <span style="cursor:pointer; text-decoration:underline;" onclick="stopVoiceRecognition()">Cancel</span>
+    </div>
+    <div class="input-capsule">
+      <textarea id="prompt-input" rows="1" placeholder="Type or click 🎤 to speak (English or नेपाली)..."></textarea>
+      <div class="input-actions">
+        <button class="mic-btn" id="btn-voice-input" title="Voice Search (Speak in English or नेपाली)">🎤</button>
+        <button id="send-btn" title="Send Message">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 1: Model Store -->
+<div id="modal-models" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Modular Model Store</div>
+      <button class="close-btn" onclick="hideModal('modal-models')">✕</button>
+    </div>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">
+      Download only what you need. Models are downloaded directly to your local <code>models/</code> folder with live progress tracking.
+    </p>
+    <div id="model-store-grid"></div>
+  </div>
+</div>
+
+<!-- Modal 2: Network Tools -->
+<div id="modal-tools" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Network Utilities & Subnetting</div>
+      <button class="close-btn" onclick="hideModal('modal-tools')">✕</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <input type="text" id="tool-subnet-input" placeholder="e.g. 192.168.10.0/27 or 10.0.0.0/22" style="flex:1; background:var(--card-bg); border:1px solid var(--border); padding:10px 14px; border-radius:6px; color:#fff; font-size:0.9rem;">
+      <button class="btn-action ready" id="btn-calc-subnet">Calculate</button>
+    </div>
+    <div id="tool-subnet-output"></div>
+    <hr style="border-color:var(--border); margin:18px 0;">
+    <div style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">Multi-Vendor Config Generator</div>
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <select id="tool-vendor-select" style="flex:1; background:var(--card-bg); border:1px solid var(--border); padding:10px 14px; border-radius:6px; color:#fff; font-size:0.9rem;">
+        <option value="cisco">Cisco IOS (OSPF, SVI & Trunk)</option>
+        <option value="huawei">Huawei VRP (VLAN, Trunk & OSPF)</option>
+        <option value="olt">Huawei SmartAX GPON OLT (ONT Service)</option>
+        <option value="fortigate">Fortinet FortiGate Policy & NAT</option>
+        <option value="mikrotik">MikroTik RouterOS Gateway & NAT</option>
+      </select>
+      <button class="btn-action ready" id="btn-gen-config">Generate</button>
+    </div>
+    <pre id="tool-config-output">// Select platform and click Generate</pre>
+  </div>
+</div>
+
+<!-- Modal 3: Settings & Accessibility -->
+<div id="modal-settings" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Settings & Accessibility</div>
+      <button class="close-btn" onclick="hideModal('modal-settings')">✕</button>
+    </div>
+
+    <!-- Accessibility Font Size for Age 10-70 -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">Text Size (Accessibility for Age 10–70)</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Comfortable reading size for children, adults & elders</div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-action" onclick="setFontSize('normal')">A (Standard)</button>
+          <button class="btn-action" onclick="setFontSize('large')">A+ (Large)</button>
+          <button class="btn-action" onclick="setFontSize('xlarge')">A++ (Elder)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audio Output Test -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">Audio Output (Read Aloud)</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Test vocal speech output on your speakers/headphones</div>
+        </div>
+        <button class="btn-action ready" onclick="testAudioSpeech()">🔊 Test Sound</button>
+      </div>
+    </div>
+
+    <!-- SmartCache -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">SmartCache Management</div>
+          <div id="cache-stats-text" style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Loading...</div>
+        </div>
+        <button class="btn-action" id="btn-clear-cache">Clear Cache</button>
+      </div>
+    </div>
+
+    <!-- Unload Model -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">Active Model RAM</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Unloads model weights immediately (0 MB idle)</div>
+        </div>
+        <button class="btn-action" style="color:#ef4444; border-color:#ef4444;" id="btn-unload-model">Unload (0 MB)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var currentLang = 'en';
+var currentPersona = 'general';
+var activeModelName = 'GAM.AI Nano (0.5B)';
+var isRecognizing = false;
+var recognition = null;
+var pollTimers = {};
+var currentUtterance = null;
+var activeSpeakingBtn = null;
+
+// Audio Voice Management with Robust Fallbacks
+var availableVoices = [];
+function loadVoices() {
+  if ('speechSynthesis' in window) {
+    availableVoices = window.speechSynthesis.getVoices();
+  }
+}
+if ('speechSynthesis' in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function findBestVoice(langPrefix) {
+  if (!availableVoices || availableVoices.length === 0) {
+    loadVoices();
+  }
+  if (!availableVoices || availableVoices.length === 0) return null;
+
+  // 1. Check exact match
+  for (var i = 0; i < availableVoices.length; i++) {
+    if (availableVoices[i].lang.toLowerCase().replace('_', '-').startsWith(langPrefix.toLowerCase())) {
+      return availableVoices[i];
+    }
+  }
+
+  // 2. Fallback for Nepali (ne) -> Hindi (hi) which shares Devanagari script & phonetics
+  if (langPrefix.startsWith('ne')) {
+    for (var j = 0; j < availableVoices.length; j++) {
+      if (availableVoices[j].lang.toLowerCase().startsWith('hi')) {
+        return availableVoices[j];
+      }
+    }
+  }
+
+  // 3. Fallback to English
+  for (var k = 0; k < availableVoices.length; k++) {
+    if (availableVoices[k].lang.toLowerCase().startsWith('en') || availableVoices[k].default) {
+      return availableVoices[k];
+    }
+  }
+
+  return availableVoices[0];
+}
+
+function stopSpeaking() {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  if (activeSpeakingBtn) {
+    activeSpeakingBtn.classList.remove('speaking');
+    activeSpeakingBtn.innerText = '🔊 Read Aloud';
+    activeSpeakingBtn = null;
+  }
+}
+
+function speakText(text, btnElem) {
+  if (!('speechSynthesis' in window)) {
+    alert('Audio playback is not supported in this browser. Please use Chrome or Edge.');
+    return;
+  }
+
+  // If already speaking this button, toggle stop
+  if (activeSpeakingBtn === btnElem && window.speechSynthesis.speaking) {
+    stopSpeaking();
+    return;
+  }
+
+  stopSpeaking();
+
+  var cleanSpeech = text.replace(/```[\s\S]*?```/g, ' Code snippet omitted. ')
+                        .replace(/\*\*/g, '')
+                        .replace(/[#_`]/g, '')
+                        .replace(/<[^>]+>/g, '');
+
+  var utter = new SpeechSynthesisUtterance(cleanSpeech);
+  var isNep = /[\u0900-\u097F]/.test(text) || (currentLang === 'ne');
+  var targetLang = isNep ? 'ne-NP' : 'en-US';
+  
+  var v = findBestVoice(isNep ? 'ne' : 'en');
+  if (v) {
+    utter.voice = v;
+    utter.lang = v.lang;
+  } else {
+    utter.lang = targetLang;
+  }
+
+  utter.rate = 0.95; // Slightly clearer for age 60+ elders
+
+  if (btnElem) {
+    activeSpeakingBtn = btnElem;
+    btnElem.classList.add('speaking');
+    btnElem.innerText = '⏹ Stop';
+  }
+
+  utter.onend = function() { stopSpeaking(); };
+  utter.onerror = function() { stopSpeaking(); };
+
+  window.speechSynthesis.speak(utter);
+}
+
+function speakMsg(btn) {
+  var text = btn.getAttribute('data-speech');
+  speakText(text, btn);
+}
+
+function testAudioSpeech() {
+  var sample = (currentLang === 'ne') ? 'नमस्ते! यो GAM.AI को आवाज परीक्षण हो।' : 'Hello! This is a test of GAM.AI voice audio readout.';
+  speakText(sample, null);
+}
+
+// Voice Recognition (Speech to Text)
+var micBtn = document.getElementById('btn-voice-input');
+var voiceBanner = document.getElementById('voice-banner');
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRec();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = function() {
+    isRecognizing = true;
+    micBtn.classList.add('recording');
+    voiceBanner.classList.add('active');
+    document.getElementById('voice-banner-text').innerText = (currentLang === 'ne') ? '🔴 सुन्दैछ... नेपालीमा बोल्नुहोस्' : '🔴 Listening... Speak now';
+  };
+
+  recognition.onresult = function(e) {
+    var transcript = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    document.getElementById('prompt-input').value = transcript;
+    if (e.results[0].isFinal) {
+      executeSend(transcript);
+      stopVoiceRecognition();
+    }
+  };
+
+  recognition.onerror = function(e) {
+    console.warn('Speech recognition error:', e.error);
+    if (e.error === 'not-allowed') {
+      alert('Microphone permission blocked. Please allow microphone access in your browser address bar.');
+    }
+    stopVoiceRecognition();
+  };
+
+  recognition.onend = function() {
+    stopVoiceRecognition();
+  };
+}
+
+function stopVoiceRecognition() {
+  isRecognizing = false;
+  micBtn.classList.remove('recording');
+  voiceBanner.classList.remove('active');
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+}
+
+micBtn.addEventListener('click', function() {
+  if (!recognition) {
+    alert('Voice input is not supported in this browser. Please use Chrome or Edge.');
+    return;
+  }
+  if (isRecognizing) {
+    stopVoiceRecognition();
+  } else {
+    recognition.lang = (currentLang === 'ne') ? 'ne-NP' : 'en-US';
+    try {
+      recognition.start();
+    } catch(err) {
+      console.warn('Recognition start error:', err);
+    }
+  }
+});
+
+// Font Size Switcher
+function setFontSize(sz) {
+  document.body.className = '';
+  if (sz === 'large') document.body.classList.add('font-large');
+  if (sz === 'xlarge') document.body.classList.add('font-xlarge');
+}
+
+// Language Switcher
+var i18n = {
+  en: {
+    newChat: 'New Conversation',
+    quickTopics: 'Quick Topics',
+    modelStore: 'Model Store',
+    networkTools: 'Network Tools',
+    settings: 'Settings & Accessibility',
+    heroTitle: 'Universal Local-First AI Assistant',
+    heroSub: 'Minimal resource usage. Usable by students, professionals, and elders alike.',
+    placeholder: 'Type or click 🎤 to speak (English or नेपाली)...',
+    langToggle: '🇳🇵'
+  },
+  ne: {
+    newChat: 'नयाँ कुराकानी',
+    quickTopics: 'द्रुत कार्यहरू',
+    modelStore: 'मोडेल स्टोर',
+    networkTools: 'नेटवर्क औजारहरू',
+    settings: 'सेटिङहरू र पहुँच',
+    heroTitle: 'नेपाली र अंग्रेजी स्थानीय AI सहायक',
+    heroSub: 'अत्यन्तै कम कम्प्युटर स्रोत खपत गर्ने, अफलाइन-सक्षम र सबैका लागि उपयोगी।',
+    placeholder: 'यहाँ लेख्नुहोस् वा 🎤 थिचेर नेपालीमा बोल्नुहोस्...',
+    langToggle: '🇺🇸'
+  }
+};
+
+function toggleLanguage() {
+  currentLang = (currentLang === 'en') ? 'ne' : 'en';
+  var t = i18n[currentLang];
+  document.getElementById('txt-new-chat').innerText = t.newChat;
+  document.getElementById('txt-quick-topics').innerText = t.quickTopics;
+  document.getElementById('txt-models-menu').innerText = t.modelStore;
+  document.getElementById('txt-tools-menu').innerText = t.networkTools;
+  document.getElementById('txt-settings-menu').innerText = t.settings;
+  document.getElementById('hero-title').innerText = t.heroTitle;
+  document.getElementById('hero-subtitle').innerText = t.heroSub;
+  document.getElementById('prompt-input').placeholder = t.placeholder;
+  document.getElementById('btn-lang-toggle').innerText = t.langToggle;
+  renderChips();
+}
+document.getElementById('btn-lang-toggle').addEventListener('click', toggleLanguage);
+
+// Persona Mode Chips
+function switchPersona(p) {
+  currentPersona = p;
+  document.querySelectorAll('.mode-pill').forEach(function(pill) {
+    pill.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  renderChips();
+}
+
+function renderChips() {
+  var c = document.getElementById('chips-container');
+  if (!c) return;
+  c.innerHTML = '';
+  
+  var chips = [];
+  if (currentPersona === 'student') {
+    chips = [
+      { t: 'Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
+      { t: 'Math Problem Solver', d: 'Step-by-step arithmetic and algebra explanation', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
+      { t: 'Nepal Geography & History', d: 'Facts about Mount Everest and rivers of Nepal', q: 'Tell me key facts about Mount Everest and rivers of Nepal' },
+      { t: 'Learn Computer Basics', d: 'What is CPU, RAM, and Storage?', q: 'What is the difference between RAM and Storage for a beginner?' }
+    ];
+  } else if (currentPersona === 'engineer') {
+    chips = [
+      { t: 'Topology Diagram', d: 'Dual-homed OSPF core routers & Huawei OLT', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
+      { t: 'FortiGate LAN to WAN', d: 'Generate FortiOS address objects & NAT policy', q: 'FortiGate firewall policy LAN to WAN' },
+      { t: 'Subnet Calculator', d: 'Calculate IP host range, netmask & broadcast', q: 'Calculate subnet 192.168.10.0/27' },
+      { t: 'Huawei GPON OLT Service', d: 'Provisioning DBA profile, lineprofile & port', q: 'Generate Huawei GPON OLT service-port config for VLAN 100' }
+    ];
+  } else {
+    chips = [
+      { t: (currentLang === 'ne' ? 'नेपालीमा कुराकानी' : 'Nepali & English Chat'), d: (currentLang === 'ne' ? 'नमस्ते, मलाई सहयोग गर्नुहोस्' : 'Friendly universal assistant'), q: (currentLang === 'ne' ? 'नमस्ते, तपाईं को हौ र के के गर्न सक्नुहुन्छ?' : 'Hello, who are you and what can you help me with?') },
+      { t: 'Network Topology Diagram', d: 'Render graphical SVG and ASCII network layout', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
+      { t: 'FortiGate Policy & NAT', d: 'Full FortiOS configuration and verification', q: 'FortiGate firewall policy LAN to WAN' },
+      { t: 'Subnet Calculator', d: 'Analyze network ID, netmask & usable hosts', q: 'Calculate subnet 192.168.10.0/27' }
+    ];
+  }
+
+  chips.forEach(function(chip) {
+    var div = document.createElement('div');
+    div.className = 'chip-card';
+    div.innerHTML = '<div class="chip-title">' + chip.t + '</div><div class="chip-desc">' + chip.d + '</div>';
+    div.onclick = function() { submitQuick(chip.q); };
+    c.appendChild(div);
+  });
+}
+renderChips();
+
+// Modals
+function showModal(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = 'flex';
+}
+function hideModal(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+document.getElementById('btn-open-models').addEventListener('click', function() { showModal('modal-models'); loadCatalog(); });
+document.getElementById('btn-open-tools').addEventListener('click', function() { showModal('modal-tools'); });
+document.getElementById('btn-open-settings').addEventListener('click', function() { showModal('modal-settings'); });
+document.getElementById('btn-header-settings').addEventListener('click', function() { showModal('modal-settings'); });
+document.getElementById('btn-new-chat').addEventListener('click', function() {
+  document.getElementById('messages-stream').innerHTML = '';
+  document.getElementById('hero-welcome').style.display = 'block';
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+  }
+});
+
+['modal-models', 'modal-tools', 'modal-settings'].forEach(function(mId) {
+  var m = document.getElementById(mId);
+  if (m) {
+    m.addEventListener('click', function(e) {
+      if (e.target === m) hideModal(mId);
+    });
+  }
+});
+
+function updateStatus() {
+  fetch('/api/status')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var rm = document.getElementById('ram-meter');
+      if (rm) rm.innerText = '● ' + d.ram_mb + ' MB';
+      var cs = document.getElementById('cache-stats-text');
+      if (cs) cs.innerText = 'Cache: ' + d.cache_entries + ' items (' + d.cache_kb + ' KB) | DB: ' + d.knowledge_items + ' items';
+    })
+    .catch(function(e) {});
+}
+setInterval(updateStatus, 3000);
+updateStatus();
+
+function activateModel(mId) {
+  fetch('/api/model/switch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: mId })
+  }).then(function() {
+    var sel = document.getElementById('active-model-dropdown');
+    sel.value = mId;
+    if (sel.options[sel.selectedIndex]) {
+      activeModelName = sel.options[sel.selectedIndex].text.split('—')[0].trim();
+    }
+    hideModal('modal-models');
+    updateStatus();
+  });
+}
+
+function startDownload(mId) {
+  var pTrack = document.getElementById('prog-track-' + mId);
+  var pBar = document.getElementById('prog-bar-' + mId);
+  var pText = document.getElementById('prog-text-' + mId);
+  var btn = document.getElementById('btn-dl-' + mId);
+
+  if (pTrack) pTrack.style.display = 'block';
+  if (pText) { pText.style.display = 'block'; pText.innerText = 'Starting download...'; }
+  if (btn) { btn.disabled = true; btn.innerText = 'Downloading...'; }
+
+  fetch('/api/models/download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model_id: mId })
+  })
+  .then(function() {
+    pollTimers[mId] = setInterval(function() {
+      fetch('/api/models/download_status?model_id=' + mId)
+        .then(function(r) { return r.json(); })
+        .then(function(st) {
+          if (pBar) pBar.style.width = st.percent + '%';
+          if (pText) pText.innerText = 'Downloading: ' + st.percent + '% (' + st.downloaded_mb + ' / ' + st.total_mb + ' MB)';
+          
+          if (st.status === 'completed') {
+            clearInterval(pollTimers[mId]);
+            if (pText) pText.innerText = 'Download complete! Model ready.';
+            if (btn) {
+              btn.disabled = false;
+              btn.className = 'btn-action ready';
+              btn.innerText = 'Switch to Model';
+              btn.onclick = function() { activateModel(mId); };
+            }
+          } else if (st.status === 'error') {
+            clearInterval(pollTimers[mId]);
+            if (pText) pText.innerText = 'Download error: ' + (st.error || 'Check internet or use direct link.');
+            if (btn) { btn.disabled = false; btn.innerText = 'Retry Download'; }
+          }
+        });
+    }, 800);
+  });
+}
+
+function loadCatalog() {
+  fetch('/api/models/catalog')
+    .then(function(r) { return r.json(); })
+    .then(function(cat) {
+      var grid = document.getElementById('model-store-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      cat.forEach(function(m) {
+        var isReady = m.is_installed;
+        var btnText = isReady ? (m.is_active ? 'Active' : 'Switch') : 'Download (' + m.download_size_mb + ' MB)';
+        var btnClass = isReady ? 'btn-action ready' : 'btn-action';
+        
+        var card = document.createElement('div');
+        card.className = 'model-card';
+        card.innerHTML = 
+          '<div class="model-header-row">' +
+            '<div>' +
+              '<div style="font-weight:700;">' + m.name + ' <span class="badge-nano">' + m.parameters + '</span></div>' +
+              '<div style="font-size:0.84rem; color:var(--text-muted); margin-top:2px;">' + m.description + '</div>' +
+              '<div style="font-size:0.78rem; color:var(--accent); margin-top:3px;">RAM required: ~' + m.ram_mb + ' MB</div>' +
+            '</div>' +
+            '<button id="btn-dl-' + m.id + '" class="' + btnClass + '">' + btnText + '</button>' +
+          '</div>' +
+          '<div class="prog-track" id="prog-track-' + m.id + '"><div class="prog-bar" id="prog-bar-' + m.id + '"></div></div>' +
+          '<div class="prog-text" id="prog-text-' + m.id + '"></div>' +
+          (!isReady ? '<div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Direct Link: <a href="' + m.url + '" target="_blank" style="color:var(--accent); text-decoration:none;">' + m.filename + '</a></div>' : '');
+
+        var btn = card.querySelector('#btn-dl-' + m.id);
+        btn.onclick = function() {
+          if (isReady) {
+            activateModel(m.id);
+          } else {
+            startDownload(m.id);
+          }
+        };
+
+        grid.appendChild(card);
+      });
+    })
+    .catch(function(e) {});
+}
+loadCatalog();
+
+document.getElementById('active-model-dropdown').addEventListener('change', function(e) {
+  activateModel(e.target.value);
+});
+
+function escapeHtml(t) {
+  if (!t) return '';
+  return t.split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');
+}
+
+function renderTopologySVG() {
+  return '<svg class="network-diagram" viewBox="0 0 680 230" width="100%" height="230">' +
+    '<defs>' +
+      '<linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">' +
+        '<stop offset="0%" stop-color="#1e293b"/>' +
+        '<stop offset="100%" stop-color="#0f172a"/>' +
+      '</linearGradient>' +
+    '</defs>' +
+    '<line x1="160" y1="50" x2="520" y2="50" stroke="#38bdf8" stroke-width="3" stroke-dasharray="6,4"/>' +
+    '<text x="340" y="40" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle">10G LACP Trunk (OSPF Area 0)</text>' +
+    '<line x1="160" y1="50" x2="340" y2="125" stroke="#94a3b8" stroke-width="2"/>' +
+    '<line x1="520" y1="50" x2="340" y2="125" stroke="#94a3b8" stroke-width="2"/>' +
+    '<line x1="340" y1="125" x2="340" y2="190" stroke="#10b981" stroke-width="2.5"/>' +
+    '<text x="350" y="165" fill="#10b981" font-size="10" font-weight="600">GPON 1490/1310nm</text>' +
+    '<rect x="80" y="25" width="160" height="50" rx="8" fill="url(#boxGrad)" stroke="#38bdf8" stroke-width="1.5"/>' +
+    '<text x="160" y="47" fill="#f8fafc" font-size="12" font-weight="700" text-anchor="middle">Core-Router-1</text>' +
+    '<text x="160" y="63" fill="#94a3b8" font-size="10" text-anchor="middle">10.0.0.1 (OSPF Area 0)</text>' +
+    '<rect x="440" y="25" width="160" height="50" rx="8" fill="url(#boxGrad)" stroke="#38bdf8" stroke-width="1.5"/>' +
+    '<text x="520" y="47" fill="#f8fafc" font-size="12" font-weight="700" text-anchor="middle">Core-Router-2</text>' +
+    '<text x="520" y="63" fill="#94a3b8" font-size="10" text-anchor="middle">10.0.0.2 (OSPF Area 0)</text>' +
+    '<rect x="250" y="105" width="180" height="42" rx="8" fill="url(#boxGrad)" stroke="#64748b" stroke-width="1.5"/>' +
+    '<text x="340" y="125" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">Huawei Agg-Switch</text>' +
+    '<text x="340" y="139" fill="#94a3b8" font-size="9.5" text-anchor="middle">Eth-Trunk (VLAN 100)</text>' +
+    '<rect x="240" y="180" width="200" height="42" rx="8" fill="url(#boxGrad)" stroke="#10b981" stroke-width="1.5"/>' +
+    '<text x="340" y="198" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">Huawei SmartAX MA5800 OLT</text>' +
+    '<text x="340" y="212" fill="#10b981" font-size="9.5" text-anchor="middle">GPON Frame 0/1/0 (ONT Registered)</text>' +
+  '</svg>';
+}
+
+function formatResponse(text) {
+  if (!text) return 'Empty response.';
+
+  var hasDiagram = (text.indexOf('mermaid') !== -1 || text.indexOf('ASCII Topology') !== -1);
+  var svgHtml = hasDiagram ? renderTopologySVG() : '';
+
+  var clean = text.split('\r\n').join('\n').split('\r').join('\n');
+  var parts = clean.split('```');
+  var out = '';
+
+  for (var i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) {
+      var s = escapeHtml(parts[i]);
+      var boldParts = s.split('**');
+      var bFormatted = '';
+      for (var j = 0; j < boldParts.length; j++) {
+        bFormatted += (j % 2 === 1) ? ('<strong>' + boldParts[j] + '</strong>') : boldParts[j];
+      }
+      out += bFormatted.split('\n').join('<br>');
+    } else {
+      var block = parts[i];
+      var firstNl = block.indexOf('\n');
+      var lang = 'text';
+      var code = block;
+      if (firstNl !== -1) {
+        lang = block.substring(0, firstNl).trim();
+        code = block.substring(firstNl + 1);
+      }
+      out += '<pre><code class="language-' + lang + '">' + escapeHtml(code) + '</code></pre>';
+    }
+  }
+
+  return svgHtml + out;
+}
+
+function executeSend(userText) {
+  var q = userText || document.getElementById('prompt-input').value.trim();
+  if (!q) return;
+
+  var hw = document.getElementById('hero-welcome');
+  if (hw) hw.style.display = 'none';
+  document.getElementById('prompt-input').value = '';
+
+  var stream = document.getElementById('messages-stream');
+  stream.innerHTML += 
+    '<div class="message-wrapper">' +
+      '<div class="msg-row user">' +
+        '<div class="msg-bubble user">' + escapeHtml(q) + '</div>' +
+      '</div>' +
+    '</div>';
+
+  var loadId = 'load-' + Date.now();
+  stream.innerHTML += 
+    '<div class="message-wrapper" id="' + loadId + '">' +
+      '<div class="msg-row">' +
+        '<div class="avatar ai">G</div>' +
+        '<div class="msg-bubble ai" style="color:var(--accent);">' + (currentLang === 'ne' ? 'प्रक्रिया हुँदैछ...' : 'Processing...') + '</div>' +
+      '</div>' +
+    '</div>';
+
+  var scroller = document.getElementById('chat-scroll-area');
+  scroller.scrollTop = scroller.scrollHeight;
+
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: q })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+
+    var msgId = 'msg-' + Date.now();
+    var responseText = data.response || '';
+
+    stream.innerHTML += 
+      '<div class="message-wrapper" id="' + msgId + '">' +
+        '<div class="msg-row">' +
+          '<div class="avatar ai">G</div>' +
+          '<div class="msg-bubble ai">' +
+            '<div class="msg-meta-bar">' +
+              '<span class="msg-model-tag">' + escapeHtml(activeModelName) + '</span>' +
+              '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">🔊 ' + (currentLang === 'ne' ? 'पढेर सुनाउनुहोस्' : 'Read Aloud') + '</button>' +
+            '</div>' +
+            formatResponse(responseText) +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    scroller.scrollTop = scroller.scrollHeight;
+    updateStatus();
+
+    // Auto read aloud if user asked for it
+    var qLower = q.toLowerCase();
+    if ((qLower.indexOf('read') !== -1 && qLower.indexOf('loud') !== -1) || q.indexOf('सुनाउनु') !== -1 || q.indexOf('बोलेर') !== -1) {
+      speakText(responseText, null);
+    }
+  })
+  .catch(function(err) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+
+    stream.innerHTML += 
+      '<div class="message-wrapper">' +
+        '<div class="msg-row">' +
+          '<div class="avatar ai">G</div>' +
+          '<div class="msg-bubble ai" style="color:#ef4444;">Connection error. Ensure "python scripts/run_web.py" is running.</div>' +
+        '</div>' +
+      '</div>';
+    scroller.scrollTop = scroller.scrollHeight;
+  });
+}
+
+document.getElementById('send-btn').addEventListener('click', function() { executeSend(); });
+document.getElementById('prompt-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    executeSend();
+  }
+});
+
+function submitQuick(promptText) {
+  document.getElementById('prompt-input').value = promptText;
+  executeSend(promptText);
+}
+
+document.getElementById('btn-calc-subnet').addEventListener('click', function() {
+  var c = document.getElementById('tool-subnet-input').value;
+  fetch('/api/network/subnet', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cidr: c })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    document.getElementById('tool-subnet-output').innerHTML = '<pre>' + JSON.stringify(d, null, 2) + '</pre>';
+  });
+});
+
+document.getElementById('btn-gen-config').addEventListener('click', function() {
+  var v = document.getElementById('tool-vendor-select').value;
+  fetch('/api/network/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vendor: v })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    document.getElementById('tool-config-output').innerText = d.config;
+  });
+});
+
+document.getElementById('btn-clear-cache').addEventListener('click', function() {
+  fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:'/clear-cache'})})
+    .then(function() { alert(currentLang === 'ne' ? 'क्यास मेटाइयो।' : 'Temporary cache cleared.'); updateStatus(); });
+});
+document.getElementById('btn-unload-model').addEventListener('click', function() {
+  fetch('/api/model/unload', {method:'POST'})
+    .then(function() { alert(currentLang === 'ne' ? 'मोडेल र्यामबाट हटाइयो।' : 'Active model unloaded from RAM.'); updateStatus(); });
+});
+</script>
+</body>
+</html>

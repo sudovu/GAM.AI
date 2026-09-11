@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite databases & journals
+*.db
+*.db-shm
+*.db-wal
+bench.db
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Model binaries (downloaded dynamically via scripts/download_model.py)
+models/*.gguf
+models/*.bin
+!models/__init__.py
+!models/catalog.json
+
+# Android Build & Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+
+# OS files
+.DS_Store
+Thumbs.db

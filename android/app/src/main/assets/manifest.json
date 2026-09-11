@@ -1,0 +1,16 @@
+{
+  "name": "GAM.AI - Local-First AI",
+  "short_name": "GAM.AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "description": "Micro, Local-First, Resource-Efficient AI Assistant",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

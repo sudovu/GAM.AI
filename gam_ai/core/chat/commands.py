@@ -38,8 +38,8 @@ class CommandHandler:
             models = self.engine.models.get_available_models()
             lines = ["Available Models:"]
             for m in models:
-                status_icon = "🟢 Loaded" if m.loaded else "⚪ Unloaded"
-                lines.append(f"  • {m.name} [{m.tier.upper()}] - RAM: ~{m.ram_required_mb} MB | Status: {status_icon}")
+                status_icon = "[LOADED]" if m.loaded else "[UNLOADED]"
+                lines.append(f"  * {m.name} [{m.tier.upper()}] - RAM: ~{m.ram_required_mb} MB | Status: {status_icon}")
             lines.append("\nTip: Drop any .gguf file into the 'models/' folder to automatically load it.")
             return {"handled": True, "message": "\n".join(lines)}
 

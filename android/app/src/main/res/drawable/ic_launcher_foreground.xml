@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Stylized AI Circuit / Core Icon in Sky Blue -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M54,28 A26,26 0 1,0 54,80 A26,26 0 1,0 54,28 Z M54,36 A18,18 0 1,1 54,72 A18,18 0 1,1 54,36 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M50,44 h8 v20 h-8 z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M44,50 h20 v8 h-20 z" />
+</vector>

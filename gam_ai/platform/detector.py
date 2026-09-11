@@ -20,6 +20,8 @@ def get_platform_info() -> Dict[str, Any]:
 def get_memory_info() -> Dict[str, int]:
     total_mb = 1024
     available_mb = 512
+
+    # 1. Linux & Android /proc/meminfo
     if os.path.exists("/proc/meminfo"):
         try:
             with open("/proc/meminfo", "r") as f:
@@ -40,6 +42,49 @@ def get_memory_info() -> Dict[str, int]:
             return {"total_ram_mb": total_mb, "available_ram_mb": available_mb}
         except Exception:
             pass
+
+    # 2. Windows GlobalMemoryStatusEx via standard library ctypes
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class MEMORYSTATUSEX(ctypes.Structure):
+                _fields_ = [
+                    ('dwLength', wintypes.DWORD),
+                    ('dwMemoryLoad', wintypes.DWORD),
+                    ('ullTotalPhys', ctypes.c_uint64),
+                    ('ullAvailPhys', ctypes.c_uint64),
+                    ('ullTotalPageFile', ctypes.c_uint64),
+                    ('ullAvailPageFile', ctypes.c_uint64),
+                    ('ullTotalVirtual', ctypes.c_uint64),
+                    ('ullAvailVirtual', ctypes.c_uint64),
+                    ('sullAvailExtendedVirtual', ctypes.c_uint64),
+                ]
+
+            stat = MEMORYSTATUSEX()
+            stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+                return {
+                    "total_ram_mb": int(stat.ullTotalPhys // (1024 * 1024)),
+                    "available_ram_mb": int(stat.ullAvailPhys // (1024 * 1024))
+                }
+        except Exception:
+            pass
+
+    # 3. macOS via sysctl
+    if sys.platform == "darwin":
+        try:
+            import subprocess
+            out = subprocess.check_output(["sysctl", "-n", "hw.memsize"], text=True).strip()
+            total_b = int(out)
+            return {
+                "total_ram_mb": total_b // (1024 * 1024),
+                "available_ram_mb": (total_b // 2) // (1024 * 1024)
+            }
+        except Exception:
+            pass
+
     return {"total_ram_mb": total_mb, "available_ram_mb": available_mb}
 
 def get_disk_info(path: str = ".") -> Dict[str, int]:

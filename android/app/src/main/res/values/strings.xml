@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GAM.AI</string>
+    <string name="server_url_prompt">Enter GAM.AI Engine URL (default: http://127.0.0.1:8080)</string>
+    <string name="action_settings">Settings</string>
+</resources>

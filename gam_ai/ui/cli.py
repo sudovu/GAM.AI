@@ -8,12 +8,17 @@ class CommandLineInterface:
         self.engine = ChatEngine(db_path=db_path, override_profile=profile_override)
 
     def print_banner(self) -> None:
+        if hasattr(sys.stdout, "reconfigure"):
+            try:
+                sys.stdout.reconfigure(encoding="utf-8")
+            except Exception:
+                pass
         summary = self.engine.capabilities.get_summary()
         mode_str = "ONLINE" if summary["online"] else "OFFLINE"
         print("=" * 62)
-        print("          GAM.AI — MICRO, LOCAL-FIRST AI ASSISTANT          ")
+        print("          GAM.AI - MICRO, LOCAL-FIRST AI ASSISTANT          ")
         print("=" * 62)
-        print(f" Profile: {summary['device_profile']} | Model: {summary['recommended_model'].upper()} | Mode: ● {mode_str}")
+        print(f" Profile: {summary['device_profile']} | Model: {summary['recommended_model'].upper()} | Mode: [{mode_str}]")
         print(f" RAM: {summary['available_ram_mb']}/{summary['total_ram_mb']} MB | Storage: {summary['free_disk_mb']} MB Free")
         print(" Principle: 'Keep the minimum data required to produce the maximum useful result.'")
         print(" Type /help for commands, /status for metrics, /exit to quit.")

@@ -148,10 +148,10 @@ class ChatEngine:
 
         lines = [
             "============================================================",
-            "GAM.AI — MICRO RESOURCE STATUS",
+            "GAM.AI - MICRO RESOURCE STATUS",
             "============================================================",
             f"Device Profile:      {d_sum['device_profile']} (Cores: {d_sum['cores']})",
-            f"Mode:                ● {'ONLINE' if d_sum['online'] else 'OFFLINE'}",
+            f"Mode:                [{'ONLINE' if d_sum['online'] else 'OFFLINE'}]",
             f"Active Model:        {model_name} (RAM: ~{self.models.get_ram_usage_mb()} MB)",
             f"Total RAM:           {d_sum['total_ram_mb']} MB (Available: {d_sum['available_ram_mb']} MB)",
             f"Storage Pressure:    {d_sum['storage_pressure']} (Free: {d_sum['free_disk_mb']} MB)",
