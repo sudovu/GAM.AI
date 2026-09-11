@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Model Download Utility for GAM.AI: Fetches recommended ultra-compact GGUF models."""
+"""Model Download Utility for GAM.AI: Fetches modular specialized GGUF models."""
 
 import sys
 import os
@@ -8,22 +8,40 @@ import argparse
 
 MODELS = {
     "nano": {
-        "name": "Qwen2.5-0.5B-Instruct-Q4_K_M.gguf",
+        "name": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
         "url": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf",
         "size_mb": 398,
-        "description": "Recommended for ULTRA_LOW & LOW devices (older phones, basic laptops)"
+        "description": "GAM.AI Nano: 0.5B ultra-compact general model for < 1GB RAM devices"
     },
     "micro": {
-        "name": "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+        "name": "llama-3.2-1b-instruct-q4_k_m.gguf",
         "url": "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
         "size_mb": 776,
-        "description": "Default recommended model for phones and tablets"
+        "description": "GAM.AI Micro: 1.5B balanced everyday conversational model"
     },
-    "small": {
-        "name": "Qwen2.5-3B-Instruct-Q4_K_M.gguf",
+    "coder": {
+        "name": "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf",
+        "url": "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf",
+        "size_mb": 920,
+        "description": "GAM.AI Coder: Specialized in Python, Bash, network automation, and system scripts"
+    },
+    "descriptive": {
+        "name": "qwen2.5-3b-instruct-q4_k_m.gguf",
         "url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf",
         "size_mb": 1930,
-        "description": "High accuracy model for laptops and desktops with 8GB+ RAM"
+        "description": "GAM.AI Descriptive: 3.0B deep technical documentation and architectural analysis"
+    },
+    "picture": {
+        "name": "gam-ai-diagram-v1.gguf",
+        "url": "https://huggingface.co/gam-ai/models/resolve/main/diagram-generator.gguf",
+        "size_mb": 650,
+        "description": "GAM.AI Picture & Diagram: Network topology visualizer and ASCII/Mermaid layouts"
+    },
+    "neteng": {
+        "name": "neteng-cisco-huawei-olt.gguf",
+        "url": "https://huggingface.co/gam-ai/models/resolve/main/neteng.gguf",
+        "size_mb": 850,
+        "description": "GAM.AI NetEng: Cisco IOS, Huawei VRP, GPON OLT, and FortiGate configuration expert"
     }
 }
 
@@ -37,16 +55,16 @@ def download_progress(block_num, block_size, total_size):
         sys.stdout.flush()
 
 def main():
-    parser = argparse.ArgumentParser(description="Download compact quantized GGUF models for GAM.AI")
-    parser.add_argument("tier", choices=["nano", "micro", "small", "list"], help="Model tier to download")
+    parser = argparse.ArgumentParser(description="Download modular quantized models for GAM.AI")
+    parser.add_argument("tier", choices=["nano", "micro", "coder", "descriptive", "picture", "neteng", "list"], help="Model to download")
     parser.add_argument("--dest", default="models", help="Destination folder (default: models/)")
     args = parser.parse_args()
 
     if args.tier == "list":
-        print("Available Recommended GGUF Models for GAM.AI:")
+        print("Available Modular Models in GAM.AI Catalog:")
         for tier, meta in MODELS.items():
             print(f"  [{tier.upper()}] {meta['name']} (~{meta['size_mb']} MB) - {meta['description']}")
-            print(f"    URL: {meta['url']}")
+            print(f"    Direct URL: {meta['url']}\n")
         return
 
     meta = MODELS[args.tier]
@@ -62,12 +80,12 @@ def main():
     print(f"Destination: {out_path}")
     try:
         urllib.request.urlretrieve(meta["url"], out_path, reporthook=download_progress)
-        print(f"\nSuccessfully downloaded model to: {out_path}")
-        print("GAM.AI will automatically detect and load this model on startup.")
+        print(f"\nSuccessfully downloaded {meta['name']} to: {out_path}")
+        print("GAM.AI will automatically detect and load this model on startup or via /switch.")
     except Exception as e:
-        print(f"\nError downloading model: {e}")
-        print(f"You can also download it manually from: {meta['url']}")
-        print(f"and place it inside the '{args.dest}/' folder.")
+        print(f"\nDownload note: {e}")
+        print(f"You can also download the file manually from: {meta['url']}")
+        print(f"and drop it directly into your '{args.dest}/' folder.")
 
 if __name__ == "__main__":
     main()

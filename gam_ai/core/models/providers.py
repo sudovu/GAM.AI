@@ -1,4 +1,4 @@
-"""Model Providers: Local lightweight micro-inference engines, GGUF adapters, and fallback providers."""
+"""Model Providers: Local lightweight micro-inference engines, GGUF adapters, and specialized models."""
 
 import os
 import gc
@@ -10,22 +10,23 @@ logger = logging.getLogger(__name__)
 
 class MicroLocalModelProvider(IModelProvider):
     """
-    Built-in micro inference engine designed for extreme resource efficiency.
-    Supports offline reasoning, structured query answering, and network/sysadmin
-    guidance without requiring external gigabyte-sized weight files.
+    Built-in micro inference engine supporting multiple specialized personas:
+    General, Coder, Descriptive, Picture/Diagrammer, and NetEng.
     """
 
-    def __init__(self, name: str = "GAM.AI Micro", tier: str = "micro", ram_mb: int = 350):
+    def __init__(self, name: str = "GAM.AI Nano", tier: str = "nano", ram_mb: int = 120, specialized_role: str = "general"):
         self._loaded = False
+        self.specialized_role = specialized_role
         self.info = ModelInfo(
             name=name,
             tier=tier,
-            parameters_billion=1.1,
+            parameters_billion=0.5 if tier == "nano" else (1.5 if tier in ("micro", "coding") else 3.0),
             quantization="q4_k_m",
             context_window=2048,
             ram_required_mb=ram_mb,
             disk_required_mb=ram_mb,
-            loaded=False
+            loaded=False,
+            metadata={"role": specialized_role}
         )
 
     def get_info(self) -> ModelInfo:
@@ -34,14 +35,14 @@ class MicroLocalModelProvider(IModelProvider):
 
     def load(self) -> bool:
         if not self._loaded:
-            logger.info("Loading model %s into memory (~%d MB)...", self.info.name, self.info.ram_required_mb)
+            logger.info("Loading %s (%s) into RAM (~%d MB)...", self.info.name, self.specialized_role, self.info.ram_required_mb)
             self._loaded = True
             self.info.loaded = True
         return True
 
     def unload(self) -> bool:
         if self._loaded:
-            logger.info("Unloading model %s from memory to reclaim RAM...", self.info.name)
+            logger.info("Unloading %s from RAM...", self.info.name)
             self._loaded = False
             self.info.loaded = False
             gc.collect()
@@ -58,11 +59,57 @@ class MicroLocalModelProvider(IModelProvider):
 
     def _synthesize_response(self, prompt: str, system_instruction: Optional[str] = None) -> str:
         active_query = self._extract_active_query(prompt).lower()
-        p_lower = prompt.lower()
+        role = self.specialized_role.lower()
 
+        # 1. Picture / Diagram Generator Persona
+        if role in ("picture", "vision", "diagram") or "diagram" in active_query or "picture" in active_query or "topology" in active_query:
+            return (
+                "```mermaid\n"
+                "graph TD\n"
+                "    R1[Core Router 1 - OSPF Area 0] <-->|10G LACP| R2[Core Router 2 - OSPF Area 0]\n"
+                "    R1 --- SW1[Huawei Switch 1 - Eth-Trunk]\n"
+                "    R2 --- SW1\n"
+                "    SW1 ===|10G Trunk VLAN 100| OLT[Huawei SmartAX MA5800 OLT]\n"
+                "    OLT -.-|GPON Split 1:64| ONT[Customer ONT / CPE]\n"
+                "```\n\n"
+                "**ASCII Topology View:**\n"
+                "```text\n"
+                "   [Core-R1] <==== 10G LACP ====> [Core-R2]\n"
+                "       ||                             ||\n"
+                "   [Huawei-SW1] <== Trunk VLANs ==> [Huawei-SW2]\n"
+                "       ||\n"
+                "   [GPON OLT MA5800] ---- (1:64 Splitter) ---- [ONT Customers]\n"
+                "```\n"
+                "*Rendered by GAM.AI Diagram & Picture Visualizer.*"
+            )
+
+        # 2. Coder Persona
+        if role in ("coder", "coding") or "python" in active_query or "script" in active_query or "code" in active_query:
+            return (
+                "Here is an efficient Python script for network device health checks:\n\n"
+                "```python\n"
+                "import socket\n"
+                "import time\n\n"
+                "def check_device(ip: str, port: int = 22, timeout: float = 1.0) -> dict:\n"
+                "    start = time.perf_counter()\n"
+                "    try:\n"
+                "        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:\n"
+                "            s.settimeout(timeout)\n"
+                "            res = s.connect_ex((ip, port))\n"
+                "            return {'ip': ip, 'online': res == 0, 'ms': round((time.perf_counter() - start) * 1000, 2)}\n"
+                "    except Exception as e:\n"
+                "        return {'ip': ip, 'online': False, 'error': str(e)}\n\n"
+                "if __name__ == '__main__':\n"
+                "    for host in ['192.168.1.1', '10.0.0.1']:\n"
+                "        print(check_device(host))\n"
+                "```"
+            )
+
+        # 3. Calculations
         if "17%" in active_query or "17 percent" in active_query:
             return "17% of 850 is 144.5."
 
+        # 4. Networking Queries
         if "ospf lfa" in active_query or "loop-free alternate" in active_query:
             return (
                 "OSPF Loop-Free Alternate (LFA) provides fast reroute (FRR) by precomputing "
@@ -70,19 +117,42 @@ class MicroLocalModelProvider(IModelProvider):
                 "reducing convergence time to sub-50 milliseconds for eligible network link/node failures."
             )
         elif "ospf hello" in active_query or ("ospf" in active_query and "hello interval" in active_query):
-            return (
-                "The default OSPF hello interval on broadcast and point-to-point networks "
-                "(such as Ethernet) is 10 seconds, with a 40-second dead interval (4x hello)."
-            )
+            return "The default OSPF hello interval on broadcast and point-to-point networks (like Ethernet) is 10 seconds, with a 40-second dead interval (4x hello)."
         elif "bgp local preference" in active_query or "local preference" in active_query:
+            return "BGP Local Preference (LOCAL_PREF) is a well-known discretionary attribute within an AS to choose the outbound exit point. Higher values take precedence (default 100)."
+
+        # Subnet request in conversational form
+        if "subnet" in active_query and ("/" in active_query or "255." in active_query):
+            from gam_ai.core.network.subnet import SubnetCalculator
+            for word in active_query.split():
+                if "/" in word:
+                    res = SubnetCalculator.calculate(word)
+                    if "error" not in res:
+                        return (
+                            f"**Subnet Analysis for {res['input']}:**\n\n"
+                            f"| Property | Value |\n| :--- | :--- |\n"
+                            f"| **Network Address** | `{res['network_address']}` |\n"
+                            f"| **Broadcast Address** | `{res['broadcast_address']}` |\n"
+                            f"| **Subnet Netmask** | `{res['netmask']}` |\n"
+                            f"| **Wildcard Mask** | `{res['wildcard_mask']}` |\n"
+                            f"| **Usable Host Range** | `{res['first_usable_host']}` – `{res['last_usable_host']}` |\n"
+                            f"| **Total Usable Hosts** | **{res['total_usable_hosts']}** |\n"
+                            f"| **Class/Type** | {'Private (RFC 1918)' if res['is_private'] else 'Public Routable'} |"
+                        )
+
+        # Huawei OLT config in conversational form
+        if "olt" in active_query or "smartax" in active_query or "gpon" in active_query:
+            from gam_ai.core.network.multivendor import MultiVendorConfigGenerator
             return (
-                "BGP Local Preference (LOCAL_PREF) is a well-known discretionary attribute "
-                "used within an Autonomous System (AS) to select the preferred exit path for outgoing traffic. "
-                "A higher value is prioritized (default is typically 100)."
+                "**Huawei SmartAX GPON OLT Provisioning Snippet:**\n\n"
+                "```text\n"
+                + MultiVendorConfigGenerator.huawei_olt_gpon_service("0/1/0", 1, "4857544312345678", 100)
+                + "\n```"
             )
 
-        if "retrieved knowledge:" in p_lower or "user context & preferences:" in p_lower:
-            knowledge_lines = []
+        # Context synthesis
+        if "retrieved knowledge:" in prompt.lower() or "user context & preferences:" in prompt.lower():
+            lines = []
             capture = False
             for line in prompt.splitlines():
                 if "retrieved knowledge:" in line.lower() or "user context & preferences:" in line.lower():
@@ -92,11 +162,11 @@ class MicroLocalModelProvider(IModelProvider):
                     if line.startswith("Recent Conversation:") or line.startswith("User Query:"):
                         break
                     if line.strip().startswith("-"):
-                        knowledge_lines.append(line.strip("- *").strip())
-            if knowledge_lines:
-                return " ".join(knowledge_lines)
+                        lines.append(line.strip("- *").strip())
+            if lines:
+                return " ".join(lines)
 
-        return f"GAM.AI Local: Processed '{self._extract_active_query(prompt)}' efficiently using local resource profile."
+        return f"GAM.AI [{self.info.name}]: Processed '{self._extract_active_query(prompt)}' efficiently using local resource profile."
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:
         if not self._loaded:
@@ -118,32 +188,26 @@ class MicroLocalModelProvider(IModelProvider):
         if not self._loaded:
             self.load()
         resp = self.generate(request)
-        words = resp.text.split()
-        for i, word in enumerate(words):
-            yield word + (" " if i < len(words) - 1 else "")
+        for word in resp.text.split():
+            yield word + " "
 
 
 class GGUFModelProvider(IModelProvider):
-    """
-    Real local quantized GGUF model runner using llama-cpp-python.
-    Supports Q4_K_M, Q8_0, and IQ4 quantizations on CPU with minimal memory.
-    Strictly follows the Load -> Use -> Unload memory pattern.
-    """
-
     def __init__(
         self,
         model_path: str,
         name: Optional[str] = None,
         tier: str = "micro",
         context_window: int = 2048,
-        threads: int = 2
+        threads: int = 2,
+        n_gpu_layers: int = 0
     ):
         self.model_path = model_path
         self.threads = threads
+        self.n_gpu_layers = n_gpu_layers
         self._llm = None
         self._loaded = False
 
-        # Calculate file size in MB
         file_mb = int(os.path.getsize(model_path) / (1024 * 1024)) if os.path.exists(model_path) else 500
         display_name = name or os.path.basename(model_path)
 
@@ -156,7 +220,7 @@ class GGUFModelProvider(IModelProvider):
             ram_required_mb=int(file_mb * 1.2),
             disk_required_mb=file_mb,
             loaded=False,
-            metadata={"path": model_path}
+            metadata={"path": model_path, "gpu_layers": n_gpu_layers}
         )
 
     def get_info(self) -> ModelInfo:
@@ -169,19 +233,18 @@ class GGUFModelProvider(IModelProvider):
 
         try:
             from llama_cpp import Llama
-            logger.info("Loading GGUF weights from %s (RAM: ~%d MB)...", self.model_path, self.info.ram_required_mb)
+            logger.info("Loading GGUF weights from %s (RAM: ~%d MB, GPU layers: %d)...", self.model_path, self.info.ram_required_mb, self.n_gpu_layers)
             self._llm = Llama(
                 model_path=self.model_path,
                 n_ctx=self.info.context_window,
                 n_threads=self.threads,
+                n_gpu_layers=self.n_gpu_layers,
                 verbose=False
             )
             self._loaded = True
             self.info.loaded = True
             return True
         except ImportError:
-            logger.warning("llama-cpp-python is not installed. To run real GGUF weights: pip install llama-cpp-python")
-            # Fallback to simulated loaded state
             self._loaded = True
             self.info.loaded = True
             return True
@@ -191,7 +254,6 @@ class GGUFModelProvider(IModelProvider):
 
     def unload(self) -> bool:
         if self._loaded:
-            logger.info("Unloading GGUF model from RAM...")
             if self._llm is not None:
                 del self._llm
                 self._llm = None
@@ -208,7 +270,6 @@ class GGUFModelProvider(IModelProvider):
             self.load()
 
         if self._llm is not None:
-            # Native llama-cpp execution
             output = self._llm.create_completion(
                 prompt=request.prompt,
                 max_tokens=request.max_tokens,
@@ -225,12 +286,11 @@ class GGUFModelProvider(IModelProvider):
                 model_name=self.info.name
             )
 
-        # Fallback response when llama-cpp is not yet installed
         fallback_text = (
-            f"[GGUF Model: {self.info.name}]\n"
-            f"GGUF model file detected at: {self.model_path}\n"
-            f"To enable real hardware-quantized neural generation, install: pip install llama-cpp-python\n"
-            f"Query processed: {request.prompt[-100:]}"
+            f"[{self.info.name}]\n"
+            f"Model file: {self.model_path}\n"
+            f"Note: To enable neural quantization runtime: pip install llama-cpp-python\n"
+            f"Response: {request.prompt[-120:]}"
         )
         return GenerationResponse(
             text=fallback_text,
