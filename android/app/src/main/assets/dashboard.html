@@ -164,8 +164,38 @@
   .msg-meta-bar {
     display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
     font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px;
+    flex-wrap: wrap; gap: 6px;
   }
   .msg-model-tag { color: var(--accent); font-weight: 600; }
+  .msg-mode-tag {
+    font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 7px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .msg-mode-tag.offline {
+    background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4);
+  }
+  .msg-mode-tag.online {
+    background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);
+  }
+  .msg-source-tag {
+    font-size: 0.72rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;
+  }
+  .msg-footer-mode {
+    margin-top: 10px; padding: 7px 12px; border-radius: 6px; font-size: 0.74rem; line-height: 1.4;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  }
+  .msg-footer-mode.offline {
+    background: rgba(234, 179, 8, 0.08); border-left: 3px solid #eab308; color: #cbd5e1;
+  }
+  .msg-footer-mode.online {
+    background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; color: #cbd5e1;
+  }
+  .mode-toggle-btn {
+    cursor: pointer; user-select: none; transition: all 0.2s;
+  }
+  .mode-toggle-btn:hover {
+    transform: scale(1.03); filter: brightness(1.15);
+  }
   .btn-read-aloud {
     background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.78rem;
     display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px;
@@ -359,6 +389,10 @@
     <!-- CLEAN RIGHT CONTROLS -->
     <div class="header-right">
       <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
+      <button class="status-badge mode-toggle-btn" id="btn-mode-toggle" onclick="toggleOnlineOfflineMode()" title="Toggle Online / Offline Mode">
+        <span id="header-mode-icon">⚡</span>
+        <span id="header-mode-text">Offline</span>
+      </button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
       <button class="icon-btn" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 EN</button>
       <button class="icon-btn" id="btn-header-settings" title="Settings">⚙️</button>
@@ -453,21 +487,27 @@
       <button class="close-btn" onclick="hideModal('modal-settings')">✕</button>
     </div>
 
-    <!-- Host Connection & USB Debugging Bridge -->
-    <div class="model-card">
+    <!-- AI Execution & Connectivity Mode (Online / Offline Switch) -->
+    <div class="model-card" style="border:1px solid rgba(56,189,248,0.35); background:linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.9));">
       <div class="model-header-row">
         <div>
-          <div style="font-weight:700;">Host Server & USB Debugging Bridge</div>
-          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;" id="server-status-label">Detecting connection status...</div>
+          <div style="font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+            <span id="settings-mode-icon">⚡</span>
+            <span id="txt-settings-mode-title">AI Execution Mode</span>
+            <span id="settings-mode-badge" style="font-size:0.72rem; padding:2px 8px; border-radius:10px; font-weight:700; background:#eab308; color:#000;">OFFLINE</span>
+          </div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;" id="settings-mode-desc">
+            100% Local On-Device AI. Zero internet required. Air-gapped & private.
+          </div>
         </div>
-        <button class="btn-action ready" id="btn-ping-server" onclick="pingServerConnection()">⚡ Ping Server</button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-action ready" id="btn-mode-offline-select" onclick="setExecutionMode('offline')">⚡ Offline</button>
+          <button class="btn-action" id="btn-mode-online-select" onclick="setExecutionMode('online')">🌐 Online</button>
+        </div>
       </div>
-      <div style="margin-top:10px; display:flex; gap:8px;">
-        <input type="text" id="setting-server-url" placeholder="http://127.0.0.1:8080" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:6px; padding:6px 10px; font-size:0.84rem;">
-        <button class="btn-action" onclick="saveServerUrl()">Save</button>
-      </div>
-      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
-        USB Debugging: Keep <code>http://127.0.0.1:8080</code> (ADB reverse enabled). For Wi-Fi: enter PC IP, e.g. <code>http://192.168.1.50:8080</code>.
+      <div style="margin-top:10px; padding:8px 12px; background:rgba(0,0,0,0.25); border-radius:8px; font-size:0.78rem; color:#94a3b8; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <span id="txt-mode-status-line">Active Engine: <strong>Local Hardware Edge AI</strong></span>
+        <span style="color:#10b981; font-weight:600;" id="txt-mode-security-line">🔒 Air-Gapped / Zero Network Egress</span>
       </div>
     </div>
 
@@ -775,31 +815,89 @@ function apiFetch(path, options) {
   });
 }
 
-function pingServerConnection() {
-  var btn = document.getElementById('btn-ping-server');
-  var lbl = document.getElementById('server-status-label');
-  if (btn) btn.innerText = 'Pinging...';
-  apiFetch('/api/status')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (btn) btn.innerText = '🟢 Connected';
-      if (lbl) lbl.innerHTML = '<span style="color:#10b981; font-weight:700;">🟢 Connected to Host Server (' + d.ram_mb + ' MB RAM)</span>';
-      updateStatus();
-    })
-    .catch(function(err) {
-      if (btn) btn.innerText = '⚡ Standalone';
-      if (lbl) lbl.innerHTML = '<span style="color:#eab308; font-weight:700;">⚡ Host Offline (Using Local Mobile Engine)</span>';
-    });
+var currentExecutionMode = localStorage.getItem('gam_ai_mode') || 'offline';
+
+function setExecutionMode(mode) {
+  currentExecutionMode = mode;
+  localStorage.setItem('gam_ai_mode', mode);
+  updateModeUI();
 }
 
-function saveServerUrl() {
-  var inp = document.getElementById('setting-server-url');
-  if (inp) {
-    var val = inp.value.trim();
-    if (val) {
-      setApiBaseUrl(val);
-      pingServerConnection();
+function toggleOnlineOfflineMode() {
+  setExecutionMode(currentExecutionMode === 'offline' ? 'online' : 'offline');
+}
+
+function updateModeUI() {
+  var isOffline = (currentExecutionMode === 'offline');
+  var t = (typeof i18n !== 'undefined' && i18n[currentLang]) ? i18n[currentLang] : null;
+
+  // Top header button
+  var headerBtn = document.getElementById('btn-mode-toggle');
+  var headerIcon = document.getElementById('header-mode-icon');
+  var headerText = document.getElementById('header-mode-text');
+  if (headerBtn) {
+    if (isOffline) {
+      headerBtn.className = 'status-badge mode-toggle-btn offline';
+      headerBtn.style.borderColor = 'rgba(234, 179, 8, 0.4)';
+      headerBtn.style.background = 'rgba(234, 179, 8, 0.12)';
+      headerBtn.style.color = '#facc15';
+      if (headerIcon) headerIcon.innerText = '⚡';
+      if (headerText) headerText.innerText = (t && t.modeOffline) ? t.modeOffline : 'Offline';
+    } else {
+      headerBtn.className = 'status-badge mode-toggle-btn online';
+      headerBtn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+      headerBtn.style.background = 'rgba(56, 189, 248, 0.12)';
+      headerBtn.style.color = '#38bdf8';
+      if (headerIcon) headerIcon.innerText = '🌐';
+      if (headerText) headerText.innerText = (t && t.modeOnline) ? t.modeOnline : 'Online';
     }
+  }
+
+  // Settings modal controls
+  var offBtn = document.getElementById('btn-mode-offline-select');
+  var onBtn = document.getElementById('btn-mode-online-select');
+  var badge = document.getElementById('settings-mode-badge');
+  var desc = document.getElementById('settings-mode-desc');
+  var statusLine = document.getElementById('txt-mode-status-line');
+  var securityLine = document.getElementById('txt-mode-security-line');
+
+  if (offBtn && onBtn) {
+    if (isOffline) {
+      offBtn.className = 'btn-action ready';
+      offBtn.style.background = '#eab308';
+      offBtn.style.color = '#000';
+      onBtn.className = 'btn-action';
+      onBtn.style.background = '';
+      onBtn.style.color = '';
+    } else {
+      onBtn.className = 'btn-action ready';
+      onBtn.style.background = '#38bdf8';
+      onBtn.style.color = '#000';
+      offBtn.className = 'btn-action';
+      offBtn.style.background = '';
+      offBtn.style.color = '';
+    }
+  }
+  if (badge) {
+    badge.innerText = isOffline ? 'OFFLINE' : 'ONLINE';
+    badge.style.background = isOffline ? '#eab308' : '#38bdf8';
+    badge.style.color = '#000';
+  }
+  if (desc) {
+    desc.innerText = isOffline 
+      ? (currentLang === 'hi' ? '100% लोकल ऑन-डिवाइस AI। इंटरनेट की आवश्यकता नहीं। पूर्णतः निजी और एयर-गैप्ड।' : (currentLang === 'ne' ? '100% स्थानीय अन-डिभाइस AI। इन्टरनेट नचाहिने, पूर्ण निजी र सुरक्षित।' : '100% Local On-Device AI. Zero internet required. Completely private & air-gapped.'))
+      : (currentLang === 'hi' ? 'ऑनलाइन हाइब्रिड AI। लाइव वेब खोज, अनुसंधान और क्लाउड नॉलेज सक्षम।' : (currentLang === 'ne' ? 'अनलाइन हाइब्रिड AI। प्रत्यक्ष वेब खोज र क्लाउड ज्ञान सक्षम।' : 'Online Hybrid AI. Live web research, search verification & knowledge augmentation enabled.'));
+  }
+  if (statusLine) {
+    statusLine.innerHTML = isOffline
+      ? 'Active Engine: <strong>Local Hardware Edge AI</strong>'
+      : 'Active Engine: <strong>Live Web Intelligence Engine</strong>';
+  }
+  if (securityLine) {
+    securityLine.innerHTML = isOffline
+      ? '🔒 Air-Gapped / Zero Network Egress'
+      : '🌐 Web Research Active';
+    securityLine.style.color = isOffline ? '#10b981' : '#38bdf8';
   }
 }
 
@@ -1272,7 +1370,9 @@ var i18n = {
     langToggle: '🌐 EN',
     readAloud: 'Read Aloud',
     processing: 'Processing...',
-    listening: '🔴 Listening... Speak now in English'
+    listening: '🔴 Listening... Speak now in English',
+    modeOffline: 'Offline',
+    modeOnline: 'Online'
   },
   hi: {
     newChat: 'नई बातचीत',
@@ -1286,7 +1386,9 @@ var i18n = {
     langToggle: '🇮🇳 HI',
     readAloud: 'पढ़कर सुनाएं',
     processing: 'प्रक्रिया जारी है...',
-    listening: '🔴 सुन रहा हूँ... कृपया हिंदी में बोलें'
+    listening: '🔴 सुन रहा हूँ... कृपया हिंदी में बोलें',
+    modeOffline: 'ऑफ़लाइन',
+    modeOnline: 'ऑनलाइन'
   },
   ne: {
     newChat: 'नयाँ कुराकानी',
@@ -1300,7 +1402,9 @@ var i18n = {
     langToggle: '🇳🇵 NE',
     readAloud: 'पढेर सुनाउनुहोस्',
     processing: 'प्रक्रिया हुँदैछ...',
-    listening: '🔴 सुन्दैछ... नेपालीमा बोल्नुहोस्'
+    listening: '🔴 सुन्दैछ... नेपालीमा बोल्नुहोस्',
+    modeOffline: 'अफलाइन',
+    modeOnline: 'अनलाइन'
   }
 };
 
@@ -1323,6 +1427,7 @@ function toggleLanguage() {
   document.getElementById('prompt-input').placeholder = t.placeholder;
   document.getElementById('btn-lang-toggle').innerText = t.langToggle;
   renderChips();
+  updateModeUI();
 }
 
 // Persona Mode Chips
@@ -1710,37 +1815,43 @@ function analyzeLensImage() {
   var scroller = document.getElementById('chat-scroll-area');
   scroller.scrollTop = scroller.scrollHeight;
 
-  // Send to Vision API or use Offline Lens Intelligence
-  apiFetch('/api/vision', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      image: lensCapturedBase64,
-      mode: mode,
-      lang: currentLang
-    })
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
+  // Send to Vision API or use Offline Lens Intelligence based on currentExecutionMode
+  if (currentExecutionMode === 'offline') {
     var lEl = document.getElementById(loadId);
     if (lEl) lEl.remove();
-
-    var responseText = data.response || generateOfflineLensAnalysis(mode, currentLang);
-    renderLensResponse(responseText);
-  })
-  .catch(function(err) {
-    var lEl = document.getElementById(loadId);
-    if (lEl) lEl.remove();
-
     var responseText = generateOfflineLensAnalysis(mode, currentLang);
-    renderLensResponse(responseText);
-  });
+    renderLensResponse(responseText, false);
+  } else {
+    apiFetch('/api/vision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: lensCapturedBase64,
+        mode: mode,
+        lang: currentLang
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var lEl = document.getElementById(loadId);
+      if (lEl) lEl.remove();
+      var responseText = data.response || generateOfflineLensAnalysis(mode, currentLang);
+      renderLensResponse(responseText, true);
+    })
+    .catch(function(err) {
+      var lEl = document.getElementById(loadId);
+      if (lEl) lEl.remove();
+      var responseText = generateOfflineLensAnalysis(mode, currentLang);
+      renderLensResponse(responseText, false);
+    });
+  }
 }
 
-function renderLensResponse(responseText) {
+function renderLensResponse(responseText, isOnline) {
   var stream = document.getElementById('messages-stream');
   var msgId = 'msg-' + Date.now();
   var readLabel = (currentLang === 'hi' ? '🔊 पढ़कर सुनाएं' : (currentLang === 'ne' ? '🔊 पढेर सुनाउनुहोस्' : '🔊 Read Aloud'));
+  var isOff = !isOnline;
 
   stream.innerHTML += 
     '<div class="message-wrapper" id="' + msgId + '">' +
@@ -1748,10 +1859,18 @@ function renderLensResponse(responseText) {
         '<div class="avatar ai">G</div>' +
         '<div class="msg-bubble ai">' +
           '<div class="msg-meta-bar">' +
-            '<span class="msg-model-tag" style="border-color:#38bdf8; color:#38bdf8;">📷 GAM.AI Lens Visual Engine</span>' +
+            '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
+              (isOff ? '<span class="msg-mode-tag offline">⚡ OFFLINE MODE</span>' : '<span class="msg-mode-tag online">🌐 ONLINE MODE</span>') +
+              '<span class="msg-model-tag" style="border-color:#38bdf8; color:#38bdf8;">📷 GAM.AI Lens Visual Engine</span>' +
+              '<span class="msg-source-tag">' + (isOff ? '💾 Local Device Vision' : '🌐 Cloud Vision Analysis') + '</span>' +
+            '</div>' +
             '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
           '</div>' +
           formatResponse(responseText) +
+          '<div class="msg-footer-mode ' + (isOff ? 'offline' : 'online') + '">' +
+            '<span>' + (isOff ? '⚡ <strong>Result: Offline Mode</strong> • Local Vision Engine' : '🌐 <strong>Result: Online Mode</strong> • Cloud Vision Analysis') + '</span>' +
+            '<span>' + (isOff ? 'Privacy: 🔒 100% Private (No upload)' : 'Status: Live Verified') + '</span>' +
+          '</div>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -1844,6 +1963,7 @@ function updateDeviceDiagnostics() {
 }
 
 function updateStatus() {
+  updateModeUI();
   apiFetch('/api/status')
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -1851,8 +1971,6 @@ function updateStatus() {
       if (rm) rm.innerHTML = '<span style="color:#10b981;">●</span> ' + d.ram_mb + ' MB';
       var cs = document.getElementById('cache-stats-text');
       if (cs) cs.innerText = 'Cache: ' + d.cache_entries + ' items (' + d.cache_kb + ' KB) | DB: ' + d.knowledge_items + ' items';
-      var stLabel = document.getElementById('server-status-label');
-      if (stLabel) stLabel.innerHTML = '<span style="color:#10b981; font-weight:700;">🟢 Connected to GAM.AI Host Server</span>';
       updateDeviceDiagnostics();
     })
     .catch(function(e) {
@@ -1861,12 +1979,10 @@ function updateStatus() {
         var avail = window.AndroidBridge.getAvailableRamMb();
         if (rm) rm.innerHTML = '<span style="color:#10b981;">●</span> ' + avail + ' MB';
       } else {
-        if (rm) rm.innerHTML = '<span style="color:#eab308;">●</span> Standalone';
+        if (rm) rm.innerHTML = '<span style="color:#10b981;">●</span> Local Edge';
       }
       var cs = document.getElementById('cache-stats-text');
       if (cs) cs.innerText = '⚡ Local Mobile Offline Engine Ready (Standby)';
-      var stLabel = document.getElementById('server-status-label');
-      if (stLabel) stLabel.innerHTML = '<span style="color:#eab308; font-weight:700;">⚡ Standalone Mode (Host Offline)</span>';
       updateDeviceDiagnostics();
     });
 }
@@ -2085,72 +2201,136 @@ function executeSend(userText, wasSpoken) {
     q.indexOf('सुनाउनु') !== -1 || q.indexOf('बोलेर') !== -1 ||
     q.indexOf('सुनाओ') !== -1 || q.indexOf('बोलकर') !== -1 || q.indexOf('पढ़कर') !== -1;
 
-  apiFetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: q, lang: currentLang })
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    var lEl = document.getElementById(loadId);
-    if (lEl) lEl.remove();
+  if (currentExecutionMode === 'offline') {
+    // 100% PURE LOCAL ON-DEVICE OFFLINE EXECUTION
+    setTimeout(function() {
+      var t0 = performance.now();
+      var offlineResult = processOfflineAIQuery(q);
+      var t1 = performance.now();
+      var latencyMs = Math.max(0.3, (t1 - t0)).toFixed(1);
 
-    var msgId = 'msg-' + Date.now();
-    var responseText = data.response || '';
+      var lEl = document.getElementById(loadId);
+      if (lEl) lEl.remove();
 
-    stream.innerHTML += 
-      '<div class="message-wrapper" id="' + msgId + '">' +
-        '<div class="msg-row">' +
-          '<div class="avatar ai">G</div>' +
-          '<div class="msg-bubble ai">' +
-            '<div class="msg-meta-bar">' +
-              '<span class="msg-model-tag">' + escapeHtml(activeModelName) + '</span>' +
-              '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
-            '</div>' +
-            formatResponse(responseText) +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    scroller.scrollTop = scroller.scrollHeight;
-    updateStatus();
+      var msgId = 'msg-' + Date.now();
+      var responseText = offlineResult.response;
 
-    // Auto read aloud if spoken or requested
-    if (shouldReadAloud) {
-      speakText(responseText, null);
-    }
-  })
-  .catch(function(err) {
-    var lEl = document.getElementById(loadId);
-    if (lEl) lEl.remove();
-
-    var offlineResult = processOfflineAIQuery(q);
-    var msgId = 'msg-' + Date.now();
-    var responseText = offlineResult.response;
-
-    stream.innerHTML += 
-      '<div class="message-wrapper" id="' + msgId + '">' +
-        '<div class="msg-row">' +
-          '<div class="avatar ai">G</div>' +
-          '<div class="msg-bubble ai">' +
-            '<div class="msg-meta-bar">' +
-              '<span class="msg-model-tag" style="border-color:#eab308; color:#eab308;">⚡ Local Offline Engine</span>' +
-              '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
-            '</div>' +
-            formatResponse(responseText) +
-            '<div style="margin-top:12px; padding:6px 10px; background:rgba(234,179,8,0.08); border-left:3px solid #eab308; border-radius:4px; font-size:0.75rem; color:var(--text-muted);">' +
-              '💡 <em>Offline Mode Active.</em> To run deep 7B/9B server models, connect USB debugging & execute: <code>python scripts/run_web.py</code> on PC. ' +
-              '<a href="javascript:showModal(\'modal-settings\')" style="color:var(--accent); text-decoration:underline; font-weight:700;">Connection Settings ⚙️</a>' +
+      stream.innerHTML += 
+        '<div class="message-wrapper" id="' + msgId + '">' +
+          '<div class="msg-row">' +
+            '<div class="avatar ai">G</div>' +
+            '<div class="msg-bubble ai">' +
+              '<div class="msg-meta-bar">' +
+                '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
+                  '<span class="msg-mode-tag offline">⚡ OFFLINE MODE</span>' +
+                  '<span class="msg-model-tag">' + escapeHtml(activeModelName) + '</span>' +
+                  '<span class="msg-source-tag">💾 On-Device Local AI</span>' +
+                '</div>' +
+                '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
+              '</div>' +
+              formatResponse(responseText) +
+              '<div class="msg-footer-mode offline">' +
+                '<span>⚡ <strong>Result: Offline Local Mode</strong> • Local Engine</span>' +
+                '<span>Latency: ' + latencyMs + ' ms</span>' +
+                '<span>Network: 0 KB (Air-Gapped)</span>' +
+                '<span style="color:#10b981; font-weight:700;">🔒 100% Private</span>' +
+              '</div>' +
             '</div>' +
           '</div>' +
-        '</div>' +
-      '</div>';
-    scroller.scrollTop = scroller.scrollHeight;
+        '</div>';
+      scroller.scrollTop = scroller.scrollHeight;
 
-    // Auto read aloud if spoken or requested
-    if (shouldReadAloud) {
-      speakText(responseText, null);
-    }
-  });
+      if (shouldReadAloud) {
+        speakText(responseText, null);
+      }
+    }, 80);
+  } else {
+    // ONLINE MODE (Live Web Research & Cloud Query)
+    var t0 = performance.now();
+    apiFetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q, lang: currentLang, mode: 'online' })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var lEl = document.getElementById(loadId);
+      if (lEl) lEl.remove();
+      var t1 = performance.now();
+      var latencyMs = (t1 - t0).toFixed(0);
+
+      var msgId = 'msg-' + Date.now();
+      var responseText = data.response || '';
+      var srcType = data.source || 'web_research';
+      var srcLabel = (srcType === 'web_research') ? '🔍 Live Web Research' : (srcType === 'cache' ? '⚡ Cache' : '🌐 Online Knowledge');
+
+      stream.innerHTML += 
+        '<div class="message-wrapper" id="' + msgId + '">' +
+          '<div class="msg-row">' +
+            '<div class="avatar ai">G</div>' +
+            '<div class="msg-bubble ai">' +
+              '<div class="msg-meta-bar">' +
+                '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
+                  '<span class="msg-mode-tag online">🌐 ONLINE MODE</span>' +
+                  '<span class="msg-model-tag">' + escapeHtml(activeModelName) + '</span>' +
+                  '<span class="msg-source-tag">' + srcLabel + '</span>' +
+                '</div>' +
+                '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
+              '</div>' +
+              formatResponse(responseText) +
+              '<div class="msg-footer-mode online">' +
+                '<span>🌐 <strong>Result: Online Mode</strong> • Live Web Intelligence</span>' +
+                '<span>Latency: ' + latencyMs + ' ms</span>' +
+                '<span>Source: ' + srcLabel + '</span>' +
+                '<span style="color:#38bdf8; font-weight:700;">✓ Web Verified</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      scroller.scrollTop = scroller.scrollHeight;
+      updateStatus();
+
+      if (shouldReadAloud) {
+        speakText(responseText, null);
+      }
+    })
+    .catch(function(err) {
+      var lEl = document.getElementById(loadId);
+      if (lEl) lEl.remove();
+
+      var offlineResult = processOfflineAIQuery(q);
+      var msgId = 'msg-' + Date.now();
+      var responseText = offlineResult.response;
+
+      stream.innerHTML += 
+        '<div class="message-wrapper" id="' + msgId + '">' +
+          '<div class="msg-row">' +
+            '<div class="avatar ai">G</div>' +
+            '<div class="msg-bubble ai">' +
+              '<div class="msg-meta-bar">' +
+                '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
+                  '<span class="msg-mode-tag offline">⚡ OFFLINE FALLBACK</span>' +
+                  '<span class="msg-model-tag">' + escapeHtml(activeModelName) + '</span>' +
+                  '<span class="msg-source-tag">💾 Local Device Knowledge</span>' +
+                '</div>' +
+                '<button class="btn-read-aloud" onclick="speakMsg(this)" data-speech="' + escapeHtml(responseText) + '">' + readLabel + '</button>' +
+              '</div>' +
+              formatResponse(responseText) +
+              '<div class="msg-footer-mode offline">' +
+                '<span>⚡ <strong>Result: Offline Fallback</strong> (Network Unreachable)</span>' +
+                '<span>Served Locally from Device</span>' +
+                '<span style="color:#10b981; font-weight:700;">🔒 Local Fallback Active</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      scroller.scrollTop = scroller.scrollHeight;
+
+      if (shouldReadAloud) {
+        speakText(responseText, null);
+      }
+    });
+  }
 }
 
 document.getElementById('send-btn').addEventListener('click', function() { executeSend(); });

@@ -63,16 +63,17 @@ class ChatEngine:
         self.commands = CommandHandler(self)
         self.promotion_threshold = promotion_threshold
 
-    def process_query(self, user_text: str) -> Dict[str, Any]:
+    def process_query(self, user_text: str, mode: str = "auto") -> Dict[str, Any]:
         user_text = SecurityGuard.sanitize_input(user_text.strip())
         if not user_text:
-            return {"response": "", "source": "empty", "tokens": 0}
+            return {"response": "", "source": "empty", "mode": "offline", "tokens": 0}
 
         if user_text.startswith("/"):
             cmd_result = self.commands.execute(user_text)
             return {
                 "response": cmd_result["message"],
                 "source": "command",
+                "mode": "offline",
                 "data": cmd_result.get("data")
             }
 
@@ -98,7 +99,7 @@ class ChatEngine:
                 logger.info("Promoted query '%s' to permanent knowledge (id=%s)", user_text, promoted_id)
 
         if not knowledge_texts:
-            is_online = self.capabilities.check_network_connectivity()
+            is_online = (mode != "offline") and self.capabilities.check_network_connectivity()
             if is_online:
                 res = self.research.research(user_text)
                 if res.get("content"):
@@ -129,9 +130,12 @@ class ChatEngine:
         self.memory.add_interaction("assistant", gen_response.text)
         self.memory.reset_active()
 
+        is_offline_result = (mode == "offline") or (source_type != "web_research")
+
         return {
             "response": gen_response.text,
             "source": source_type,
+            "mode": "offline" if is_offline_result else "online",
             "prompt_tokens": gen_response.prompt_tokens,
             "completion_tokens": gen_response.completion_tokens,
             "model_name": gen_response.model_name,

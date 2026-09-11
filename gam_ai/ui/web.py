@@ -166,7 +166,8 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
 
         if self.path == "/api/chat":
             query = req_data.get("query") or req_data.get("message") or req_data.get("prompt") or ""
-            result = self.engine.process_query(query)
+            mode = req_data.get("mode", "auto")
+            result = self.engine.process_query(query, mode=mode)
             self._send_json(result)
 
         elif self.path in ("/api/model/switch", "/api/models/switch"):
