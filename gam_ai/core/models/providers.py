@@ -61,6 +61,74 @@ class MicroLocalModelProvider(IModelProvider):
         active_query = self._extract_active_query(prompt).lower()
         role = self.specialized_role.lower()
 
+        # Basic Daily Conversation & Small Talk
+        clean_q = active_query.strip("?!.,'\" ")
+        
+        # Greetings
+        if clean_q in ("hello", "hi", "hey", "hey there", "good morning", "good afternoon", "good evening", "howdy", "greetings", "yo"):
+            return (
+                "Hello! How can I help you today? Whether you need help with network troubleshooting, "
+                "want to generate a configuration, need coding advice, or just want to chat, I'm ready!"
+            )
+            
+        # How are you
+        if "how are you" in active_query or "how is it going" in active_query or "how are you doing" in active_query or "how's it going" in active_query or "what's up" in active_query:
+            return (
+                "I'm doing great, thank you for asking! All my local systems and memory caches are running smoothly. "
+                "How are you doing today? What project or topic are you working on?"
+            )
+
+        # Jokes & Humor
+        if "joke" in active_query or "make me laugh" in active_query or "funny" in active_query:
+            import random
+            jokes = [
+                "Why do programmers prefer dark mode?\nBecause light attracts bugs! 🐛",
+                "There are 10 types of people in the world:\nThose who understand binary, and those who don't! 😄",
+                "Why did the router go to school?\nTo improve its routing table! 📡",
+                "Why was the computer cold?\nIt left its Windows open! 🪟❄️",
+                "A SQL query walks into a bar, strolls up to two tables and asks:\n'Can I join you?' 🍻",
+                "Why don't bachelors like Git?\nBecause they are afraid of committing! 💻",
+                "How do you comfort a JavaScript bug?\nYou console it! 🖥️"
+            ]
+            return random.choice(jokes)
+
+        # Who are you / Identity
+        if "who are you" in active_query or "what is your name" in active_query or "what are you" in active_query:
+            return (
+                "I am **GAM.AI** — a micro, local-first artificial intelligence assistant. "
+                "I am designed from the ground up for maximum resource efficiency, minimal RAM and storage footprint, "
+                "and complete offline privacy. I can help with everyday questions, network engineering (Cisco, Huawei, OLT, FortiGate), "
+                "coding, subnetting, and learning in both English and Nepali."
+            )
+
+        # What can you do / Capabilities
+        if "what can you do" in active_query or "what are your features" in active_query or clean_q in ("help", "help me"):
+            return (
+                "Here is what I can do for you:\n\n"
+                "1. **Everyday Conversation & Q&A**: Friendly chat, science, math, history, and homework assistance.\n"
+                "2. **Network Engineering & CCNA**: OSPF, BGP, STP, VLANs, and visual network topology diagrams.\n"
+                "3. **Multi-Vendor Configurations**: Ready-to-use syntax for Cisco IOS, Huawei VRP, Huawei GPON OLT, FortiGate, and MikroTik.\n"
+                "4. **Subnet & CIDR Calculator**: Instant calculation of network IDs, usable host ranges, and wildcard masks.\n"
+                "5. **Python & Script Automation**: Device socket health checking and automation scripts.\n"
+                "6. **Bilingual English & Nepali**: Native conversation and technical explanations in both languages."
+            )
+
+        # Gratitude & Farewell
+        if clean_q in ("thank you", "thanks", "thank you so much", "thx", "thanks a lot"):
+            return "You're very welcome! If you need anything else, just ask."
+        if clean_q in ("bye", "goodbye", "see you", "see ya", "cya", "good night"):
+            return "Goodbye! Have a fantastic day ahead. Feel free to come back whenever you need assistance!"
+
+        # Story
+        if "tell me a story" in active_query or "tell a story" in active_query:
+            return (
+                "Once upon a time in a bustling data center, a small packet named Ping was sent out across the globe. "
+                "Along the journey, Ping met high-speed fiber cables, traversed giant OSPF core routers, and hopped across switches. "
+                "Whenever a link dropped, a smart Loop-Free Alternate (LFA) caught Ping within milliseconds and guided it safely home. "
+                "Ping learned that no matter how complex the network of life gets, staying resilient and finding the right path always leads to success."
+            )
+
+
         # 1. Picture / Diagram Generator Persona
         if role in ("picture", "vision", "diagram") or "diagram" in active_query or "picture" in active_query or "topology" in active_query:
             return (
@@ -150,7 +218,79 @@ class MicroLocalModelProvider(IModelProvider):
                 + "\n```"
             )
 
-        # Context synthesis
+        
+        # FortiGate & Firewalls
+        if "fortigate" in active_query or "fortios" in active_query or ("firewall" in active_query and ("policy" in active_query or "lan to wan" in active_query)):
+            from gam_ai.core.network.multivendor import MultiVendorConfigGenerator
+            cfg = MultiVendorConfigGenerator.fortigate_policy(1, "LAN_to_WAN_Internet", "port2", "port1")
+            return (
+                "### FortiGate Firewall Policy: LAN to WAN\n\n"
+                "In FortiOS, internal traffic requires an explicit stateful policy and Source NAT (PAT) to reach the internet.\n\n"
+                "**1. FortiOS CLI Configuration:**\n\n"
+                "```fortios\n"
+                "config firewall address\n"
+                "    edit \"LAN_Subnet_192.168.1.0\"\n"
+                "        set subnet 192.168.1.0 255.255.255.0\n"
+                "    next\n"
+                "end\n\n"
+                + cfg + "\n"
+                "```\n\n"
+                "**2. Policy Breakdown:**\n"
+                "- **srcintf / dstintf**: Incoming internal port (`port2`) and outgoing internet WAN interface (`port1`).\n"
+                "- **nat enable**: Translates RFC 1918 private LAN IPs to the WAN interface public IP.\n"
+                "- **action accept**: Stateful packet inspection automatically permits return traffic.\n\n"
+                "**3. Troubleshooting & Verification:**\n"
+                "```fortios\n"
+                "diagnose sys session filter src 192.168.1.50\n"
+                "diagnose sys session list\n"
+                "diagnose sniffer packet any 'host 192.168.1.50' 4 10\n"
+                "```"
+            )
+
+        # MikroTik RouterOS
+        if "mikrotik" in active_query or "routeros" in active_query:
+            from gam_ai.core.network.multivendor import MultiVendorConfigGenerator
+            return (
+                "### MikroTik RouterOS Gateway & NAT Configuration\n\n"
+                "```routeros\n"
+                + MultiVendorConfigGenerator.mikrotik_basic_setup() + "\n"
+                "```\n\n"
+                "- Configures bridge interface for LAN ports.\n"
+                "- Masquerades outbound traffic through WAN interface (`ether1`).\n"
+                "- Enables stateful connection-tracking firewall filter rules."
+            )
+
+        # Cisco Configurations (OSPF, Trunk, SVI)
+        if "cisco" in active_query and ("ospf" in active_query or "vlan" in active_query or "trunk" in active_query):
+            from gam_ai.core.network.multivendor import MultiVendorConfigGenerator
+            return (
+                "### Cisco IOS / IOS-XE Configuration\n\n"
+                "**OSPFv2 Routing:**\n"
+                "```cisco\n"
+                + MultiVendorConfigGenerator.cisco_ospf(1, "1.1.1.1", "0", "192.168.1.0", "0.0.0.255") + "\n"
+                "```\n\n"
+                "**802.1Q Trunk Port:**\n"
+                "```cisco\n"
+                + MultiVendorConfigGenerator.cisco_trunk_port("GigabitEthernet0/0/1", allowed_vlans="10,20,30") + "\n"
+                "```"
+            )
+
+        # Huawei VRP Configurations
+        if "huawei" in active_query and ("vlan" in active_query or "trunk" in active_query or "ospf" in active_query) and "olt" not in active_query:
+            from gam_ai.core.network.multivendor import MultiVendorConfigGenerator
+            return (
+                "### Huawei VRP Switch Configuration\n\n"
+                "**VLAN & Gateway Vlanif:**\n"
+                "```text\n"
+                + MultiVendorConfigGenerator.huawei_vlan(10, "Sales_Dept", "192.168.10.1", 24) + "\n"
+                "```\n\n"
+                "**Trunk Port Configuration:**\n"
+                "```text\n"
+                + MultiVendorConfigGenerator.huawei_trunk_port("GigabitEthernet0/0/1", "10 20 30") + "\n"
+                "```"
+            )
+
+# Context synthesis
         if "retrieved knowledge:" in prompt.lower() or "user context & preferences:" in prompt.lower():
             lines = []
             capture = False

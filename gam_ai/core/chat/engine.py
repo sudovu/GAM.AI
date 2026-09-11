@@ -1,3 +1,21 @@
+
+CONVERSATIONAL_PHRASES = {
+    "hello", "hi", "hey", "good morning", "good afternoon", "good evening",
+    "how are you", "how are you doing", "how's it going", "what's up",
+    "thank you", "thanks", "bye", "goodbye", "see you", "tell me a joke",
+    "say a joke", "tell a joke", "who are you", "what is your name",
+    "what can you do", "help me", "नमस्ते", "नमस्कार", "धन्यवाद"
+}
+
+def is_conversational_query(text: str) -> bool:
+    clean = text.lower().strip("?!.,'\" ")
+    if clean in CONVERSATIONAL_PHRASES:
+        return True
+    for phrase in ("how are you", "tell me a joke", "say a joke", "who are you", "what can you do", "tell me a story"):
+        if phrase in clean:
+            return True
+    return False
+
 """ChatEngine: Central orchestrator coordinating 3-level storage, models, and research."""
 import logging
 from typing import Dict, Any, Optional
