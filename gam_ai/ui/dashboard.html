@@ -275,6 +275,33 @@
   }
   .btn-action-subtle:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 
+  /* Search Engine Mode Toggle in Not Found Card */
+  .notfound-search-toggle-bar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px; padding: 8px 12px; margin: 4px 0;
+  }
+  .search-mode-segmented-toggle {
+    display: inline-flex; background: rgba(0, 0, 0, 0.4); border-radius: 20px; padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.1); gap: 3px;
+  }
+  .segmented-mode-btn {
+    border: none; background: transparent; color: var(--text-muted); font-size: 0.78rem;
+    font-weight: 600; padding: 6px 14px; border-radius: 16px; cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .segmented-mode-btn.active-offline {
+    background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.25); font-weight: 700;
+  }
+  .segmented-mode-btn.active-online {
+    background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.6);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.25); font-weight: 700;
+  }
+  .segmented-mode-btn:hover:not(.active-offline):not(.active-online) {
+    color: var(--text-main); background: rgba(255, 255, 255, 0.08);
+  }
+
   /* ChatGPT-Inspired Bottom Input Section */
   .input-container {
     padding: 8px 16px max(14px, env(safe-area-inset-bottom)) 16px;
@@ -1968,6 +1995,238 @@ function processOfflineAIQuery(q) {
     };
   }
 
+  // ── 28. ELABORATE / SIMPLIFY / I DON'T UNDERSTAND / REGENERATE ──────────
+  var isElaborateRequest = (
+    qLower.indexOf("don't understand") !== -1 || qLower.indexOf("dont understand") !== -1 ||
+    qLower.indexOf("didn't understand") !== -1 || qLower.indexOf("didnt understand") !== -1 ||
+    qLower.indexOf("not understanding") !== -1 || qLower.indexOf("don't get it") !== -1 ||
+    qLower.indexOf("dont get it") !== -1 || qLower.indexOf("elaborate") !== -1 ||
+    qLower.indexOf("explain more") !== -1 || qLower.indexOf("simplify") !== -1 ||
+    qLower.indexOf("make it simpler") !== -1 || qLower.indexOf("simpler terms") !== -1 ||
+    qLower.indexOf("explain simply") !== -1 || qLower.indexOf("what do you mean") !== -1 ||
+    qLower.indexOf("what does that mean") !== -1 || qLower.indexOf("eli5") !== -1 ||
+    qLower.indexOf("regenerate") !== -1 || qLower.indexOf("retry response") !== -1 ||
+    qLower.indexOf("repeat") !== -1 || qLower.indexOf("explain again") !== -1 ||
+    q.indexOf('समझ नहीं आया') !== -1 || q.indexOf('समझाओ') !== -1 || q.indexOf('सरल भाषा') !== -1 ||
+    q.indexOf('विस्तार') !== -1 || q.indexOf('बुझिन') !== -1 || q.indexOf('फेरि भन्नु') !== -1 ||
+    q.indexOf('सजिलो गरी') !== -1
+  );
+
+  if (isElaborateRequest) {
+    var prevQuery = (window._lastAssistantQuery || '').toLowerCase();
+    var prevText = (window._lastAssistantResponse || '').toLowerCase();
+
+    // 1. If previous was VLAN
+    if (prevQuery.indexOf('vlan') !== -1 || prevText.indexOf('vlan') !== -1 || qLower.indexOf('vlan') !== -1) {
+      return {
+        found: true,
+        response: '💡 **VLANs Explained in Super Simple Terms**\n\n' +
+          '### 🚗 The Everyday Analogy\n' +
+          'Imagine a **single physical highway** (your Ethernet cable).\n' +
+          'Normally, all cars mix together. But with a VLAN, we paint dedicated colored lanes:\n' +
+          '- **Blue Lane (VLAN 10):** Management & Servers only\n' +
+          '- **Green Lane (VLAN 20):** Office Staff laptops & Wi-Fi\n' +
+          '- **Orange Lane (VLAN 30):** Security CCTV Cameras\n\n' +
+          'Even though they share the exact same wire, **green cars can NEVER see or talk to orange cars** unless the router specifically gives permission.\n\n' +
+          '### 🪜 The 3 Terms You Actually Need to Know\n' +
+          '1. **Access Port (Untagged):** For regular laptops, printers, cameras. The device doesn\'t know what a VLAN is; the switch puts it into the right lane automatically.\n' +
+          '2. **Trunk Port (Tagged):** Connects two switches or a router. It keeps the "color stickers" attached so traffic stays separated across switches.\n' +
+          '3. **PVID (Port VLAN ID):** Tells the switch: *"Whenever an ordinary device plugs into this port, assign it to this VLAN ID."*\n\n' +
+          '### 🛠️ What You Should Do in MikroTik\n' +
+          '1. Put all ports into a single bridge (`bridge1`).\n' +
+          '2. Turn ON `vlan-filtering=yes` on that bridge.\n' +
+          '3. In `/interface bridge vlan`, set which ports are Tagged (uplinks) and Untagged (PC/CCTV ports).'
+      };
+    }
+
+    // 2. If previous was NAT / Masquerade / Port Forward
+    if (prevQuery.indexOf('nat') !== -1 || prevText.indexOf('masquerade') !== -1 || prevText.indexOf('nat') !== -1 || qLower.indexOf('nat') !== -1) {
+      return {
+        found: true,
+        response: '💡 **NAT & Masquerade Explained in Super Simple Terms**\n\n' +
+          '### 🏢 The Office Receptionist Analogy\n' +
+          'Imagine an office with **100 workers** (your phones, smart TVs, PCs), but only **ONE official public mailing address** (your public IP from the ISP).\n\n' +
+          'When Worker #12 sends a letter to Google:\n' +
+          '1. The router (Receptionist) erases Worker #12\'s internal room number (`192.168.88.12`).\n' +
+          '2. The router puts the company\'s official stamp on it (`203.0.113.5`) and notes down in a logbook: *"Google reply goes to Worker #12"*.\n' +
+          '3. When Google replies, the router checks its logbook and quietly hands the reply back to Worker #12!\n\n' +
+          'This is called **Masquerade (Source NAT)**. Without it, the internet cannot reply to private `192.168.x.x` addresses!\n\n' +
+          '### 🚪 What is Port Forwarding (Destination NAT)?\n' +
+          'It\'s like a direct phone extension. If someone outside calls your company main number on extension `8080`, the receptionist forwards that specific call straight to the office security camera server.'
+      };
+    }
+
+    // 3. If previous was PoE / Power / Electrical
+    if (prevQuery.indexOf('poe') !== -1 || prevText.indexOf('poe') !== -1 || prevQuery.indexOf('power') !== -1 || qLower.indexOf('poe') !== -1) {
+      return {
+        found: true,
+        response: '💡 **PoE (Power over Ethernet) Explained Simply**\n\n' +
+          '### 🔌 The Big Idea\n' +
+          'You have a Wi-Fi dish or camera on a high metal tower. You don\'t want to hire an electrician to install a 220V power socket on the tower roof in the rain.\n\n' +
+          '**PoE solves this:** One single CAT6 network cable sends **both internet data and electrical power** up the tower at the same time!\n\n' +
+          '### ⚡ 2 Kinds of PoE to Remember\n' +
+          '1. **Passive 24V PoE (MikroTik / Ubiquiti outdoor):** Raw 24V power is sent continuously through blue & brown wire pairs (pins 4,5 and 7,8). Cheap & simple, but verify voltage before plugging in!\n' +
+          '2. **Active 802.3af/at (48V Smart PoE):** The switch talks to the device first: *"Are you a PoE camera?"* If yes, it sends 48V safely. If you plug a normal laptop in, it sends NO electricity so nothing fries!\n\n' +
+          '### ⚠️ Golden Rule\n' +
+          'Always ground your outdoor equipment to a copper earth rod. Surge arrestors prevent lightning static from blowing up your indoor switch.'
+      };
+    }
+
+    // 4. If previous was Subnetting / IP
+    if (prevQuery.indexOf('subnet') !== -1 || prevText.indexOf('subnet') !== -1 || qLower.indexOf('subnet') !== -1) {
+      return {
+        found: true,
+        response: '💡 **Subnetting & IP Addresses Explained Simply**\n\n' +
+          '### 🏘️ The Street and House Analogy\n' +
+          'Every IP address has two parts: a **Street Name (Network)** and a **House Number (Host)**.\n\n' +
+          'Take `192.168.1.55 / 24`:\n' +
+          '- The `/24` means the first 3 numbers (`192.168.1`) are the **Street Name**.\n' +
+          '- The last number (`.55`) is your **House Number**.\n\n' +
+          'All devices on `192.168.1.x` live on the same street. They can talk to each other directly without a router!\n\n' +
+          'If you want to talk to `192.168.2.10`, that is a **different street**. You must send your message through the street exit gate — your **Default Gateway** (the router at `192.168.1.1`).'
+      };
+    }
+
+    // 5. Default General Elaboration / Regeneration
+    return {
+      found: true,
+      response: '💡 **Let\'s Break This Down in Crystal-Clear Steps**\n\n' +
+        'Here is a simpler, step-by-step breakdown:\n\n' +
+        '### 🎯 The Core Goal in 1 Sentence\n' +
+        'Connect your equipment physically, give each device a unique local address, and let the router safely bridge everyone to the internet.\n\n' +
+        '### 📋 Simple 4-Step Checklist\n' +
+        '1. **Physical Cables (Layer 1):** Check link LEDs. Green lights mean the electrical wire is good.\n' +
+        '2. **IP & Gateway (Layer 3):** Ensure your laptop has an address like `192.168.88.x` and can ping the router (`192.168.88.1`).\n' +
+        '3. **Internet Route (WAN):** The router needs a DHCP client or PPPoE connection to your ISP.\n' +
+        '4. **NAT Masquerade:** One single rule lets all your phones and laptops share that one internet uplink.\n\n' +
+        '### ❓ Which specific part feels confusing?\n' +
+        'You can type:\n' +
+        '- *"explain how to test cables"*\n' +
+        '- *"explain how to ping"*\n' +
+        '- *"give me exact commands for mikrotik"*\n' +
+        '- *"how to troubleshoot no internet"*'
+    };
+  }
+
+  // ── 29. HOW TO SOLVE A PROBLEM / GENERAL TROUBLESHOOTING METHODOLOGY ────
+  if (qLower.indexOf('how to solve a problem') !== -1 || qLower.indexOf('how to solve problem') !== -1 ||
+      qLower.indexOf('problem solving') !== -1 || qLower.indexOf('troubleshooting methodology') !== -1 ||
+      qLower.indexOf('how to troubleshoot') !== -1 || qLower.indexOf('troubleshoot guide') !== -1 ||
+      qLower.indexOf('diagnostic methodology') !== -1 || qLower.indexOf('troubleshoot network') !== -1 ||
+      q.indexOf('समस्या समाधान') !== -1 || q.indexOf('कसरी समाधान गर्ने') !== -1) {
+    return {
+      found: true,
+      response: '🛠️ **Universal 5-Step Problem-Solving Methodology (Root Cause Analysis)**\n\n' +
+        'Whenever a network, device, or internet connection fails, always diagnose from the ground up (OSI Layers 1 to 7):\n\n' +
+        '```\n' +
+        'Step 1: Physical (Cables, PoE, LEDs)\n' +
+        '   ↓\n' +
+        'Step 2: Data Link (Port speed, Bridge, VLANs)\n' +
+        '   ↓\n' +
+        'Step 3: Network (IP address, Default Gateway Ping)\n' +
+        '   ↓\n' +
+        'Step 4: DNS & Transport (Public IP Ping vs Domain Ping)\n' +
+        '   ↓\n' +
+        'Step 5: Application / Firewall (NAT, Drop rules, Service state)\n' +
+        '```\n\n' +
+        '### 🪜 Step 1 — Check Physical Layer (Hardware & Power)\n' +
+        '- **LED check:** Are port lights solid or flashing? No light = dead cable, dead port, or no PoE.\n' +
+        '- **PoE injector:** Is the LED solid green? Blinking LED = short circuit or cable wire touch.\n' +
+        '- **Cable run:** Is cable ≤ 100m? Damaged pins 1,2,3,6 drop data entirely; pins 4,5,7,8 kill PoE.\n\n' +
+        '### 🪜 Step 2 — Check Data Link Layer (Switching & Bridge)\n' +
+        '- Is the Ethernet port negotiating at **1000 Mbps Full Duplex** or dropped to 10 Mbps/Half Duplex?\n' +
+        '- Is the port added to the router/switch bridge? (`/interface bridge port print`)\n' +
+        '- Is VLAN tagging blocking untagged traffic?\n\n' +
+        '### 🪜 Step 3 — Check Network Layer (IP & Gateway)\n' +
+        '- Did your device receive an IP address or `169.254.x.x` (DHCP failed)?\n' +
+        '- **Ping Gateway Test:** `ping 192.168.88.1`. If this fails, the problem is 100% inside your building, not the ISP!\n\n' +
+        '### 🪜 Step 4 — Check DNS & Routing (The 2-Ping Rule)\n' +
+        '- **Test A:** `ping 8.8.8.8` (Google Public IP)\n' +
+        '  - If replies come back → **Your internet route & WAN are working!**\n' +
+        '- **Test B:** `ping google.com` (Domain Name)\n' +
+        '  - If Test A works but Test B fails → **DNS is broken.** Set DNS to `8.8.8.8` and `1.1.1.1`.\n\n' +
+        '### 🪜 Step 5 — Check Firewall & NAT\n' +
+        '- Is NAT Masquerade active on the WAN interface?\n' +
+        '- Are firewall filter rules dropping outgoing packets? Check drop packet counters.'
+    };
+  }
+
+  // ── 30. COMMON ERRORS & STEP-BY-STEP TROUBLESHOOTING ───────────────────────
+  if (qLower.indexOf('error') !== -1 || qLower.indexOf('troubleshoot') !== -1 ||
+      qLower.indexOf('no internet') !== -1 || qLower.indexOf('dns probe') !== -1 ||
+      qLower.indexOf('dns error') !== -1 || qLower.indexOf('ip conflict') !== -1 ||
+      qLower.indexOf('dhcp failed') !== -1 || qLower.indexOf('169.254') !== -1 ||
+      qLower.indexOf('packet loss') !== -1 || qLower.indexOf('high ping') !== -1 ||
+      qLower.indexOf('port flapping') !== -1 || qLower.indexOf('reboot loop') !== -1 ||
+      qLower.indexOf('poe overload') !== -1 || qLower.indexOf('wifi drop') !== -1 ||
+      qLower.indexOf('winbox') !== -1 || qLower.indexOf('cant access router') !== -1 ||
+      q.indexOf('त्रुटि') !== -1 || q.indexOf('समस्या') !== -1 || q.indexOf('इन्टरनेट चलेन') !== -1) {
+    return {
+      found: true,
+      response: '🚨 **Top 10 Network & System Errors — Step-by-Step Fixes**\n\n' +
+        '### 1. Error: "Connected, No Internet Access"\n' +
+        '- **Symptom:** Wi-Fi or Ethernet shows connected with an exclamation mark (!).\n' +
+        '- **Root Cause:** Device has an IP, but router has no default route, no WAN IP, or missing NAT.\n' +
+        '- **Fix in MikroTik:**\n' +
+        '  ```routeros\n' +
+        '  # 1. Verify router has WAN IP:\n' +
+        '  /ip dhcp-client print\n' +
+        '  # 2. Verify default route:\n' +
+        '  /ip route print where dst-address=0.0.0.0/0\n' +
+        '  # 3. Add NAT Masquerade rule if missing:\n' +
+        '  /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade\n' +
+        '  ```\n\n' +
+        '### 2. Error: "DNS_PROBE_FINISHED_NO_INTERNET" or Cannot Open Websites\n' +
+        '- **Symptom:** Can ping `8.8.8.8`, but browser says site cannot be reached.\n' +
+        '- **Root Cause:** DNS server is unreachable or not allowing remote requests.\n' +
+        '- **Fix in MikroTik:**\n' +
+        '  ```routeros\n' +
+        '  /ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes\n' +
+        '  /ip dns cache flush\n' +
+        '  ```\n' +
+        '- **Client Fix (PC/Phone):** Run `ipconfig /flushdns` in Windows CMD or toggle Airplane mode.\n\n' +
+        '### 3. Error: "IP Address Conflict"\n' +
+        '- **Symptom:** Two devices kick each other offline repeatedly.\n' +
+        '- **Root Cause:** A device was given a static IP that falls inside the router\'s automatic DHCP pool.\n' +
+        '- **Fix:**\n' +
+        '  - Check ARP table: `/ip arp print`\n' +
+        '  - Change DHCP pool to only give addresses `192.168.88.100` to `192.168.88.254`.\n' +
+        '  - Keep `192.168.88.2` through `192.168.88.99` strictly for static servers and switches.\n\n' +
+        '### 4. Error: Device Gets `169.254.x.x` (APIPA / DHCP Lookup Failed)\n' +
+        '- **Symptom:** Device never gets internet; IP starts with `169.254`.\n' +
+        '- **Root Cause:** DHCP server is stopped, pool is exhausted, or port is on wrong bridge/VLAN.\n' +
+        '- **Fix:**\n' +
+        '  ```routeros\n' +
+        '  /ip dhcp-server print  ;# Check if red or disabled\n' +
+        '  /ip pool print         ;# Check if pool has free addresses\n' +
+        '  /interface bridge port print ;# Verify physical port is in the bridge\n' +
+        '  ```\n\n' +
+        '### 5. Error: High Packet Loss & Latency Spikes (Ping Jitter)\n' +
+        '- **Symptom:** Video calls freeze, games lag, 5–30% packet loss in ping.\n' +
+        '- **Root Cause:** MTU fragmentation, bandwidth saturation, or bad wireless link.\n' +
+        '- **Fix:**\n' +
+        '  - Run MTU test: `ping 8.8.8.8 -f -l 1472`\n' +
+        '  - If fragmented, clamp MSS in MikroTik:\n' +
+        '    `/ip firewall mangle add chain=forward protocol=tcp tcp-flags=syn action=change-mss new-mss=clamp-to-pmtu`\n' +
+        '  - Check port errors: `/interface print stats`\n\n' +
+        '### 6. Error: Ethernet Link Stuck at 100 Mbps on 1 Gbps Port\n' +
+        '- **Symptom:** Internet speed is capped at 90–95 Mbps on Gigabit fiber.\n' +
+        '- **Root Cause:** Gigabit requires all 8 wires inside CAT5e/CAT6. If pin 4,5,7 or 8 has a bad crimp, it falls back to 100M (4-wire mode).\n' +
+        '- **Fix:** Re-crimp both RJ45 connectors with a quality crimper following T-568B color standard.\n\n' +
+        '### 7. Error: Ubiquiti / MikroTik Wireless Link Drops & Low CCQ\n' +
+        '- **Symptom:** Dish disconnects when it rains or during peak hours.\n' +
+        '- **Fix:**\n' +
+        '  - Open AirOS / RouterOS Frequency Usage tool.\n' +
+        '  - Shift from crowded channel to clean DFS channel (e.g. 5500 or 5745 MHz).\n' +
+        '  - Reduce channel width from 80MHz to 20MHz or 40MHz for vastly higher signal stability.\n' +
+        '  - Re-align antenna until RSSI is −55 to −60 dBm.\n\n' +
+        '### 8. Error: PoE Device Reboot Loop / Blinking Power LED\n' +
+        '- **Symptom:** Router or AP turns on for 10 seconds, then reboots.\n' +
+        '- **Root Cause:** Voltage drop over cable run >40m on 24V passive PoE, or power supply too weak.\n' +
+        '- **Fix:** Upgrade power supply from 24V 0.5A (12W) to 24V 1.5A (36W) or switch to 48V 802.3at.'
+    };
+  }
+
   // ── 19. TOPIC NOT FOUND → Request switch to Online ────────────────────────
   var notFoundText = isHi
     ? 'ℹ️ **यह विषय आपके वर्तमान स्थानीय ऑफ़लाइन नॉलेज पैक में उपलब्ध नहीं है।**\n\n' +
@@ -2858,11 +3117,44 @@ function toggleMsgTranslate(msgId) {
 }
 
 function switchOnlineAndQuery(q) {
-  setExecutionMode('online');
-  showToast('🌐 Switched to Online Mode! Searching live web...');
+  toggleSearchModeAndQuery(q, 'online');
+}
+
+function toggleSearchModeAndQuery(q, targetMode) {
+  setExecutionMode(targetMode);
+  var msg = (targetMode === 'online') 
+    ? '🌐 Switched to Online Search! Searching live web...' 
+    : '⚡ Switched to Offline Search! Searching local engine...';
+  showToast(msg);
   setTimeout(function() {
     executeSend(q, false);
-  }, 300);
+  }, 250);
+}
+
+function elaborateMsg(msgId) {
+  var origQuery = (window._msgQueryStore && window._msgQueryStore[msgId]) || '';
+  var text = (window._msgStore && window._msgStore[msgId]) || '';
+  var topic = origQuery || (text ? text.split('\n')[0].replace(/[#*`]/g, '').trim().substring(0, 50) : '');
+  var prompt = (currentLang === 'hi') 
+    ? ('कृपया इसे सरल भाषा में समझाएं: ' + topic) 
+    : ((currentLang === 'ne') 
+      ? ('कृपया यसलाई सजिलो भाषामा व्याख्या गर्नुहोस्: ' + topic) 
+      : ('Please elaborate and explain this in simpler terms with easy steps: ' + topic));
+  showToast('💡 Generating simplified breakdown...');
+  executeSend(prompt, false);
+}
+
+function regenerateMsg(msgId) {
+  var origQuery = (window._msgQueryStore && window._msgQueryStore[msgId]) || '';
+  if (!origQuery) {
+    var wrapper = document.getElementById(msgId);
+    if (wrapper) origQuery = wrapper.getAttribute('data-query') || '';
+  }
+  if (!origQuery) {
+    origQuery = 'regenerate response';
+  }
+  showToast(currentLang === 'hi' ? '🔄 पुनः उत्तर तैयार किया जा रहा है...' : (currentLang === 'ne' ? '🔄 पुनः जवाफ तयार गरिँदैछ...' : '🔄 Regenerating response...'));
+  executeSend(origQuery, false);
 }
 
 function downloadKnowledgeLocally(q) {
@@ -3086,6 +3378,14 @@ function renderAssistantMessage(opts) {
   var text = opts.text || '';
   window._msgStore = window._msgStore || {};
   window._msgStore[msgId] = text;
+  window._msgQueryStore = window._msgQueryStore || {};
+  window._msgQueryStore[msgId] = q;
+
+  if (!isNotFound && text) {
+    window._lastAssistantResponse = text;
+    window._lastAssistantQuery = q;
+  }
+
   var isOff = !!opts.isOffline;
   var modelName = opts.modelName || activeModelName;
   var srcTag = opts.sourceTag || (isOff ? '💾 Local Device Engine' : '🌐 Web Intelligence');
@@ -3096,6 +3396,8 @@ function renderAssistantMessage(opts) {
   var readLabel = (currentLang === 'hi' ? '🔊 पढ़कर सुनाएं' : (currentLang === 'ne' ? '🔊 पढेर सुनाउनुहोस्' : '🔊 Read Aloud'));
   var transLabel = (currentLang === 'hi' ? '🌐 अनुवाद ▾' : (currentLang === 'ne' ? '🌐 अनुवाद ▾' : '🌐 Translate ▾'));
   var copyLabel = (currentLang === 'hi' ? '📋 कॉपी' : (currentLang === 'ne' ? '📋 कपी' : '📋 Copy'));
+  var elaborateLabel = (currentLang === 'hi' ? '💡 सरल भाषा' : (currentLang === 'ne' ? '💡 सरल व्याख्या' : '💡 Elaborate'));
+  var regenLabel = (currentLang === 'hi' ? '🔄 पुनः उत्पन्न' : (currentLang === 'ne' ? '🔄 पुनः जवाफ' : '🔄 Regenerate'));
 
   var notFoundHtml = '';
   if (isNotFound) {
@@ -3105,7 +3407,6 @@ function renderAssistantMessage(opts) {
       : (currentLang === 'ne' 
         ? 'यो विषय हाल स्थानीय अफलाइन भण्डारणमा उपलब्ध छैन। अनलाइन खोज्न मोड बदल्नुहोस् वा स्थानीय रूपमा डाउनलोड गर्नुहोस्:' 
         : 'This topic was not found in your local offline knowledge pack. Switch to Online Mode to search the live web or download related info locally:'));
-    var btnSwitchText = (currentLang === 'hi' ? '🌐 ऑनलाइन मोड में खोजें' : (currentLang === 'ne' ? '🌐 अनलाइन मोडमा खोज्नुहोस्' : '🌐 Switch to Online Mode & Search Now'));
     var btnDlText = (currentLang === 'hi' ? '📥 जानकारी स्थानीय डाउनलोड करें' : (currentLang === 'ne' ? '📥 स्थानीय जानकारी डाउनलोड' : '📥 Download Knowledge Locally'));
     var btnModelText = (currentLang === 'hi' ? '📦 मॉडल स्टोर' : (currentLang === 'ne' ? '📦 मोडेल स्टोर' : '📦 Model Store'));
 
@@ -3119,16 +3420,27 @@ function renderAssistantMessage(opts) {
           '</div>' +
         '</div>' +
         '<div class="notfound-prompt">' + notFoundMsg + '</div>' +
+
+        '<!-- Interactive Toggle Switch for Online & Offline Search -->' +
+        '<div class="notfound-search-toggle-bar">' +
+          '<span style="font-size:0.8rem; font-weight:700; color:var(--text-main);">🔄 Search Engine Switch:</span>' +
+          '<div class="search-mode-segmented-toggle">' +
+            '<button class="segmented-mode-btn ' + (isOff ? 'active-offline' : '') + '" onclick="toggleSearchModeAndQuery(' + JSON.stringify(q) + ', \'offline\')">⚡ Offline Local</button>' +
+            '<button class="segmented-mode-btn ' + (!isOff ? 'active-online' : '') + '" onclick="toggleSearchModeAndQuery(' + JSON.stringify(q) + ', \'online\')">🌐 Online Search</button>' +
+          '</div>' +
+        '</div>' +
+
         '<div class="notfound-actions">' +
-          '<button class="btn-action-primary" onclick="switchOnlineAndQuery(' + JSON.stringify(q) + ')">' + btnSwitchText + '</button>' +
+          '<button class="btn-action-primary" onclick="toggleSearchModeAndQuery(' + JSON.stringify(q) + ', \'' + (isOff ? 'online' : 'offline') + '\')">' + (isOff ? '🌐 Switch to Online Search' : '⚡ Switch to Offline Search') + '</button>' +
           '<button class="btn-action-secondary" onclick="downloadKnowledgeLocally(' + JSON.stringify(q) + ')">' + btnDlText + '</button>' +
+          '<button class="btn-action-subtle" onclick="submitQuick(\'how to solve a problem\')">🛠️ Troubleshooting Guide</button>' +
           '<button class="btn-action-subtle" onclick="showModal(\'modal-models\')">' + btnModelText + '</button>' +
         '</div>' +
       '</div>';
   }
 
   var msgHtml = 
-    '<div class="message-wrapper" id="' + msgId + '" data-raw-text="' + escapeHtml(text) + '" data-current-lang="' + currentLang + '">' +
+    '<div class="message-wrapper" id="' + msgId + '" data-raw-text="' + escapeHtml(text) + '" data-current-lang="' + currentLang + '" data-query="' + escapeHtml(q) + '">' +
       '<div class="msg-row">' +
         '<div class="avatar ai">G</div>' +
         '<div class="msg-bubble ai">' +
@@ -3151,6 +3463,8 @@ function renderAssistantMessage(opts) {
                 '<button onclick="translateMsgText(\'' + msgId + '\', \'ne\')">🇳🇵 नेपाली</button>' +
               '</div>' +
             '</div>' +
+            '<button class="msg-btn-action" onclick="elaborateMsg(\'' + msgId + '\')" title="Explain in simpler terms with easy steps">' + elaborateLabel + '</button>' +
+            '<button class="msg-btn-action" onclick="regenerateMsg(\'' + msgId + '\')" title="Regenerate this response">' + regenLabel + '</button>' +
             '<button class="msg-btn-action" onclick="copyMsgText(\'' + msgId + '\')">' + copyLabel + '</button>' +
           '</div>' +
           '<div class="msg-footer-mode ' + (isOff ? 'offline' : 'online') + '">' +
