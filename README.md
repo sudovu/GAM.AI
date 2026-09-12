@@ -71,27 +71,52 @@ Benchmarked on Linux x86_64:
 
 ---
 
-## 4. Quickstart
+## 4. Cross-Platform Downloads & Installation
+
+GAM.AI is packaged with dedicated, ready-to-install executables and packages for all major platforms:
+
+| Platform | Target Form Factor | Deliverable / Package | Installation / Quickstart |
+| :--- | :--- | :--- | :--- |
+| **Android** | Android 7.0+ (Phones, Tablets, Foldables, TV) | [`gam-ai-universal-release.apk`](dist/gam-ai-universal-release.apk) | Direct install: `adb install -r dist/gam-ai-universal-release.apk` or tap APK on device. |
+| **Android (Termux)** | CLI & Developer Mode | [`scripts/setup_android_termux.sh`](scripts/setup_android_termux.sh) | In Termux: `bash scripts/setup_android_termux.sh` |
+| **Windows** | Windows 10, 11, Server x64 | [`gam-ai.exe`](dist/gam-ai.exe) | Single-file portable standalone binary. Double-click to launch instant UI & server. |
+| **iOS / iPadOS** | iPhone, iPad, Safari Mobile | [`gam-ai-web-app.zip`](dist/gam-ai-web-app.zip) | Open in Safari, tap **Share** -> **"Add to Home Screen"** for full standalone PWA. |
+| **Linux / macOS** | Desktop & Headless Servers | Standard Python Package | `pip install .` or `python3 scripts/run_app.py` |
+| **Cross-Platform PWA** | Chrome, Edge, Safari, Firefox | Hosted Web Dashboard | Works offline with Service Worker caching and local SQLite/IndexedDB persistence. |
+
+---
+
+## 5. Quickstart
+
+### Packaging All Platforms in 1 Step
+```bash
+python scripts/package_all_platforms.py
+```
 
 ### Running Tests
-Execute the comprehensive test suite (13 unit and acceptance tests covering offline operation, cache reuse, cleanup, promotion, storage pressure, and RAM limits):
+Execute the full 29-test acceptance and unit suite:
 ```bash
-python3 scripts/run_tests.py
+python scripts/run_tests.py
 ```
 
 ### Running Profiling Benchmarks
 ```bash
-python3 scripts/run_benchmark.py
+python scripts/run_benchmark.py
+```
+
+### Starting the Standalone App
+```bash
+python scripts/run_app.py
 ```
 
 ### Starting the Interactive CLI
 ```bash
-python3 scripts/run_cli.py
+python scripts/run_cli.py
 ```
 
 ---
 
-## 5. Built-in Slash Commands
+## 6. Built-in Slash Commands
 
 | Command | Action |
 | :--- | :--- |

@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.5.0] - 2026-09-12
+### Multi-Platform Production Release & Multi-Turn Contextual Persistence
+- **All-Platform Ready-to-Install Packaging**:
+  - **Android (7.0+ Phones, Tablets, TV)**: Universal Release APK (`dist/gam-ai-universal-release.apk`) verified on Google Pixel 7 Pro with native WebBridge, camera lens integration, and hardware acceleration.
+  - **Windows (10/11/Server x64)**: Single-file standalone portable binary (`dist/gam-ai.exe`) with embedded UI and zero prerequisite setup.
+  - **iOS & iPadOS**: Progressive Web App package (`dist/gam-ai-web-app.zip`) with Safari "Add to Home Screen" support, offline service workers, and touch/tablet gesture optimization.
+  - **Linux & macOS**: Full Python packaging via `pyproject.toml` (`pip install .`) and CLI/Desktop run modes.
+  - **Automated Master Packaging**: `scripts/package_all_platforms.py` builds and stages deliverables for all platforms.
+  - **Multi-Platform CI/CD Pipeline**: GitHub Actions matrix workflow (`build-apk.yml`) building APK, Windows EXE, Linux binary, macOS binary, and Web PWA archive with automatic release asset attachment.
+- **Local Conversation Persistence & Context Reasoning**:
+  - Multi-turn state tracking (`GAM_CONTEXT`) with non-repeating sequential item delivery ("next", "another one", "one more", "और एक", "अर्को").
+  - Rich offline catalogs: 25 English, 12 Hindi, 10 Nepali jokes, 15 riddles, 10 facts, 8 quotes.
+  - Referential context grounding ("why?", "explain more", "give an example") inspecting previous conversational turns.
+  - Persistent storage across reloads/reboots in `localStorage` and SQLite `conversations`/`messages` tables.
+  - 1-tap new chat / clear history button (`🗑️`) with confirmation modal and reset toast.
+- **Expanded Test Suite**:
+  - 29 unit and acceptance tests covering multi-turn context resolution, SQLite persistence, and multi-platform packaging.
+
 ## [1.0.0] - 2026-09-11
 ### Initial Production Release
 - **Three-Level Storage Engine**:

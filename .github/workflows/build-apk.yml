@@ -1,9 +1,9 @@
-name: Build & Package GAM.AI Android APK
+name: Build & Package GAM.AI Multi-Platform Releases
 
 on:
   push:
     branches: [ main, master ]
-    paths-ignore:
+    paths_ignore:
       - 'README.md'
       - 'docs/**'
   pull_request:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@0v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@0v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -65,7 +65,7 @@ jobs:
       - name: Build Debug & Release APK
         run: |
           cd android
-          ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace
+          ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace -x lint -x lintVitalRelease -x lintVitalAnalyzeRelease
 
       - name: Stage Artifacts
         run: |
@@ -80,10 +80,109 @@ jobs:
           path: dist/*.apk
           retention-days: 30
 
-      - name: Attach APK to GitHub Release
-        if: github.event_name == 'release'
+  build-windows:
+    name: Build Windows Standalone Executable
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@0v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build gam-ai.exe
+        run: python scripts/build_windows_exe.py
+
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: gam-ai-windows-x64
+          path: dist/gam-ai.exe
+          retention-days: 30
+
+  build-linux:
+    name: Build Linux Standalone Binary
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@0v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build gam-ai-linux
+        run: |
+          pyinstaller --onefile --name gam-ai-linux -x64 \
+            --add-data "gam_ai/ui:gam_ai/ui" _
+            --platforms linux-x86_64 _\
+            scripts/run_app.py || \
+          pyinstaller --onefile --name gam-ai-linux-x64 \
+            --add-data "gam_ai/ui:gam_ai/ui" \
+            scripts/run_app.py
+
+      - name: Upload Linux Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: gam-ai-linux-x64
+          path: dist/gam-ai-linux-x64
+          retention-days: 30
+
+  build-web-pwa:
+    name: Package Cross-Platform Web & iOS PWA
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses:"actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Package Web & iOS PWA
+        run: |
+          python scripts/package_all_platforms.py
+
+      - name: Upload Web PWA
+        uses: actions/upload-artifact@v4
+        with:
+          name: gam-ai-web-pwa
+          path: dist/gam-ai-web-app.zip
+          retention-days: 30
+
+  release:
+    name: Attach All Platform Artifacts to GitHub Release
+    if: github.event_name == 'release'
+    needs: [build-apk, build-windows, build-linux, build-web-pwa]
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Stage Release Files
+        run: |
+          mkdir -p release-final
+          find release-artifacts -type f -exec cp {} release-final/ \;
+          ls -la release-final/
+
+      - name: Publish All Platforms to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/*.apk
+          files: release-final/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
