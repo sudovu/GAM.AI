@@ -229,7 +229,8 @@ class ChatEngine:
         prompt_str = self.context_budget.assemble_prompt_string(payload)
 
         model = self.models.load_model(self.config.default_model_tier)
-        gen_request = GenerationRequest(prompt=prompt_str)
+        safe_max_tokens = self.context_budget.get_remaining_generation_tokens(payload)
+        gen_request = GenerationRequest(prompt=prompt_str, max_tokens=safe_max_tokens)
         gen_response = model.generate(gen_request)
 
         # Update in-memory rolling history

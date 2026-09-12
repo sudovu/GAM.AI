@@ -142,6 +142,36 @@ class TestCoreComponents(unittest.TestCase):
             # Close database connection cleanly before tempdir removal
             engine.close()
 
+    def test_never_run_out_of_tokens(self):
+        """Verify that massive queries and long histories never exceed context or starve generation."""
+        from gam_ai.core.ai.context_budget import ContextBudgetManager
+        from gam_ai.core.chat.engine import ChatEngine
+
+        # Test 1: ContextBudgetManager with micro context (150 tokens) and massive 3,000 word query
+        cbm = ContextBudgetManager(max_context_tokens=150)
+        massive_query = "analyze this complex network telemetry packet " * 500  # 2,500 words
+        long_knowledge = ["RFC 793 Transmission Control Protocol specification details " * 20 for _ in range(10)]
+        long_history = [{"role": "user" if i % 2 == 0 else "assistant", "content": f"Turn {i} message " * 15} for i in range(20)]
+
+        payload = cbm.build_budgeted_prompt(
+            query=massive_query,
+            knowledge_items=long_knowledge,
+            history=long_history
+        )
+
+        # Must strictly stay within context ceiling and leave room for generation
+        self.assertLessEqual(payload.total_estimated_tokens, 150)
+        remaining_gen = cbm.get_remaining_generation_tokens(payload)
+        self.assertGreaterEqual(remaining_gen, 16)
+        self.assertLessEqual(payload.total_estimated_tokens + remaining_gen, 150)
+
+        # Test 2: ChatEngine live execution with massive input
+        engine = ChatEngine(db_path=":memory:")
+        res = engine.process_query(massive_query[:1000], conversation_id="conv_stress")
+        self.assertTrue(len(res["response"]) > 0)
+        self.assertLessEqual(res["prompt_tokens"], engine.config.max_context_tokens)
+        engine.close()
+
 if __name__ == "__main__":
     unittest.main()
 

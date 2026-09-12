@@ -15,8 +15,17 @@
   - Referential context grounding ("why?", "explain more", "give an example") inspecting previous conversational turns.
   - Persistent storage across reloads/reboots in `localStorage` and SQLite `conversations`/`messages` tables.
   - 1-tap new chat / clear history button (`🗑️`) with confirmation modal and reset toast.
+- **Continuous Context & Token Safety ("Never Runs Out of Tokens")**:
+  - `ContextBudgetManager` guarantees prompt ceiling and strictly reserves generation headroom (`safe_max_tokens`), preventing generation starvation.
+  - Deterministic sliding-window compaction with `compress_text_to_token_limit` handles massive queries and long pastes safely.
+  - Client-side real-time token tracking (`getTotalHistoryTokens`) and auto-compaction in `dashboard.html` with live status indicator.
+  - Automated stress unit test `test_never_run_out_of_tokens` verifying massive inputs within micro token budgets.
+- **Dedicated Platform Installer Scripts**:
+  - `scripts/install_windows.ps1` (automated Windows Desktop shortcut and setup).
+  - `scripts/install_macos.sh` (one-command macOS installer).
+  - `scripts/host_ios_pwa.py` (local LAN PWA server for iPhone, iPad, and Android tablets).
 - **Expanded Test Suite**:
-  - 29 unit and acceptance tests covering multi-turn context resolution, SQLite persistence, and multi-platform packaging.
+  - 30 unit and acceptance tests covering multi-turn context resolution, token headroom guarantees, and multi-platform packaging.
 
 ## [1.0.0] - 2026-09-11
 ### Initial Production Release

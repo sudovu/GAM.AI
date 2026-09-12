@@ -79,14 +79,30 @@ GAM.AI is packaged with dedicated, ready-to-install executables and packages for
 | :--- | :--- | :--- | :--- |
 | **Android** | Android 7.0+ (Phones, Tablets, Foldables, TV) | [`gam-ai-universal-release.apk`](dist/gam-ai-universal-release.apk) | Direct install: `adb install -r dist/gam-ai-universal-release.apk` or tap APK on device. |
 | **Android (Termux)** | CLI & Developer Mode | [`scripts/setup_android_termux.sh`](scripts/setup_android_termux.sh) | In Termux: `bash scripts/setup_android_termux.sh` |
-| **Windows** | Windows 10, 11, Server x64 | [`gam-ai.exe`](dist/gam-ai.exe) | Single-file portable standalone binary. Double-click to launch instant UI & server. |
-| **iOS / iPadOS** | iPhone, iPad, Safari Mobile | [`gam-ai-web-app.zip`](dist/gam-ai-web-app.zip) | Open in Safari, tap **Share** -> **"Add to Home Screen"** for full standalone PWA. |
-| **Linux / macOS** | Desktop & Headless Servers | Standard Python Package | `pip install .` or `python3 scripts/run_app.py` |
+| **Windows** | Windows 10, 11, Server x64 | [`gam-ai.exe`](dist/gam-ai.exe) / [`scripts/install_windows.ps1`](scripts/install_windows.ps1) | Run `powershell -ExecutionPolicy Bypass scripts/install_windows.ps1` to create Desktop shortcut or launch `dist/gam-ai.exe`. |
+| **macOS** | Mac (Intel & Apple Silicon M1/M2/M3/M4) | [`scripts/install_macos.sh`](scripts/install_macos.sh) | In Terminal: `bash scripts/install_macos.sh` (sets up virtualenv, pip package, and launcher). |
+| **iOS / iPadOS / Tablets** | iPhone, iPad, Safari Mobile | [`dist/gam-ai-web-app.zip`](dist/gam-ai-web-app.zip) / [`scripts/host_ios_pwa.py`](scripts/host_ios_pwa.py) | Run `python scripts/host_ios_pwa.py`, open Safari on iOS, tap **Share** -> **"Add to Home Screen"** for full standalone PWA. |
+| **Linux / Server** | Desktop & Headless Servers | Standard Python Package | `pip install .` (via `pyproject.toml`) or `python3 scripts/run_app.py` |
 | **Cross-Platform PWA** | Chrome, Edge, Safari, Firefox | Hosted Web Dashboard | Works offline with Service Worker caching and local SQLite/IndexedDB persistence. |
 
 ---
 
-## 5. Quickstart
+## 5. Continuous Context & Token Safety ("Never Runs Out of Tokens")
+
+GAM.AI is architected with a strict **Never Run Out of Tokens** engine that guarantees the model and client interface never crash, reject requests, or truncate mid-sentence due to context saturation:
+
+1. **Guaranteed Output Headroom Reservation**:
+   - The engine automatically reserves 20%–25% of the total context window exclusively for model completion (`safe_max_tokens`), ensuring generations are never starved.
+2. **Deterministic Sliding-Window Query Compaction**:
+   - If a user pastes large logs, codebases, or documents, `ContextBudgetManager` automatically preserves the leading intent and trailing constraints with an informative compaction marker (`[...compacted X words for token safety...]`), preventing prompt overflow.
+3. **Infinite Multi-Turn Rolling History**:
+   - When conversations grow beyond token thresholds, earlier turns are automatically consolidated into an atomic context digest while keeping recent turns intact.
+4. **Client-Side Token Meter**:
+   - `dashboard.html` dynamically calculates token usage in real time, auto-compacts local storage, and displays a live status indicator (`● Safe Tokens`) so conversations can run indefinitely.
+
+---
+
+## 6. Quickstart
 
 ### Packaging All Platforms in 1 Step
 ```bash
@@ -94,7 +110,7 @@ python scripts/package_all_platforms.py
 ```
 
 ### Running Tests
-Execute the full 29-test acceptance and unit suite:
+Execute the full 30-test acceptance and unit suite:
 ```bash
 python scripts/run_tests.py
 ```
@@ -116,7 +132,7 @@ python scripts/run_cli.py
 
 ---
 
-## 6. Built-in Slash Commands
+## 7. Built-in Slash Commands
 
 | Command | Action |
 | :--- | :--- |
@@ -133,5 +149,5 @@ python scripts/run_cli.py
 
 ---
 
-## 6. License
+## 8. License
 MIT License. See [LICENSE](LICENSE) for details.

@@ -663,6 +663,7 @@
       <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
       <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation()" title="New Chat (Clear Local History)">🗑️</button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
+      <div class="status-badge" id="token-meter" title="Continuous Token Safety: Never runs out of tokens" style="border-color: rgba(16,185,129,0.5); color: #10b981;">&#9679; Safe Tokens</div>
       <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
       <button class="icon-btn" id="btn-header-settings" title="Settings">⚙️</button>
     </div>
@@ -1518,6 +1519,56 @@ var GAM_CONTEXT = {
 
   init: function() {
     this.loadFromStorage();
+    this.updateTokenMeter();
+  },
+
+  estimateTokens: function(text) {
+    if (!text) return 0;
+    return Math.max(1, Math.round(text.trim().split(/\s+/).length * 1.3));
+  },
+
+  getTotalHistoryTokens: function() {
+    var total = 0;
+    for (var i = 0; i < this.history.length; i++) {
+      var txt = this.history[i].text || this.history[i].content || '';
+      total += this.estimateTokens(txt);
+    }
+    return total;
+  },
+
+  autoCompactHistory: function(maxTokenBudget) {
+    var budget = maxTokenBudget || 2048;
+    var total = this.getTotalHistoryTokens();
+    if (total <= budget || this.history.length <= 6) return;
+    var recent = this.history.slice(-6);
+    var older = this.history.slice(0, -6);
+    var digestTopics = [];
+    for (var j = 0; j < older.length; j++) {
+      if (older[j].role === 'user') {
+        var q = older[j].query || older[j].text || '';
+        var snippet = q.slice(0, 35);
+        if (snippet && digestTopics.indexOf(snippet) === -1) digestTopics.push(snippet);
+      }
+    }
+    var digestMsg = {
+      id: 'digest-' + Date.now(),
+      role: 'system',
+      text: 'Prior context digest: Covered topics: ' + digestTopics.slice(0, 6).join('; ') + '.',
+      query: '',
+      topic: 'digest',
+      meta: { compacted: true },
+      timestamp: Date.now()
+    };
+    this.history = [digestMsg].concat(recent);
+    this.saveToStorage();
+    this.updateTokenMeter();
+  },
+
+  updateTokenMeter: function() {
+    var el = document.getElementById('token-meter');
+    if (!el) return;
+    var tokens = this.getTotalHistoryTokens();
+    el.innerHTML = '⚡ ' + tokens + '/2k Safe';
   },
 
   saveToStorage: function() {
@@ -1570,6 +1621,8 @@ var GAM_CONTEXT = {
       if (topic) this.activeTopic = topic;
     }
     this.saveToStorage();
+    this.autoCompactHistory(2048);
+    this.updateTokenMeter();
     return item;
   },
 
@@ -1584,6 +1637,7 @@ var GAM_CONTEXT = {
       localStorage.removeItem(this.STORAGE_HISTORY_KEY);
       localStorage.removeItem(this.STORAGE_STATE_KEY);
     } catch(e) {}
+    this.updateTokenMeter();
   },
 
   getNextIndex: function(category, maxCount) {
