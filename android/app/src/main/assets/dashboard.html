@@ -739,6 +739,20 @@
       </div>
     </div>
 
+    <!-- Gemini Cloud AI Key Configuration -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">🌐 Gemini Cloud AI Key (Optional)</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Enter your free Gemini API Key for direct conversational AI in Online Mode</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <input type="password" id="input-gemini-key" placeholder="AIzaSy... (leave empty for live web search)" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:var(--text-main); font-size:0.85rem;" />
+        <button class="btn-action ready" onclick="saveGeminiApiKey()">Save Key</button>
+      </div>
+    </div>
+
     <!-- SmartCache -->
     <div class="model-card">
       <div class="model-header-row">
@@ -1165,8 +1179,16 @@ function generateOfflineVendorConfig(vendor) {
   return '# Generic router interface configuration\ninterface GigabitEthernet0/0\n ip address 192.168.1.1 255.255.255.0\n no shutdown';
 }
 
-// ─── GEMINI API KEY for online fallback (set this for live responses) ───────
-var GEMINI_API_KEY = '';
+// ─── GEMINI API KEY for online fallback (persisted in localStorage) ─────────
+var GEMINI_API_KEY = localStorage.getItem('gamaiGeminiKey') || '';
+
+function saveGeminiApiKey() {
+  var el = document.getElementById('input-gemini-key');
+  var k = el ? el.value.trim() : '';
+  localStorage.setItem('gamaiGeminiKey', k);
+  GEMINI_API_KEY = k;
+  showToast(k ? '✓ Gemini Cloud AI Key saved!' : 'Gemini Key cleared. Live web search active.');
+}
 
 function processOfflineAIQuery(q) {
   var qLower = q.toLowerCase().trim();
@@ -3614,13 +3636,17 @@ function updateStatus() {
 setInterval(updateStatus, 4000);
 updateStatus();
 
-// ── Initialize voice gender button label on load ─────────────────────────
-(function initVoiceGenderBtn() {
+// ── Initialize voice gender button and settings inputs on load ───────────
+(function initSettingsState() {
   var btn = document.getElementById('btn-voice-gender');
   if (btn) {
     btn.innerHTML = (window._voiceGender === 'male')
       ? '<span style="font-size:1rem;">♂️</span> Male Voice'
       : '<span style="font-size:1rem;">♀️</span> Female Voice';
+  }
+  var kInput = document.getElementById('input-gemini-key');
+  if (kInput) {
+    kInput.value = localStorage.getItem('gamaiGeminiKey') || '';
   }
 })();
 
@@ -3969,6 +3995,210 @@ function formatResponse(text) {
   return svgHtml + out;
 }
 
+// ─── CLIENT-SIDE LIVE ONLINE WEB & ENCYCLOPEDIA RESEARCH ENGINE ────────────
+function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
+  var cleanQ = q.replace(/[\?\.!]/g, '').trim();
+  var isHi = (lang === 'hi');
+  var isNe = (lang === 'ne');
+
+  // Check if device has NO active network connection at all
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+    var offlineNotice = isHi
+      ? '⚠️ **डिवाइस इंटरनेट से कनेक्ट नहीं है**\n\nलाइव ऑनलाइन परिणाम प्राप्त करने के लिए कृपया अपने फोन का Wi-Fi या मोबाइल डेटा चालू करें।\n\nआप ऑफ़लाइन मोड में स्थानीय सहायता भी ले सकते हैं।'
+      : (isNe
+        ? '⚠️ **डिभाइस इन्टरनेटसँग जोडिएको छैन**\n\nअनलाइन नतिजा प्राप्त गर्न कृपया Wi-Fi वा मोबाइल डेटा सुचारु गर्नुहोस्।\n\nवा स्थानीय रूपमा उपलब्ध अफलाइन मोड प्रयोग गर्नुहोस्।'
+        : '⚠️ **No Internet Connection Detected**\n\nGAM.AI could not reach the live web because your device is currently disconnected from Wi-Fi and mobile data.\n\nPlease check your internet connection or switch back to ⚡ Offline Local Mode.');
+    renderAssistantMessage({
+      text: offlineNotice,
+      isOffline: true,
+      modelName: activeModelName,
+      sourceTag: '📶 Disconnected',
+      latencyMs: '1.0',
+      isNotFound: true,
+      query: q,
+      shouldReadAloud: shouldReadAloud
+    });
+    return;
+  }
+
+  // 1. DuckDuckGo Instant Answer API
+  var ddgUrl = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(cleanQ) + '&format=json&no_html=1&skip_disambig=1';
+
+  // 2. Wikipedia Search API (current language with English fallback)
+  var wikiLang = isHi ? 'hi' : (isNe ? 'ne' : 'en');
+  var wikiSearchUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(cleanQ) + '&format=json&origin=*';
+
+  var pDdg = fetch(ddgUrl)
+    .then(function(r) { return r.json(); })
+    .catch(function() { return null; });
+
+  var pWiki = fetch(wikiSearchUrl)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.query && data.query.search && data.query.search.length > 0) {
+        var topItem = data.query.search[0];
+        var topTitle = topItem.title;
+        var extractUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(topTitle) + '&format=json&origin=*';
+        return fetch(extractUrl)
+          .then(function(r2) { return r2.json(); })
+          .then(function(d2) {
+            var pages = (d2 && d2.query && d2.query.pages) ? d2.query.pages : {};
+            var pageKey = Object.keys(pages)[0];
+            var extract = (pageKey && pages[pageKey] && pages[pageKey].extract) ? pages[pageKey].extract : '';
+            return {
+              title: topTitle,
+              extract: extract,
+              snippet: (topItem.snippet || '').replace(/<[^>]+>/g, ''),
+              otherHits: data.query.search.slice(1, 4)
+            };
+          })
+          .catch(function() { return null; });
+      }
+      // If language was Hindi or Nepali and got 0 results, fall back to English Wikipedia
+      if (wikiLang !== 'en') {
+        var enWikiUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(cleanQ) + '&format=json&origin=*';
+        return fetch(enWikiUrl)
+          .then(function(re) { return re.json(); })
+          .then(function(de) {
+            if (de && de.query && de.query.search && de.query.search.length > 0) {
+              var topEn = de.query.search[0];
+              var enExtUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(topEn.title) + '&format=json&origin=*';
+              return fetch(enExtUrl).then(function(re2){ return re2.json(); }).then(function(de2) {
+                var pgs = (de2 && de2.query && de2.query.pages) ? de2.query.pages : {};
+                var pk = Object.keys(pgs)[0];
+                return {
+                  title: topEn.title,
+                  extract: (pk && pgs[pk] && pgs[pk].extract) ? pgs[pk].extract : '',
+                  snippet: (topEn.snippet || '').replace(/<[^>]+>/g, ''),
+                  otherHits: de.query.search.slice(1, 4)
+                };
+              });
+            }
+            return null;
+          })
+          .catch(function() { return null; });
+      }
+      return null;
+    })
+    .catch(function() { return null; });
+
+  Promise.all([pDdg, pWiki]).then(function(results) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+
+    var ddg = results[0];
+    var wiki = results[1];
+
+    var heading = '';
+    var mainText = '';
+    var bullets = [];
+
+    if (ddg && (ddg.AbstractText || ddg.Answer || ddg.Definition)) {
+      heading = ddg.Heading || ddg.Entity || cleanQ;
+      mainText = ddg.AbstractText || ddg.Answer || ddg.Definition;
+      if (ddg.RelatedTopics && ddg.RelatedTopics.length > 0) {
+        for (var ri = 0; ri < Math.min(3, ddg.RelatedTopics.length); ri++) {
+          if (ddg.RelatedTopics[ri].Text) {
+            bullets.push(ddg.RelatedTopics[ri].Text);
+          }
+        }
+      }
+    }
+
+    if (!mainText && wiki && wiki.extract) {
+      heading = wiki.title;
+      mainText = wiki.extract;
+      if (wiki.otherHits && wiki.otherHits.length > 0) {
+        for (var wi = 0; wi < wiki.otherHits.length; wi++) {
+          var sText = (wiki.otherHits[wi].snippet || '').replace(/<[^>]+>/g, '');
+          if (sText) {
+            bullets.push('**' + wiki.otherHits[wi].title + '**: ' + sText);
+          }
+        }
+      }
+    }
+
+    if (!mainText && wiki && wiki.snippet) {
+      heading = wiki.title;
+      mainText = wiki.snippet;
+    }
+
+    if (mainText) {
+      var bulletsMd = '';
+      if (bullets.length > 0) {
+        bulletsMd = '\n\n### 🔍 Related Insights & Context\n' + bullets.map(function(b) { return '- ' + b; }).join('\n');
+      }
+
+      var finalOnlineResponse = 
+        '🌐 **Live Online Research: ' + heading + '**\n\n' +
+        mainText +
+        bulletsMd +
+        '\n\n---\n' +
+        '🔗 **Source:** Live Online Web & Encyclopedia • Verified Online Access';
+
+      var t1 = performance.now();
+      renderAssistantMessage({
+        text: finalOnlineResponse,
+        isOffline: false,
+        modelName: '🌐 Live Web Intelligence',
+        sourceTag: '🔍 Live Web Research',
+        latencyMs: (t1 - t0).toFixed(0),
+        isNotFound: false,
+        query: q,
+        shouldReadAloud: shouldReadAloud
+      });
+    } else {
+      // If neither returned encyclopedia text, check if local offline engine has a matching pack
+      var offlineResult = processOfflineAIQuery(q);
+      if (offlineResult.found) {
+        renderAssistantMessage({
+          text: offlineResult.response,
+          isOffline: false,
+          modelName: activeModelName,
+          sourceTag: '⚡ Local & Live Hybrid',
+          latencyMs: '1.5',
+          isNotFound: false,
+          query: q,
+          shouldReadAloud: shouldReadAloud
+        });
+      } else {
+        var noResultMsg = isHi
+          ? '🌐 **लाइव वेब खोज परिणाम:** "' + escapeHtml(q) + '" के लिए कोई सटीक विकिपीडिया या वेब प्रविष्टि नहीं मिली।\n\n💡 **सुझाव:** अलग कीवर्ड से खोजें (जैसे *"MikroTik"*, *"VLAN"*, *"DHCP"*), या सेटिंग्स में free Gemini API Key जोड़ें।'
+          : (isNe
+            ? '🌐 **लाइभ वेब खोज नतिजा:** "' + escapeHtml(q) + '" का लागि कुनै प्रत्यक्ष विकिपीडिया वा वेब प्रविष्टि भेटिएन।\n\n💡 **सुझाव:** मुख्य शब्दहरूबाट खोज्नुहोस् (जस्तै *"MikroTik"*, *"VLAN"*, *"DHCP"*), वा सेटिङ्समा निःशुल्क Gemini API Key थप्नुहोस्।'
+            : '🌐 **Live Web Search for "' + escapeHtml(q) + '"**\n\nNo direct encyclopedia or instant answer entry was found on the live web for this specific phrasing.\n\n💡 **Search Tips:**\n- Try broader keywords (e.g. *"MikroTik router"*, *"VLAN configuration"*, *"DHCP"*)\n- Or add your free Google Gemini API Key in ⚙️ Settings for full conversational generative AI answers in Online Mode.');
+
+        renderAssistantMessage({
+          text: noResultMsg,
+          isOffline: false,
+          modelName: '🌐 Live Web Search',
+          sourceTag: '🔍 Live Web Engine',
+          latencyMs: '1.2',
+          isNotFound: true,
+          query: q,
+          shouldReadAloud: shouldReadAloud
+        });
+      }
+    }
+  }).catch(function(err) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+    var offlineResult = processOfflineAIQuery(q);
+    renderAssistantMessage({
+      text: offlineResult.response,
+      isOffline: true,
+      modelName: activeModelName,
+      sourceTag: '💾 Local Fallback Knowledge',
+      latencyMs: '1.5',
+      isNotFound: (offlineResult.found === false),
+      query: q,
+      shouldReadAloud: shouldReadAloud
+    });
+  });
+}
+
 function executeSend(userText, wasSpoken) {
   var q = userText || document.getElementById('prompt-input').value.trim();
   if (!q) return;
@@ -4092,39 +4322,15 @@ function executeSend(userText, wasSpoken) {
               shouldReadAloud: shouldReadAloud
             });
           } else {
-            var fallback2 = processOfflineAIQuery(q);
-            renderAssistantMessage({
-              text: fallback2.response, isOffline: true, modelName: activeModelName,
-              sourceTag: '💾 Local Fallback', latencyMs: '1.5',
-              isNotFound: (fallback2.found === false), query: q, shouldReadAloud: shouldReadAloud
-            });
+            fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud);
           }
         })
         .catch(function() {
-          var lEl2 = document.getElementById(loadId);
-          if (lEl2) lEl2.remove();
-          var fallback3 = processOfflineAIQuery(q);
-          renderAssistantMessage({
-            text: fallback3.response, isOffline: true, modelName: activeModelName,
-            sourceTag: '💾 Local Fallback', latencyMs: '1.5',
-            isNotFound: (fallback3.found === false), query: q, shouldReadAloud: shouldReadAloud
-          });
+          fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud);
         });
       } else {
-        // No Gemini key — use expanded offline AI which now handles everyday conversation
-        var lEl = document.getElementById(loadId);
-        if (lEl) lEl.remove();
-        var offlineResult = processOfflineAIQuery(q);
-        renderAssistantMessage({
-          text: offlineResult.response,
-          isOffline: true,
-          modelName: activeModelName,
-          sourceTag: '💾 Local Fallback Knowledge',
-          latencyMs: '1.5',
-          isNotFound: (offlineResult.found === false),
-          query: q,
-          shouldReadAloud: shouldReadAloud
-        });
+        // No Gemini key — perform direct live client-side online web & encyclopedia research
+        fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud);
       }
     });
   }
