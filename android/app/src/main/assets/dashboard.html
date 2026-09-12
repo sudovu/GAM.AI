@@ -1340,6 +1340,39 @@ function processOfflineAIQuery(q) {
   if (qLower.indexOf('planet') !== -1 || qLower.indexOf('solar system') !== -1 || q.indexOf('ग्रह') !== -1) {
     return { found: true, response: '🪐 **The 8 Planets (in order from the Sun):**\n\n1. ☿ Mercury\n2. ♀ Venus\n3. 🌍 Earth\n4. ♂ Mars\n5. ♃ Jupiter\n6. ♄ Saturn\n7. ⛢ Uranus\n8. ♆ Neptune\n\n*Pluto was reclassified as a Dwarf Planet in 2006.*' };
   }
+  if (qLower.indexOf('james webb') !== -1 || qLower.indexOf('jwst') !== -1 || q.indexOf('जेम्स वेब') !== -1 ||
+      (qLower.indexOf('telescope') !== -1 && (qLower.indexOf('who') !== -1 || qLower.indexOf('space') !== -1))) {
+    if (isHi) {
+      return {
+        found: true,
+        response: '🔭 **जेम्स वेब स्पेस टेलीस्कोप (James Webb Space Telescope - JWST)**\n\n' +
+          '- **किसने बनाया व भेजा:** **NASA** (अमेरिकी अंतरिक्ष एजेंसी) ने **ESA** (यूरोपीय अंतरिक्ष एजेंसी) और **CSA** (कनाडाई अंतरिक्ष एजेंसी) के अंतरराष्ट्रीय सहयोग से बनाया। मुख्य निर्माता नॉर्थ्रॉप ग्रुम्मन (Northrop Grumman) था।\n' +
+          '- **लॉन्च तिथि:** **25 दिसंबर 2021** को एरियन 5 (Ariane 5) रॉकेट द्वारा फ्रेंच गयाना से लॉन्च किया गया।\n' +
+          '- **स्थान:** पृथ्वी से 15 लाख किलोमीटर दूर सूर्य-पृथ्वी **L2 लैग्रेंज बिंदु** पर परिक्रमा करता है।\n' +
+          '- **उद्देश्य:** ब्रह्मांड की सबसे पहली आकाशगंगाओं, तारों की उत्पत्ति और रहने योग्य एक्सोप्लैनेट्स के वायुमंडल का इन्फ्रारेड (Infrared) में अध्ययन करना।\n' +
+          '- **दर्पण:** 6.5 मीटर चौड़ा, 18 सोने की परत वाले हेक्सागोनल बेरिलियम खंडों से निर्मित प्राथमिक दर्पण।'
+      };
+    }
+    if (isNe) {
+      return {
+        found: true,
+        response: '🔭 **जेम्स वेब स्पेस टेलिस्कोप (JWST)**\n\n' +
+          '- **कसले पठायो र निर्माण गर्‍यो:** **नासा (NASA)** ले युरोपेली अन्तरिक्ष एजेन्सी (**ESA**) र क्यानेडियन अन्तरिक्ष एजेन्सी (**CSA**) सँगको सहकार्यमा प्रक्षेपण गरेको हो।\n' +
+          '- **प्रक्षेपण मिति:** **२५ डिसेम्बर २०२१** मा एरियन ५ (Ariane 5) रकेटबाट प्रक्षेपण गरियो।\n' +
+          '- **स्थान:** पृथ्वीबाट करिब १५ लाख किलोमिटर टाढा **L2 लेग्रेन्ज बिन्दु**मा अवस्थित छ।\n' +
+          '- **मुख्य उद्देश्य:** प्रारम्भिक ब्रह्माण्डका पहिलो तारा तथा आकाशगङ्गाहरूको इन्फ्रारेड अध्ययन गर्ने।'
+      };
+    }
+    return {
+      found: true,
+      response: '🔭 **James Webb Space Telescope (JWST)**\n\n' +
+        '- **Who Built & Sent It:** **NASA** led development in partnership with the European Space Agency (**ESA**) and Canadian Space Agency (**CSA**). Primary contractor was Northrop Grumman.\n' +
+        '- **Launch Date:** Launched on **December 25, 2021** aboard an Ariane 5 rocket from Kourou, French Guiana.\n' +
+        '- **Location:** Orbiting the Sun–Earth **L2 Lagrange point**, approximately 1.5 million kilometers (930,000 miles) from Earth.\n' +
+        '- **Primary Mission:** Observing early star and galaxy formation from the dawn of the universe, and characterizing atmospheres of habitable exoplanets using high-resolution infrared astronomy.\n' +
+        '- **Primary Mirror:** 6.5-meter (21.3 ft) diameter mirror consisting of 18 gold-coated beryllium hexagonal segments.'
+    };
+  }
   if ((qLower.indexOf('boil') !== -1 && qLower.indexOf('water') !== -1) || qLower.indexOf('boiling point') !== -1) {
     return { found: true, response: '🌡️ Water boils at **100°C (212°F)** at standard atmospheric pressure (sea level).' };
   }
@@ -2320,9 +2353,36 @@ function findBestVoice(langPrefix) {
   return availableVoices[0];
 }
 
+var nativeTtsPollTimer = null;
+
+function isVoiceSpeaking() {
+  if (window.AndroidBridge && typeof window.AndroidBridge.isSpeaking === 'function') {
+    try {
+      if (window.AndroidBridge.isSpeaking()) return true;
+    } catch (e) {}
+  }
+  if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+    return true;
+  }
+  return false;
+}
+
 function stopSpeaking() {
+  if (nativeTtsPollTimer) {
+    clearInterval(nativeTtsPollTimer);
+    nativeTtsPollTimer = null;
+  }
+  if (window.AndroidBridge && typeof window.AndroidBridge.stopSpeaking === 'function') {
+    try {
+      window.AndroidBridge.stopSpeaking();
+    } catch (e) {
+      console.warn('Native stopSpeaking error:', e);
+    }
+  }
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
   }
   if (activeSpeakingBtn) {
     activeSpeakingBtn.classList.remove('speaking');
@@ -2333,18 +2393,15 @@ function stopSpeaking() {
 }
 
 function speakText(text, btnElem) {
-  if (!('speechSynthesis' in window)) {
-    return;
-  }
+  if (!text) return;
 
   // If already speaking this button, toggle stop
-  if (activeSpeakingBtn === btnElem && window.speechSynthesis.speaking) {
+  if (activeSpeakingBtn === btnElem && isVoiceSpeaking()) {
     stopSpeaking();
     return;
   }
 
-  // Android WebView: cancel stuck TTS queue, then reload voices
-  window.speechSynthesis.cancel();
+  stopSpeaking();
   if (!availableVoices || availableVoices.length === 0) { loadVoices(); }
 
   var cleanSpeech = text.replace(/```[\s\S]*?```/g, ' Code snippet omitted. ')
@@ -2353,25 +2410,60 @@ function speakText(text, btnElem) {
                         .replace(/<[^>]+>/g, '')
                         .replace(/https?:\/\/\S+/g, '');
 
-  var utter = new SpeechSynthesisUtterance(cleanSpeech);
   var isDevanagari = /[\u0900-\u097F]/.test(text);
 
   var targetVoicePrefix = 'en';
+  var targetLangCode = 'en-US';
   if (currentLang === 'hi' || (isDevanagari && currentLang !== 'ne')) {
     targetVoicePrefix = 'hi';
-    utter.lang = 'hi-IN';
+    targetLangCode = 'hi-IN';
   } else if (currentLang === 'ne' || isDevanagari) {
     targetVoicePrefix = 'ne';
-    utter.lang = 'ne-NP';
+    targetLangCode = 'ne-NP';
   } else {
     targetVoicePrefix = 'en';
-    utter.lang = 'en-US';
+    targetLangCode = 'en-US';
   }
 
-  // ── Gender-based voice selection ──────────────────────────────────────────
   var preferredGender = window._voiceGender || 'female';
-  var genderVoice = null;
+  var pitch = (preferredGender === 'female') ? 1.15 : 0.85;
+  var rate = 0.95;
 
+  if (btnElem) {
+    activeSpeakingBtn = btnElem;
+    btnElem.classList.add('speaking');
+    btnElem.innerText = '⏹ Stop';
+  }
+
+  // 1. Android Native TextToSpeech Engine (Full direct native audio on mobile device)
+  if (window.AndroidBridge && typeof window.AndroidBridge.speakText === 'function') {
+    try {
+      window.AndroidBridge.speakText(cleanSpeech, targetLangCode, pitch, rate);
+      nativeTtsPollTimer = setInterval(function() {
+        if (!window.AndroidBridge.isSpeaking()) {
+          clearInterval(nativeTtsPollTimer);
+          nativeTtsPollTimer = null;
+          if (activeSpeakingBtn === btnElem) {
+            stopSpeaking();
+          }
+        }
+      }, 350);
+      return;
+    } catch (e) {
+      console.warn('Native speakText failed, falling back to Web Speech:', e);
+    }
+  }
+
+  // 2. Standard Web SpeechSynthesis Fallback
+  if (!('speechSynthesis' in window)) {
+    if (activeSpeakingBtn) stopSpeaking();
+    return;
+  }
+
+  var utter = new SpeechSynthesisUtterance(cleanSpeech);
+
+  // ── Gender-based voice selection ──────────────────────────────────────────
+  var genderVoice = null;
   if (availableVoices && availableVoices.length > 0) {
     var femaleKeywords = ['female', 'woman', 'girl', 'zira', 'susan', 'samantha', 'victoria',
       'karen', 'moira', 'fiona', 'allison', 'ava', 'joanna', 'salli', 'kendra', 'kimberly',
@@ -2404,13 +2496,7 @@ function speakText(text, btnElem) {
   }
 
   utter.rate = 0.95; // Slightly clearer for all ages (10-70)
-  utter.pitch = (preferredGender === 'female') ? 1.1 : 0.85;
-
-  if (btnElem) {
-    activeSpeakingBtn = btnElem;
-    btnElem.classList.add('speaking');
-    btnElem.innerText = '⏹ Stop';
-  }
+  utter.pitch = pitch;
 
   utter.onend = function() { stopSpeaking(); };
   utter.onerror = function(e) {
@@ -3142,7 +3228,36 @@ function switchOnlineAndQuery(q) {
   toggleSearchModeAndQuery(q, 'online');
 }
 
+function toggleSearchModeFromBtn(btn, targetMode) {
+  var wrapper = btn.closest ? btn.closest('.message-wrapper') : null;
+  var q = (wrapper && wrapper.getAttribute('data-query')) || '';
+  if (!q) {
+    var card = btn.closest ? btn.closest('.offline-notfound-card') : null;
+    if (card) q = card.getAttribute('data-query') || '';
+  }
+  if (!q && window._lastNotFoundQuery) {
+    q = window._lastNotFoundQuery;
+  }
+  toggleSearchModeAndQuery(q, targetMode);
+}
+
+function downloadKnowledgeFromBtn(btn) {
+  var wrapper = btn.closest ? btn.closest('.message-wrapper') : null;
+  var q = (wrapper && wrapper.getAttribute('data-query')) || '';
+  if (!q) {
+    var card = btn.closest ? btn.closest('.offline-notfound-card') : null;
+    if (card) q = card.getAttribute('data-query') || '';
+  }
+  if (!q && window._lastNotFoundQuery) {
+    q = window._lastNotFoundQuery;
+  }
+  downloadKnowledgeLocally(q);
+}
+
 function toggleSearchModeAndQuery(q, targetMode) {
+  if (!q && window._lastNotFoundQuery) {
+    q = window._lastNotFoundQuery;
+  }
   setExecutionMode(targetMode);
   var msg = (targetMode === 'online') 
     ? '🌐 Switched to Online Search! Searching live web...' 
@@ -3432,8 +3547,10 @@ function renderAssistantMessage(opts) {
     var btnDlText = (currentLang === 'hi' ? '📥 जानकारी स्थानीय डाउनलोड करें' : (currentLang === 'ne' ? '📥 स्थानीय जानकारी डाउनलोड' : '📥 Download Knowledge Locally'));
     var btnModelText = (currentLang === 'hi' ? '📦 मॉडल स्टोर' : (currentLang === 'ne' ? '📦 मोडेल स्टोर' : '📦 Model Store'));
 
+    window._lastNotFoundQuery = q;
+
     notFoundHtml = 
-      '<div class="offline-notfound-card">' +
+      '<div class="offline-notfound-card" data-query="' + escapeHtml(q) + '">' +
         '<div class="notfound-header">' +
           '<div class="notfound-icon">⚠️</div>' +
           '<div>' +
@@ -3447,14 +3564,14 @@ function renderAssistantMessage(opts) {
         '<div class="notfound-search-toggle-bar">' +
           '<span style="font-size:0.8rem; font-weight:700; color:var(--text-main);">🔄 Search Engine Switch:</span>' +
           '<div class="search-mode-segmented-toggle">' +
-            '<button class="segmented-mode-btn ' + (isOff ? 'active-offline' : '') + '" onclick="toggleSearchModeAndQuery(' + JSON.stringify(q) + ', \'offline\')">⚡ Offline Local</button>' +
-            '<button class="segmented-mode-btn ' + (!isOff ? 'active-online' : '') + '" onclick="toggleSearchModeAndQuery(' + JSON.stringify(q) + ', \'online\')">🌐 Online Search</button>' +
+            '<button class="segmented-mode-btn ' + (isOff ? 'active-offline' : '') + '" onclick="toggleSearchModeFromBtn(this, \'offline\')">⚡ Offline Local</button>' +
+            '<button class="segmented-mode-btn ' + (!isOff ? 'active-online' : '') + '" onclick="toggleSearchModeFromBtn(this, \'online\')">🌐 Online Search</button>' +
           '</div>' +
         '</div>' +
 
         '<div class="notfound-actions">' +
-          '<button class="btn-action-primary" onclick="toggleSearchModeAndQuery(' + JSON.stringify(q) + ', \'' + (isOff ? 'online' : 'offline') + '\')">' + (isOff ? '🌐 Switch to Online Search' : '⚡ Switch to Offline Search') + '</button>' +
-          '<button class="btn-action-secondary" onclick="downloadKnowledgeLocally(' + JSON.stringify(q) + ')">' + btnDlText + '</button>' +
+          '<button class="btn-action-primary" onclick="toggleSearchModeFromBtn(this, \'' + (isOff ? 'online' : 'offline') + '\')">' + (isOff ? '🌐 Switch to Online Search' : '⚡ Switch to Offline Search') + '</button>' +
+          '<button class="btn-action-secondary" onclick="downloadKnowledgeFromBtn(this)">' + btnDlText + '</button>' +
           '<button class="btn-action-subtle" onclick="submitQuick(\'how to solve a problem\')">🛠️ Troubleshooting Guide</button>' +
           '<button class="btn-action-subtle" onclick="showModal(\'modal-models\')">' + btnModelText + '</button>' +
         '</div>' +
@@ -3995,14 +4112,69 @@ function formatResponse(text) {
   return svgHtml + out;
 }
 
+// ── Safe Cross-Platform HTTP / JSON Fetcher ────────────────────────────────
+function safeFetchJson(url, options) {
+  var isPost = options && options.method === 'POST';
+  // If running inside Android Native App, use AndroidBridge to completely bypass file:/// and CORS restrictions
+  if (window.AndroidBridge) {
+    return new Promise(function(resolve) {
+      try {
+        var respStr = '';
+        if (isPost && typeof window.AndroidBridge.fetchHttpPost === 'function') {
+          respStr = window.AndroidBridge.fetchHttpPost(url, options.body || '');
+        } else if (!isPost && typeof window.AndroidBridge.fetchHttp === 'function') {
+          respStr = window.AndroidBridge.fetchHttp(url);
+        }
+        if (respStr && respStr.trim().length > 0) {
+          try {
+            var data = JSON.parse(respStr);
+            resolve(data);
+            return;
+          } catch (pe) {
+            console.warn('safeFetchJson JSON parse error:', pe);
+          }
+        }
+      } catch (e) {
+        console.warn('safeFetchJson native bridge call failed:', e);
+      }
+      // Native failed or returned empty; attempt browser fetch fallback
+      if (typeof fetch === 'function') {
+        fetch(url, options)
+          .then(function(r) { return r.json(); })
+          .then(resolve)
+          .catch(function() { resolve(null); });
+      } else {
+        resolve(null);
+      }
+    });
+  }
+
+  // Standard Browser fetch
+  if (typeof fetch === 'function') {
+    return fetch(url, options)
+      .then(function(r) { return r.json(); })
+      .catch(function() { return null; });
+  }
+  return Promise.resolve(null);
+}
+
 // ─── CLIENT-SIDE LIVE ONLINE WEB & ENCYCLOPEDIA RESEARCH ENGINE ────────────
 function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
-  var cleanQ = q.replace(/[\?\.!]/g, '').trim();
+  var cleanQ = (q || '').replace(/[\?\.!]/g, '').trim();
   var isHi = (lang === 'hi');
   var isNe = (lang === 'ne');
 
-  // Check if device has NO active network connection at all
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+  // Check hardware connectivity via AndroidBridge if available
+  var isOfflineNet = false;
+  if (window.AndroidBridge && typeof window.AndroidBridge.isNetworkConnected === 'function') {
+    try {
+      isOfflineNet = !window.AndroidBridge.isNetworkConnected();
+    } catch (e) {
+      isOfflineNet = false;
+    }
+  }
+
+  if (isOfflineNet) {
     var lEl = document.getElementById(loadId);
     if (lEl) lEl.remove();
     var offlineNotice = isHi
@@ -4023,26 +4195,41 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
     return;
   }
 
+  // Extract core search keywords:
+  // 1. Strip emojis and emoticons
+  var withoutEmojis = (q || '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '');
+  // 2. Strip punctuation, quotes and special symbols
+  var cleanQ = withoutEmojis.replace(/[?!.,"“”‘’`~@#$%^&*()_+={}\[\]|\\:;<>]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // 3. Extract core search keywords (strip conversational prompt prefixes)
+  var searchKeywords = cleanQ
+    .replace(/^(Please\s+elaborate\s+and\s+explain\s+this\s+in\s+simpler\s+terms\s+with\s+easy\s+steps:?)\s*/i, '')
+    .replace(/^(Please\s+explain|Explain|What\s+is|What\s+are|What\s+was|Who\s+sent|Who\s+launched|Who\s+made|Who\s+built|Who\s+created|Who\s+is|Who\s+was|Where\s+is|When\s+was|Tell\s+me\s+about|How\s+to\s+configure|How\s+to\s+set\s+up|How\s+to\s+use|How\s+to|How\s+do)\s+/i, '')
+    .replace(/^(कृपया\s+इसे\s+सरल\s+भाषा\s+में\s+समझाएं:?)\s*/i, '')
+    .replace(/^(कृपया\s+समझाएं|क्या\s+है|किसे\s+कहते\s+हैं|किसने\s+बनाया|किसने\s+भेजा)\s*/i, '')
+    .replace(/^(कृपया\s+यसलाई\s+सजिलो\s+भाषामा\s+व्याख्या\s+गर्नुहोस्:?)\s*/i, '')
+    .replace(/^(कृपया\s+व्याख्या\s+गर्नुहोस्|के\s+हो|कसले\s+बनायो|कसले\s+पठायो)\s*/i, '')
+    .trim();
+  if (!searchKeywords) {
+    searchKeywords = cleanQ || withoutEmojis.trim() || q;
+  }
+
   // 1. DuckDuckGo Instant Answer API
-  var ddgUrl = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(cleanQ) + '&format=json&no_html=1&skip_disambig=1';
+  var ddgUrl = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(searchKeywords) + '&format=json&no_html=1&skip_disambig=1';
 
-  // 2. Wikipedia Search API (current language with English fallback)
+  // 2. Wikipedia Search API
   var wikiLang = isHi ? 'hi' : (isNe ? 'ne' : 'en');
-  var wikiSearchUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(cleanQ) + '&format=json&origin=*';
+  var wikiSearchUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(searchKeywords) + '&format=json&origin=*';
 
-  var pDdg = fetch(ddgUrl)
-    .then(function(r) { return r.json(); })
-    .catch(function() { return null; });
+  var pDdg = safeFetchJson(ddgUrl);
 
-  var pWiki = fetch(wikiSearchUrl)
-    .then(function(r) { return r.json(); })
+  var pWiki = safeFetchJson(wikiSearchUrl)
     .then(function(data) {
       if (data && data.query && data.query.search && data.query.search.length > 0) {
         var topItem = data.query.search[0];
         var topTitle = topItem.title;
         var extractUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(topTitle) + '&format=json&origin=*';
-        return fetch(extractUrl)
-          .then(function(r2) { return r2.json(); })
+        return safeFetchJson(extractUrl)
           .then(function(d2) {
             var pages = (d2 && d2.query && d2.query.pages) ? d2.query.pages : {};
             var pageKey = Object.keys(pages)[0];
@@ -4053,19 +4240,17 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
               snippet: (topItem.snippet || '').replace(/<[^>]+>/g, ''),
               otherHits: data.query.search.slice(1, 4)
             };
-          })
-          .catch(function() { return null; });
+          });
       }
-      // If language was Hindi or Nepali and got 0 results, fall back to English Wikipedia
+      // If native language had 0 hits and wasn't English, try English Wikipedia
       if (wikiLang !== 'en') {
-        var enWikiUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(cleanQ) + '&format=json&origin=*';
-        return fetch(enWikiUrl)
-          .then(function(re) { return re.json(); })
+        var enWikiUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(searchKeywords) + '&format=json&origin=*';
+        return safeFetchJson(enWikiUrl)
           .then(function(de) {
             if (de && de.query && de.query.search && de.query.search.length > 0) {
               var topEn = de.query.search[0];
               var enExtUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(topEn.title) + '&format=json&origin=*';
-              return fetch(enExtUrl).then(function(re2){ return re2.json(); }).then(function(de2) {
+              return safeFetchJson(enExtUrl).then(function(de2) {
                 var pgs = (de2 && de2.query && de2.query.pages) ? de2.query.pages : {};
                 var pk = Object.keys(pgs)[0];
                 return {
@@ -4077,8 +4262,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
               });
             }
             return null;
-          })
-          .catch(function() { return null; });
+          });
       }
       return null;
     })
@@ -4096,7 +4280,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
     var bullets = [];
 
     if (ddg && (ddg.AbstractText || ddg.Answer || ddg.Definition)) {
-      heading = ddg.Heading || ddg.Entity || cleanQ;
+      heading = ddg.Heading || ddg.Entity || searchKeywords;
       mainText = ddg.AbstractText || ddg.Answer || ddg.Definition;
       if (ddg.RelatedTopics && ddg.RelatedTopics.length > 0) {
         for (var ri = 0; ri < Math.min(3, ddg.RelatedTopics.length); ri++) {
@@ -4150,8 +4334,11 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
         shouldReadAloud: shouldReadAloud
       });
     } else {
-      // If neither returned encyclopedia text, check if local offline engine has a matching pack
-      var offlineResult = processOfflineAIQuery(q);
+      // If neither returned encyclopedia text, check if local engine has a matching pack
+      var offlineResult = processOfflineAIQuery(searchKeywords);
+      if (!offlineResult.found) {
+        offlineResult = processOfflineAIQuery(q);
+      }
       if (offlineResult.found) {
         renderAssistantMessage({
           text: offlineResult.response,
@@ -4185,7 +4372,10 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
   }).catch(function(err) {
     var lEl = document.getElementById(loadId);
     if (lEl) lEl.remove();
-    var offlineResult = processOfflineAIQuery(q);
+    var offlineResult = processOfflineAIQuery(searchKeywords);
+    if (!offlineResult.found) {
+      offlineResult = processOfflineAIQuery(q);
+    }
     renderAssistantMessage({
       text: offlineResult.response,
       isOffline: true,
@@ -4295,7 +4485,7 @@ function executeSend(userText, wasSpoken) {
         var sysPrompt = 'You are GAM.AI, a helpful, friendly AI assistant. Respond concisely in ' +
           (currentLang === 'hi' ? 'Hindi (हिन्दी)' : currentLang === 'ne' ? 'Nepali (नेपाली)' : 'English') +
           '. Keep answers brief and clear.';
-        fetch(geminiUrl, {
+        safeFetchJson(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4303,7 +4493,6 @@ function executeSend(userText, wasSpoken) {
             contents: [{ parts: [{ text: q }] }]
           })
         })
-        .then(function(r) { return r.json(); })
         .then(function(gData) {
           var lEl = document.getElementById(loadId);
           if (lEl) lEl.remove();

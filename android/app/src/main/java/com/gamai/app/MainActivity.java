@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                android.util.Log.d("GAM_AI_CONSOLE", consoleMessage.message() + " [" + consoleMessage.sourceId() + ":" + consoleMessage.lineNumber() + "]");
                 return super.onConsoleMessage(consoleMessage);
             }
 
@@ -263,6 +264,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (bridge != null) {
             bridge.releaseWakeLock();
+            bridge.destroy();
         }
         if (webView != null) {
             webView.destroy();

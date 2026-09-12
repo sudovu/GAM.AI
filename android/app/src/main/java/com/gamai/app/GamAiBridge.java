@@ -22,6 +22,8 @@ public class GamAiBridge {
     private final Context context;
     private final SharedPreferences prefs;
     private PowerManager.WakeLock wakeLock;
+    private android.speech.tts.TextToSpeech tts;
+    private boolean ttsReady = false;
 
     private static final String PREFS_NAME = "gam_ai_prefs";
     private static final String KEY_SERVER_URL = "server_url";
@@ -30,6 +32,21 @@ public class GamAiBridge {
     public GamAiBridge(Context context) {
         this.context = context;
         this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        try {
+            tts = new android.speech.tts.TextToSpeech(context.getApplicationContext(), new android.speech.tts.TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                        ttsReady = true;
+                        try {
+                            tts.setLanguage(java.util.Locale.US);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            });
+        } catch (Exception e) {
+            android.util.Log.e("GAM_AI_TTS", "Failed to init TextToSpeech", e);
+        }
     }
 
     @JavascriptInterface
@@ -144,6 +161,26 @@ public class GamAiBridge {
     }
 
     @JavascriptInterface
+    public boolean isNetworkConnected() {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    android.net.Network net = cm.getActiveNetwork();
+                    if (net != null) {
+                        android.net.NetworkCapabilities cap = cm.getNetworkCapabilities(net);
+                        return cap != null && cap.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
+                    }
+                } else {
+                    android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+                    return info != null && info.isConnected();
+                }
+            }
+        } catch (Exception ignored) {}
+        return true;
+    }
+
+    @JavascriptInterface
     public long getAvailableRamMb() {
         try {
             ActivityManager actManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
@@ -200,5 +237,125 @@ public class GamAiBridge {
                 }
             }
         } catch (Exception ignored) {}
+    }
+
+    @JavascriptInterface
+    public void speakText(final String text, final String lang, final float pitch, final float rate) {
+        if (text == null || text.trim().isEmpty()) return;
+        if (tts != null && ttsReady) {
+            try {
+                if (lang != null && !lang.isEmpty()) {
+                    if (lang.startsWith("hi")) {
+                        tts.setLanguage(new java.util.Locale("hi", "IN"));
+                    } else if (lang.startsWith("ne")) {
+                        int res = tts.setLanguage(new java.util.Locale("ne", "NP"));
+                        if (res == android.speech.tts.TextToSpeech.LANG_MISSING_DATA || res == android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED) {
+                            tts.setLanguage(new java.util.Locale("hi", "IN"));
+                        }
+                    } else {
+                        tts.setLanguage(java.util.Locale.US);
+                    }
+                }
+                tts.setPitch(pitch > 0 ? pitch : 1.0f);
+                tts.setSpeechRate(rate > 0 ? rate : 1.0f);
+                tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "GAM_AI_SPEECH_" + System.currentTimeMillis());
+            } catch (Exception e) {
+                android.util.Log.e("GAM_AI_TTS", "speakText error", e);
+            }
+        }
+    }
+
+    @JavascriptInterface
+    public void stopSpeaking() {
+        if (tts != null) {
+            try {
+                tts.stop();
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @JavascriptInterface
+    public boolean isSpeaking() {
+        if (tts != null) {
+            try {
+                return tts.isSpeaking();
+            } catch (Exception ignored) {}
+        }
+        return false;
+    }
+
+    @JavascriptInterface
+    public String fetchHttp(String urlString) {
+        if (urlString == null || urlString.trim().isEmpty()) return "";
+        try {
+            java.net.URL url = new java.net.URL(urlString);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36");
+            conn.setRequestProperty("Accept", "application/json, text/plain, */*");
+            conn.setConnectTimeout(9000);
+            conn.setReadTimeout(9000);
+            conn.setInstanceFollowRedirects(true);
+            int code = conn.getResponseCode();
+            if (code >= 200 && code < 400) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream(), java.nio.charset.StandardCharsets.UTF_8));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+                reader.close();
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            android.util.Log.e("GAM_AI_HTTP", "fetchHttp failed for: " + urlString, e);
+        }
+        return "";
+    }
+
+    @JavascriptInterface
+    public String fetchHttpPost(String urlString, String jsonBody) {
+        if (urlString == null || urlString.trim().isEmpty()) return "";
+        try {
+            java.net.URL url = new java.net.URL(urlString);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36");
+            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            conn.setRequestProperty("Accept", "application/json, text/plain, */*");
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(15000);
+            conn.setDoOutput(true);
+            if (jsonBody != null) {
+                byte[] input = jsonBody.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                try (java.io.OutputStream os = conn.getOutputStream()) {
+                    os.write(input, 0, input.length);
+                }
+            }
+            int code = conn.getResponseCode();
+            java.io.InputStream stream = (code >= 200 && code < 400) ? conn.getInputStream() : conn.getErrorStream();
+            if (stream != null) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(stream, java.nio.charset.StandardCharsets.UTF_8));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+                reader.close();
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            android.util.Log.e("GAM_AI_HTTP", "fetchHttpPost failed for: " + urlString, e);
+        }
+        return "";
+    }
+
+    public void destroy() {
+        if (tts != null) {
+            try {
+                tts.stop();
+                tts.shutdown();
+            } catch (Exception ignored) {}
+        }
     }
 }
