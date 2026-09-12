@@ -98,6 +98,51 @@ class TestCoreComponents(unittest.TestCase):
         r_strat = provider.generate(GenerationRequest(prompt="User Query: how to launch an AI startup"))
         self.assertIn("Strategic Analysis", r_strat.text)
 
+    def test_multiturn_context_and_sqlite_persistence(self):
+        """Verify local conversation storage in SQLite and multi-turn context resolution."""
+        from gam_ai.core.chat.engine import ChatEngine
+        import tempfile
+        import os
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test_chat.db")
+            engine = ChatEngine(db_path=db_path)
+
+            # Turn 1: Ask for a joke
+            res1 = engine.process_query("Tell me a funny joke", conversation_id="conv_1")
+            self.assertTrue(len(res1["response"]) > 0)
+
+            # Turn 2: Follow up with "next"
+            res2 = engine.process_query("next", conversation_id="conv_1")
+            self.assertTrue(len(res2["response"]) > 0)
+
+            # Verify SQLite persistence
+            history = engine.get_chat_history(conversation_id="conv_1")
+            self.assertEqual(len(history), 4) # 2 user turns + 2 assistant turns
+            self.assertEqual(history[0]["role"], "user")
+            self.assertEqual(history[0]["content"], "Tell me a funny joke")
+            self.assertEqual(history[1]["role"], "assistant")
+            self.assertEqual(history[2]["role"], "user")
+            self.assertEqual(history[2]["content"], "next")
+            self.assertEqual(history[3]["role"], "assistant")
+
+            # Turn 3: Referential follow-up
+            res3 = engine.process_query("why?", conversation_id="conv_1")
+            self.assertTrue(len(res3["response"]) > 0)
+
+            history3 = engine.get_chat_history(conversation_id="conv_1")
+            self.assertEqual(len(history3), 6)
+
+            # Clear chat history
+            deleted = engine.clear_chat_history(conversation_id="conv_1")
+            self.assertEqual(deleted, 6)
+            cleared_history = engine.get_chat_history(conversation_id="conv_1")
+            self.assertEqual(len(cleared_history), 0)
+
+            # Close database connection cleanly before tempdir removal
+            engine.close()
+
 if __name__ == "__main__":
     unittest.main()
+
 

@@ -163,6 +163,13 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             })
             self._send_json(st)
 
+        elif parsed.path == "/api/chat/history":
+            query_params = urllib.parse.parse_qs(parsed.query)
+            conv_id = query_params.get("conversation_id", [None])[0]
+            limit = int(query_params.get("limit", [50])[0])
+            history = self.engine.get_chat_history(conversation_id=conv_id, limit=limit)
+            self._send_json({"history": history})
+
         else:
             self.send_error(404, "Not Found")
 
@@ -177,8 +184,14 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
         if self.path == "/api/chat":
             query = req_data.get("query") or req_data.get("message") or req_data.get("prompt") or ""
             mode = req_data.get("mode", "auto")
-            result = self.engine.process_query(query, mode=mode)
+            conversation_id = req_data.get("conversation_id", "default")
+            result = self.engine.process_query(query, mode=mode, conversation_id=conversation_id)
             self._send_json(result)
+
+        elif self.path in ("/api/chat/clear", "/api/chat/reset"):
+            conv_id = req_data.get("conversation_id")
+            deleted = self.engine.clear_chat_history(conversation_id=conv_id)
+            self._send_json({"status": "cleared", "deleted_messages": deleted})
 
         elif self.path in ("/api/model/switch", "/api/models/switch"):
             model_id = req_data.get("model", "nano")

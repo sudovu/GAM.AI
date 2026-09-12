@@ -661,6 +661,7 @@
       <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme (Cyberpunk / OLED / Light / Matrix)">🎨</button>
       <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
       <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
+      <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation()" title="New Chat (Clear Local History)">🗑️</button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
       <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
       <button class="icon-btn" id="btn-header-settings" title="Settings">⚙️</button>
@@ -1500,8 +1501,496 @@ function saveGeminiApiKey() {
 // ══════════════════════════════════════════════════════════════════════════════
 // OMNI-GENERATIVE PROMPT INTELLIGENCE ENGINE (ChatGPT, Claude, Qwen, DeepSeek, Gemini)
 // ══════════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════
+// UNIVERSAL MULTI-TURN CONTEXT ENGINE & LOCAL PERSISTENT STORAGE
+// ══════════════════════════════════════════════════════════════════════════════
+var GAM_CONTEXT = {
+  STORAGE_HISTORY_KEY: 'gam_ai_chat_history_v2',
+  STORAGE_STATE_KEY: 'gam_ai_context_state_v2',
+
+  history: [],
+  activeTopic: null,
+  lastUserQuery: '',
+  lastAssistantResponse: '',
+  pointers: { joke: 0, riddle: 0, quote: 0, fact: 0, poem: 0, troubleshoot: 0 },
+  seenIndices: { joke: [], riddle: [], quote: [], fact: [], poem: [], troubleshoot: [] },
+
+  init: function() {
+    this.loadFromStorage();
+  },
+
+  saveToStorage: function() {
+    try {
+      var trimmed = this.history.slice(-50);
+      localStorage.setItem(this.STORAGE_HISTORY_KEY, JSON.stringify(trimmed));
+      localStorage.setItem(this.STORAGE_STATE_KEY, JSON.stringify({
+        activeTopic: this.activeTopic,
+        lastUserQuery: this.lastUserQuery,
+        lastAssistantResponse: this.lastAssistantResponse,
+        pointers: this.pointers,
+        seenIndices: this.seenIndices
+      }));
+    } catch(e) {}
+  },
+
+  loadFromStorage: function() {
+    try {
+      var rawH = localStorage.getItem(this.STORAGE_HISTORY_KEY);
+      if (rawH) this.history = JSON.parse(rawH) || [];
+      var rawS = localStorage.getItem(this.STORAGE_STATE_KEY);
+      if (rawS) {
+        var p = JSON.parse(rawS);
+        if (p.activeTopic) this.activeTopic = p.activeTopic;
+        if (p.lastUserQuery) this.lastUserQuery = p.lastUserQuery;
+        if (p.lastAssistantResponse) this.lastAssistantResponse = p.lastAssistantResponse;
+        if (p.pointers) this.pointers = p.pointers;
+        if (p.seenIndices) this.seenIndices = p.seenIndices;
+      }
+    } catch(e) {
+      this.history = [];
+    }
+  },
+
+  recordTurn: function(role, text, query, topic, meta) {
+    var item = {
+      id: 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      role: role,
+      text: text || '',
+      query: query || '',
+      topic: topic || this.activeTopic || 'general',
+      meta: meta || {},
+      timestamp: Date.now()
+    };
+    this.history.push(item);
+    if (role === 'user') {
+      this.lastUserQuery = query || text;
+    } else if (role === 'assistant') {
+      this.lastAssistantResponse = text;
+      if (topic) this.activeTopic = topic;
+    }
+    this.saveToStorage();
+    return item;
+  },
+
+  clearHistory: function() {
+    this.history = [];
+    this.activeTopic = null;
+    this.lastUserQuery = '';
+    this.lastAssistantResponse = '';
+    this.pointers = { joke: 0, riddle: 0, quote: 0, fact: 0, poem: 0, troubleshoot: 0 };
+    this.seenIndices = { joke: [], riddle: [], quote: [], fact: [], poem: [], troubleshoot: [] };
+    try {
+      localStorage.removeItem(this.STORAGE_HISTORY_KEY);
+      localStorage.removeItem(this.STORAGE_STATE_KEY);
+    } catch(e) {}
+  },
+
+  getNextIndex: function(category, maxCount) {
+    if (!this.pointers) this.pointers = {};
+    if (typeof this.pointers[category] !== 'number') this.pointers[category] = 0;
+    var idx = this.pointers[category] % maxCount;
+    this.pointers[category] = (this.pointers[category] + 1) % maxCount;
+    if (!this.seenIndices) this.seenIndices = {};
+    if (!this.seenIndices[category]) this.seenIndices[category] = [];
+    if (this.seenIndices[category].indexOf(idx) === -1) {
+      this.seenIndices[category].push(idx);
+    }
+    this.saveToStorage();
+    return idx;
+  }
+};
+
+// ── EXPANSIVE SEQUENTIAL CONTENT CATALOGS ──────────────────────────────────
+var JOKES_CATALOG_EN = [
+  "Why don't scientists trust atoms?\n\n**Because they make up everything!** 😄",
+  "There are only 10 types of people in the world:\n\n**Those who understand binary, and those who don't!** 💻",
+  "Why do programmers prefer dark mode?\n\n**Because light attracts bugs!** 🐛",
+  "I told my computer I needed a break...\n\n**Now it won't stop sending me Kit-Kat ads.** 😂",
+  "Why did the smartphone go to school?\n\n**To improve its screen time!** 📱",
+  "An IPv6 packet walks into a bar...\n\n**Nobody talks to him because everyone is still using IPv4!** 🌐",
+  "Why do Java developers wear glasses?\n\n**Because they can't C#!** ☕",
+  "A SQL query walks into a bar, walks up to two tables and asks:\n\n**'Can I join you?'** 🗄️",
+  "Why was the cell phone wearing glasses?\n\n**It lost its contacts!** 👓",
+  "What is a programmer's favorite hangout spot?\n\n**The Foo Bar!** 🍸",
+  "Why did the router break up with the modem?\n\n**Because there was too much latency in their relationship!** 🔌",
+  "There is no place like **127.0.0.1**! 🏠",
+  "Why did the developer go broke?\n\n**Because he used up all his cache!** 💰",
+  "Why was the JavaScript developer sad?\n\n**Because he didn't Node how to Express himself!** 😢",
+  "How many network engineers does it take to change a lightbulb?\n\n**None, that's clearly a Layer 1 physical issue!** 💡",
+  "What do you call an algorithm that is always calm?\n\n**An algo-rhythm!** 🎵",
+  "Why did the computer keep freezing?\n\n**Because it left its Windows open!** ❄️",
+  "Why did the database administrator leave his spouse?\n\n**Too many one-to-many relationships!** 💔",
+  "What did the switch say to the router?\n\n**'You always know where to route me!'** 🧭",
+  "Why do Python programmers love nature?\n\n**Because it has zero indentation errors!** 🐍",
+  "What is a robot's favorite type of music?\n\n**Heavy metal!** 🤖",
+  "Why was the math book always crying?\n\n**Because it had way too many problems!** 📐",
+  "A UDP packet walks into a bar.\n\n**The bartender didn't acknowledge it, but the packet didn't care!** 📦",
+  "Why did the AI cross the road?\n\n**Because the training data told it to!** 🚦",
+  "How do you comfort a JavaScript bug?\n\n**You console it!** 🖥️"
+];
+
+var JOKES_CATALOG_HI = [
+  "एक आदमी तेज़ दौड़ रहा था। पुलिसवाले ने पूछा — 'क्यों भाग रहे हो?'\nवो बोला — **'डॉक्टर ने कहा था हर रोज़ दौड़ो!'** 😄",
+  "शिक्षक: 'नदी में क्या होता है?'\nछात्र: 'पानी सर!'\nशिक्षक: 'और क्या?'\nछात्र: **'मगरमच्छ भी सर!'** 😂",
+  "दो दोस्त मिले।\nपहला: 'यार, मेरा फ़ोन बात नहीं करता।'\nदूसरा: **'मेरा भी — दोनों का GPS काम करता है, बस दोनों खो गए हैं!'** 📱😄",
+  "इंजीनियरिंग छात्र से पूछा गया: 'भगवान और प्रोग्रामर में क्या फ़र्क़ है?'\nछात्र: **'भगवान बग्स को नेचर कहते हैं, और प्रोग्रामर उन्हें फ़ीचर!'** 💻😄",
+  "इंटरव्यूअर: 'कंपनी के नेटवर्क में आपको सबसे अच्छा क्या लगा?'\nकैंडिडेट: **'कि Wi-Fi का पासवर्ड रिसेप्शन की दीवार पर लिखा है!'** 📶😂",
+  "पत्नी: 'दाल में नमक कम है!'\nप्रोग्रामर पति: **'रुको, वर्ज़न 2.0 रिलीज़ करता हूँ, उसमें नमक पैच कर दूँगा!'** 🍲😂",
+  "एक कंप्यूटर दूसरे से बोला: 'यार बहुत गर्मी है!'\nदूसरा: **'फैन तो चल रहा है, तू ज़्यादा लोड क्यों ले रहा है!'** ❄️😄",
+  "पापा: 'बेटा, क्या कर रहे हो?'\nबेटा: 'मशीन लर्निंग सीख रहा हूँ।'\nपापा: **'पहले झाड़ू लगाना सीख ले, वो भी ऑटोमैटिक मशीन ही है!'** 🧹😂",
+  "सॉफ्टवेयर इंजीनियर डॉक्टर के पास गया।\nडॉक्टर: 'क्या बीमारी है?'\nइंजीनियर: **'रात को जब भी सोता हूँ, दिमाग में syntax error आने लगता है!'** 🩺😄",
+  "टीचर: 'क्लाउड कंप्यूटिंग क्या है?'\nचिंटू: **'सर, जब बारिश में कंप्यूटर छत पर रख दो!'** ☁️😂",
+  "वाईफाई रूटर ने स्विच से कहा:\n**'तू तो सिर्फ तारों से जुड़ा है, मैं हवा में उड़ता हूँ!'** 📡😄",
+  "दो रोबोट बातें कर रहे थे:\nपहला: 'इंसानों की सबसे बड़ी खूबी क्या है?'\nदूसरा: **'वे बिना बैटरी चार्ज किए भी दिनभर बातें कर सकते हैं!'** 🤖😄"
+];
+
+var JOKES_CATALOG_NE = [
+  "एक जना बाटोमा दौडिरहेका थिए। पुलिसले सोध्यो — 'किन दौडिएको?'\nउनले भने — **'डाक्टरले रोज दौडिनु भन्नुभएको!'** 😄",
+  "साथीले सोध्यो: 'तपाईंको फोन किन बोल्दैन?'\nउत्तर: **'किनभने ऊ introvert छ!'** 😂",
+  "इन्जिनियरिङ विद्यार्थीलाई सोधियो: 'काठमाडौँको ट्राफिक र नेटवर्क ब्यान्डविथमा के समानता छ?'\nउत्तर: **'दुवैमा दैनिक हजारौँ प्याकेट ड्रप हुन्छ!'** 🚗🌐😄",
+  "शिक्षक: 'सूर्य किन पूर्वबाट उदाउँछ?'\nविद्यार्थी: **'किनभने पश्चिमबाट लोडसेडिङ छ सर!'** ☀️😂",
+  "एक जनाले कम्प्युटर पसलमा सोध्यो:\n**'कम्प्युटर माउस त छ, यसलाई खुवाउने चिज कहाँ पाइन्छ?'** 🐭😄",
+  "साथी: 'नयाँ ल्यापटप किनेको कस्तो छ?'\nअर्को साथी: **'सफ्टवेयर त राम्रो छ, तर पानीले धोएपछि अन नै भएन!'** 💻😂",
+  "प्रोग्रामरले पसलमा भन्यो: 'एक दर्जन अण्डा दिनुस्, यदि स्याउ छ भने ६ वटा दिनुस्।'\n**ऊ ६ वटा अण्डा लिएर घर फर्कियो!** 🥚🍎😄",
+  "शिक्षक: 'पृथ्वी गोलो छ भन्ने प्रमाण के हो?'\nविद्यार्थी: **'पैसा घुमीफिरी फेरि सकिन्छ सर!'** 🌍😂",
+  "इन्टरनेट बिग्रिएपछि घरमा शान्ति भयो:\n**सबै जना एकअर्कासँग बोल्न थाले, मान्छेहरू राम्रा रहेछन्!** 📶😄",
+  "रोबोटले चिया पसलमा भन्यो:\n**'चिनी कम, भोल्टेज अलि बढी हाल्दिनुस्!'** ☕🤖😄"
+];
+
+var RIDDLES_CATALOG_EN = [
+  "🧩 **Riddle:** I have hands and a face, but cannot hold anything or smile. What am I?\n\n**Answer: A Clock! ⏰**",
+  "🧩 **Riddle:** The more you take, the more you leave behind. What am I?\n\n**Answer: Footsteps! 👣**",
+  "🧩 **Riddle:** What gets wetter the more it dries?\n\n**Answer: A Towel! 🏖️**",
+  "🧩 **Riddle:** What has keys but no locks, space but no room, and allows you to enter but not go in?\n\n**Answer: A Keyboard! ⌨️**",
+  "🧩 **Riddle:** I am tall when young, and short when old. What am I?\n\n**Answer: A Candle! 🕯️**",
+  "🧩 **Riddle:** What has cities, but no houses; forests, but no trees; and water, but no fish?\n\n**Answer: A Map! 🗺️**",
+  "🧩 **Riddle:** What can travel around the world while staying in a corner?\n\n**Answer: A Stamp! 📮**",
+  "🧩 **Riddle:** What has a head, a tail, is brown, and has no legs?\n\n**Answer: A Penny! 🪙**",
+  "🧩 **Riddle:** What disappears as soon as you say its name?\n\n**Answer: Silence! 🤫**",
+  "🧩 **Riddle:** Feed me and I live, yet give me a drink and I die. What am I?\n\n**Answer: Fire! 🔥**",
+  "🧩 **Riddle:** What has an eye but cannot see?\n\n**Answer: A Needle! 🪡**",
+  "🧩 **Riddle:** What begins with T, ends with T, and has T in it?\n\n**Answer: A Teapot! 🫖**",
+  "🧩 **Riddle:** What runs all around a backyard yet never moves?\n\n**Answer: A Fence! 🏡**",
+  "🧩 **Riddle:** I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?\n\n**Answer: An Echo! 🗣️**",
+  "🧩 **Riddle:** What has many teeth, but cannot bite?\n\n**Answer: A Comb! 🪮**"
+];
+
+var FACTS_CATALOG_EN = [
+  "💡 **Did you know?** Over 99% of international internet traffic is carried by deep-sea **submarine fiber-optic cables**, not satellites!",
+  "💡 **Quantum Scale:** If an atom were the size of a football stadium, the nucleus would be the size of a marble at the 50-yard line!",
+  "💡 **Speed of Light:** Light travels at approximately **299,792 km/s**. It takes 8 minutes and 20 seconds for sunlight to reach Earth.",
+  "💡 **Computer History:** The first computer mouse was invented by Doug Engelbart in 1964, and it was carved out of **wood**!",
+  "💡 **Human DNA:** If unwound and linked together, the DNA in all your body's cells would stretch from Earth to Pluto and back!",
+  "💡 **Network Genesis:** The first message sent on the ARPANET in 1969 was meant to be 'LOGIN', but the system crashed after sending 'LO'!",
+  "💡 **Honey Never Spoils:** Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still perfectly edible!",
+  "💡 **Cosmic Wonder:** A day on Venus is longer than a whole year on Venus! It takes 243 Earth days to rotate once.",
+  "💡 **Brain Processing:** Your brain generates about **12 to 25 watts** of electricity — enough to power a low-wattage LED bulb.",
+  "💡 **Binary Core:** The term 'bit' is short for 'binary digit' and was coined by mathematician John Tukey in 1947."
+];
+
+var QUOTES_CATALOG_EN = [
+  "✨ *'The only way to do great work is to love what you do.'* — **Steve Jobs**",
+  "✨ *'Talk is cheap. Show me the code.'* — **Linus Torvalds**",
+  "✨ *'Simplicity is prerequisite for reliability.'* — **Edsger W. Dijkstra**",
+  "✨ *'It does not matter how slowly you go as long as you do not stop.'* — **Confucius**",
+  "✨ *'First, solve the problem. Then, write the code.'* — **John Johnson**",
+  "✨ *'In the middle of difficulty lies opportunity.'* — **Albert Einstein**",
+  "✨ *'The computer was born to solve problems that did not exist before.'* — **Bill Gates**",
+  "✨ *'Knowledge is power, but enthusiasm pulls the switch.'* — **Ivern Ball**"
+];
+
+// ── SMART FOLLOW-UP & REFERENTIAL INTENT RESOLVERS ─────────────────────────
+function isFollowUpRequest(text) {
+  if (!text || typeof text !== 'string') return false;
+  var t = text.toLowerCase().trim().replace(/[?!.,'"]/g, '');
+  var followUpWords = [
+    'next', 'another', 'another one', 'one more', 'one more please', 'next one',
+    'more', 'continue', 'tell me another', 'next please', 'keep going', 'and next',
+    'what next', 'another joke', 'next joke', 'more jokes', 'another riddle', 'next riddle',
+    'another fact', 'next fact', 'another quote', 'next quote', 'aur ek', 'aur sunao',
+    'agla', 'ek aur', 'dusra', 'aage', 'arko', 'arko bhan', 'thap', 'aagadi'
+  ];
+  if (followUpWords.indexOf(t) !== -1) return true;
+  for (var i = 0; i < followUpWords.length; i++) {
+    var fw = followUpWords[i];
+    if (t === fw || t.startsWith(fw + ' ') || t.endsWith(' ' + fw)) {
+      return true;
+    }
+  }
+  if (t.indexOf('अगला') !== -1 || t.indexOf('और एक') !== -1 || t.indexOf('दूसरा') !== -1 ||
+      t.indexOf('एक और') !== -1 || t.indexOf('और सुनाओ') !== -1 || t.indexOf('आगे') !== -1 ||
+      t.indexOf('अर्को') !== -1 || t.indexOf('अर्को भन') !== -1 || t.indexOf('थप') !== -1) {
+    return true;
+  }
+  return false;
+}
+
+function isReferentialQuery(text) {
+  if (!text || typeof text !== 'string') return false;
+  var t = text.toLowerCase().trim().replace(/[?!.,'"]/g, '');
+  var refPhrases = [
+    'why', 'why is that', 'why so', 'explain', 'explain more', 'elaborate',
+    'tell me more', 'give an example', 'give example', 'show example',
+    'how does it work', 'how does that work', 'show code for that', 'show python code',
+    'what does that mean', 'how do i fix that', 'can you elaborate'
+  ];
+  if (refPhrases.indexOf(t) !== -1) return true;
+  if (t.indexOf('ऐसा क्यों') !== -1 || t.indexOf('विस्तार से') !== -1 || t.indexOf('और बताओ') !== -1 ||
+      t.indexOf('किन यस्तो') !== -1 || t.indexOf('थप व्याख्या') !== -1 || t.indexOf('उदाहरण') !== -1) {
+    return true;
+  }
+  return false;
+}
+
+function resolveFollowUpAndContext(promptText, lang) {
+  if (!promptText) return null;
+  var p = promptText.trim();
+  var pLower = p.toLowerCase();
+  var isDevanagari = /[\u0900-\u097F]/.test(p);
+  var isHi = (lang === 'hi') || (isDevanagari && (p.indexOf('क्या') !== -1 || p.indexOf('है') !== -1 || p.indexOf('चुटकुला') !== -1 || p.indexOf('सुनाओ') !== -1 || p.indexOf('बताओ') !== -1 || p.indexOf('नमस्ते') !== -1));
+  var isNe = (lang === 'ne') || (isDevanagari && !isHi);
+
+  var isFollow = isFollowUpRequest(p);
+  var isRef = isReferentialQuery(p);
+
+  // 1. Direct Joke Trigger
+  if (pLower.indexOf('joke') !== -1 || pLower.indexOf('funny') !== -1 || pLower.indexOf('make me laugh') !== -1 ||
+      p.indexOf('चुटकुला') !== -1 || p.indexOf('मज़ाक') !== -1 || p.indexOf('जोक') !== -1 || p.indexOf('मजाक') !== -1) {
+    var activeList = isHi ? JOKES_CATALOG_HI : (isNe ? JOKES_CATALOG_NE : JOKES_CATALOG_EN);
+    var idx = GAM_CONTEXT.getNextIndex('joke', activeList.length);
+    GAM_CONTEXT.activeTopic = 'joke';
+    return {
+      found: true,
+      topic: 'joke',
+      response: '### 😄 Tech & Geek Humor [Joke ' + (idx + 1) + '/' + activeList.length + ']\n\n' +
+        activeList[idx] + '\n\n' +
+        '💡 *Sequential Memory Active: Type \'next\' or tap below for the next joke without repetition.*\n\n' +
+        '[[btn:😄 Next Joke|next]]\n' +
+        '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]\n' +
+        '[[btn:💡 Science Fact|tell me a science fact]]'
+    };
+  }
+
+  // 2. Direct Riddle Trigger
+  if (pLower.indexOf('riddle') !== -1 || pLower.indexOf('puzzle') !== -1 || p.indexOf('पहेली') !== -1 || p.indexOf('गाउँखाने कथा') !== -1) {
+    var activeRiddles = RIDDLES_CATALOG_EN;
+    var idxR = GAM_CONTEXT.getNextIndex('riddle', activeRiddles.length);
+    GAM_CONTEXT.activeTopic = 'riddle';
+    return {
+      found: true,
+      topic: 'riddle',
+      response: '### 🧠 Brain Teaser [Riddle ' + (idxR + 1) + '/' + activeRiddles.length + ']\n\n' +
+        activeRiddles[idxR] + '\n\n' +
+        '[[btn:🧩 Next Riddle|next]]\n' +
+        '[[btn:😄 Tell Me a Joke|tell me a joke]]\n' +
+        '[[btn:💡 Science Fact|tell me a science fact]]'
+    };
+  }
+
+  // 3. Direct Fact Trigger
+  if (pLower.indexOf('fact') !== -1 || pLower.indexOf('did you know') !== -1 || p.indexOf('तथ्य') !== -1 || p.indexOf('रोचक जानकारी') !== -1) {
+    var activeFacts = FACTS_CATALOG_EN;
+    var idxF = GAM_CONTEXT.getNextIndex('fact', activeFacts.length);
+    GAM_CONTEXT.activeTopic = 'fact';
+    return {
+      found: true,
+      topic: 'fact',
+      response: '### 💡 Fascinating Science & Tech Fact [Fact ' + (idxF + 1) + '/' + activeFacts.length + ']\n\n' +
+        activeFacts[idxF] + '\n\n' +
+        '[[btn:💡 Next Fact|next]]\n' +
+        '[[btn:😄 Tell Me a Joke|tell me a joke]]\n' +
+        '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]'
+    };
+  }
+
+  // 4. Direct Quote Trigger
+  if (pLower.indexOf('quote') !== -1 || pLower.indexOf('motivation') !== -1 || pLower.indexOf('inspire') !== -1 || p.indexOf('सुविचार') !== -1 || p.indexOf('प्रेरणा') !== -1) {
+    var activeQuotes = QUOTES_CATALOG_EN;
+    var idxQ = GAM_CONTEXT.getNextIndex('quote', activeQuotes.length);
+    GAM_CONTEXT.activeTopic = 'quote';
+    return {
+      found: true,
+      topic: 'quote',
+      response: '### ✨ Daily Inspiration [Quote ' + (idxQ + 1) + '/' + activeQuotes.length + ']\n\n' +
+        activeQuotes[idxQ] + '\n\n' +
+        '[[btn:✨ Next Quote|next]]\n' +
+        '[[btn:😄 Tell Me a Joke|tell me a joke]]\n' +
+        '[[btn:💡 Science Fact|tell me a science fact]]'
+    };
+  }
+
+  // 5. Follow-Up Trigger ("next", "another", "one more", "अगला", "अर्को")
+  if (isFollow) {
+    var topic = GAM_CONTEXT.activeTopic || 'joke';
+    if (topic === 'joke') {
+      var activeList = isHi ? JOKES_CATALOG_HI : (isNe ? JOKES_CATALOG_NE : JOKES_CATALOG_EN);
+      var idx = GAM_CONTEXT.getNextIndex('joke', activeList.length);
+      return {
+        found: true,
+        topic: 'joke',
+        response: '### 😄 Next Joke [Joke ' + (idx + 1) + '/' + activeList.length + ']\n\n' +
+          activeList[idx] + '\n\n' +
+          '[[btn:😄 Next Joke|next]]\n' +
+          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]\n' +
+          '[[btn:💡 Science Fact|tell me a science fact]]'
+      };
+    } else if (topic === 'riddle') {
+      var idxR = GAM_CONTEXT.getNextIndex('riddle', RIDDLES_CATALOG_EN.length);
+      return {
+        found: true,
+        topic: 'riddle',
+        response: '### 🧠 Next Riddle [Riddle ' + (idxR + 1) + '/' + RIDDLES_CATALOG_EN.length + ']\n\n' +
+          RIDDLES_CATALOG_EN[idxR] + '\n\n' +
+          '[[btn:🧩 Next Riddle|next]]\n' +
+          '[[btn:😄 Tell Me a Joke|tell me a joke]]'
+      };
+    } else if (topic === 'fact') {
+      var idxF = GAM_CONTEXT.getNextIndex('fact', FACTS_CATALOG_EN.length);
+      return {
+        found: true,
+        topic: 'fact',
+        response: '### 💡 Next Fact [Fact ' + (idxF + 1) + '/' + FACTS_CATALOG_EN.length + ']\n\n' +
+          FACTS_CATALOG_EN[idxF] + '\n\n' +
+          '[[btn:💡 Next Fact|next]]\n' +
+          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]'
+      };
+    } else if (topic === 'quote') {
+      var idxQ = GAM_CONTEXT.getNextIndex('quote', QUOTES_CATALOG_EN.length);
+      return {
+        found: true,
+        topic: 'quote',
+        response: '### ✨ Next Quote [Quote ' + (idxQ + 1) + '/' + QUOTES_CATALOG_EN.length + ']\n\n' +
+          QUOTES_CATALOG_EN[idxQ] + '\n\n' +
+          '[[btn:✨ Next Quote|next]]\n' +
+          '[[btn:😄 Tell Me a Joke|tell me a joke]]'
+      };
+    } else if (topic === 'troubleshoot') {
+      return {
+        found: true,
+        topic: 'troubleshoot',
+        response: '### 🛠️ Diagnostic Verification — Next Action Step\n\n' +
+          'Continuing from the previous diagnostic finding:\n\n' +
+          '1. **Verification Test:** Ping local loopback `127.0.0.1` followed by default gateway.\n' +
+          '2. **Interface Check:** Inspect physical link and duplex negotiation.\n' +
+          '3. **DNS Resolution:** Run `nslookup` on a public domain.\n\n' +
+          '[[btn:✅ Gateway Ping Successful|gateway ping ok]]\n' +
+          '[[btn:❌ Request Timed Out|gateway unreachable]]'
+      };
+    } else {
+      // Default follow-up falls back to next joke with clear indicator
+      var activeList = isHi ? JOKES_CATALOG_HI : (isNe ? JOKES_CATALOG_NE : JOKES_CATALOG_EN);
+      var idx = GAM_CONTEXT.getNextIndex('joke', activeList.length);
+      GAM_CONTEXT.activeTopic = 'joke';
+      return {
+        found: true,
+        topic: 'joke',
+        response: '### 😄 Tech & Geek Humor [Joke ' + (idx + 1) + '/' + activeList.length + ']\n\n' +
+          activeList[idx] + '\n\n' +
+          '[[btn:😄 Next Joke|next]]\n' +
+          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]\n' +
+          '[[btn:💡 Science Fact|tell me a science fact]]'
+      };
+    }
+  }
+
+  // 6. Contextual Referential Query ("why?", "explain that", "give an example")
+  if (isRef && GAM_CONTEXT.lastAssistantResponse) {
+    var lastResp = GAM_CONTEXT.lastAssistantResponse;
+    var lastQ = GAM_CONTEXT.lastUserQuery;
+    
+    // Check if previous response was about atoms
+    if (lastResp.indexOf('atoms') !== -1) {
+      return {
+        found: true,
+        topic: 'explanation',
+        response: '### 🔬 Contextual Explanation: Atoms & Matter\n\n' +
+          'In our previous joke (*"Why don\'t scientists trust atoms? Because they make up everything!"*), the humor relies on a scientific double meaning:\n\n' +
+          '1. **Scientific Fact:** Everything around us with mass — from your phone screen to the air you breathe — is physically composed of **atoms** (protons, neutrons, electrons).\n' +
+          '2. **Punning Wordplay:** To \'make something up\' also idiomatically means to fabricate an untruth!\n\n' +
+          'So scientists don\'t \'trust\' them as a witty joke, but atomic physics is one of the most rigorously tested pillars of modern science!\n\n' +
+          '[[btn:😄 Next Joke|next]]\n' +
+          '[[btn:💡 Science Fact|tell me a science fact]]\n' +
+          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]'
+      };
+    }
+    
+    // Generic contextual expansion
+    return {
+      found: true,
+      topic: 'explanation',
+      response: '### 📖 Contextual In-Depth Explanation\n\n' +
+        'Elaborating on our previous discussion regarding **"' + (lastQ || 'the current topic') + '"**:\n\n' +
+        '> *Summary of previous point:* ' + lastResp.substring(0, 160).replace(/[#*`]/g, '') + '...\n\n' +
+        '**Key Conceptual Deep-Dive:**\n' +
+        '- **Underlying Mechanism:** System components operate under deterministic rules to ensure consistency and eliminate single points of failure.\n' +
+        '- **Practical Application:** In real-world environments, this approach prevents latency bottlenecks and maintains state integrity.\n' +
+        '- **Best Practice:** Always log state transitions and verify boundary conditions before deployment.\n\n' +
+        '[[btn:💡 Next Step / Example|next]]\n' +
+        '[[btn:😄 Next Joke|tell me a joke]]\n' +
+        '[[btn:🏠 Home Menu|modal:home]]'
+    };
+  }
+
+  return null;
+}
+
+function clearChatConversation() {
+  if (confirm('Start a new chat and clear local conversation history?')) {
+    GAM_CONTEXT.clearHistory();
+    var stream = document.getElementById('messages-stream');
+    if (stream) stream.innerHTML = '';
+    var hw = document.getElementById('hero-welcome');
+    if (hw) hw.style.display = 'block';
+    try {
+      apiFetch('/api/chat/clear', { method: 'POST', body: JSON.stringify({ conversation_id: 'default' }) }).catch(function(){});
+    } catch(e) {}
+    showToast('✓ Conversation cleared. Ready for new topic!');
+  }
+}
+
+function restoreSavedChatIfAny() {
+  GAM_CONTEXT.init();
+  if (GAM_CONTEXT.history && GAM_CONTEXT.history.length > 0) {
+    var hw = document.getElementById('hero-welcome');
+    if (hw) hw.style.display = 'none';
+    var stream = document.getElementById('messages-stream');
+    if (!stream) return;
+    stream.innerHTML = '';
+    GAM_CONTEXT.history.forEach(function(item) {
+      if (item.role === 'user') {
+        stream.innerHTML += 
+          '<div class="message-wrapper">' +
+            '<div class="msg-row user">' +
+              '<div class="msg-bubble user">' + escapeHtml(item.text || item.query) + '</div>' +
+            '</div>' +
+          '</div>';
+      } else if (item.role === 'assistant') {
+        renderAssistantMessage({
+          msgId: item.id,
+          text: item.text,
+          isOffline: item.meta ? item.meta.isOffline : true,
+          modelName: item.meta ? item.meta.modelName : activeModelName,
+          sourceTag: item.meta ? item.meta.sourceTag : '💾 Local Device Engine',
+          latencyMs: item.meta ? item.meta.latencyMs : '0.4',
+          query: item.query || '',
+          skipRecord: true
+        });
+      }
+    });
+    var scroller = document.getElementById('chat-scroll-area');
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+  }
+}
+
 function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
   if (!prompt || typeof prompt !== 'string') return null;
+
+  // ── 00. MULTI-TURN CONTEXT & FOLLOW-UP RESOLUTION ──────────────────────────
+  var followUpResult = resolveFollowUpAndContext(prompt, lang);
+  if (followUpResult) {
+    return followUpResult;
+  }
   var p = prompt.trim();
   var pLower = p.toLowerCase();
   var isDevanagari = /[\u0900-\u097F]/.test(p);
@@ -4972,8 +5461,7 @@ document.getElementById('btn-open-tools').addEventListener('click', function() {
 document.getElementById('btn-open-settings').addEventListener('click', function() { closeSidebar(); showModal('modal-settings'); });
 document.getElementById('btn-header-settings').addEventListener('click', function() { showModal('modal-settings'); });
 document.getElementById('btn-new-chat').addEventListener('click', function() {
-  document.getElementById('messages-stream').innerHTML = '';
-  document.getElementById('hero-welcome').style.display = 'block';
+  clearChatConversation();
   closeSidebar();
 });
 
@@ -5770,6 +6258,14 @@ function renderAssistantMessage(opts) {
   if (!isNotFound && text) {
     window._lastAssistantResponse = text;
     window._lastAssistantQuery = q;
+    if (!opts.skipRecord) {
+      GAM_CONTEXT.recordTurn('assistant', text, q, opts.topic || null, {
+        modelName: modelName,
+        isOffline: isOff,
+        sourceTag: srcTag,
+        latencyMs: latency
+      });
+    }
   }
 
   var isOff = !!opts.isOffline;
@@ -6683,6 +7179,7 @@ function executeSend(userText, wasSpoken) {
   document.getElementById('prompt-input').value = '';
 
   var stream = document.getElementById('messages-stream');
+  GAM_CONTEXT.recordTurn('user', q, q);
   stream.innerHTML += 
     '<div class="message-wrapper">' +
       '<div class="msg-row user">' +
@@ -7231,6 +7728,7 @@ function stopAllAudio() {
 
 // ── Boot Initialization ──────────────────────────────────────────────────
 applySavedThemeAndScale();
+restoreSavedChatIfAny();
 if ('speechSynthesis' in window) {
   loadVoices();
 }

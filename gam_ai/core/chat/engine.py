@@ -16,9 +16,9 @@ def is_conversational_query(text: str) -> bool:
             return True
     return False
 
-"""ChatEngine: Central orchestrator coordinating 3-level storage, models, and research."""
+import uuid
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from gam_ai.core.database.db import DatabaseManager
 from gam_ai.core.resources.capabilities import DeviceCapabilityManager, StoragePressure
 from gam_ai.core.models.manager import ModelManager
@@ -35,6 +35,19 @@ from gam_ai.core.security.guard import SecurityGuard
 from gam_ai.interfaces.model import GenerationRequest
 
 logger = logging.getLogger(__name__)
+
+FOLLOW_UP_TRIGGERS = {
+    "next", "another", "another one", "one more", "more", "next one", "tell me another",
+    "continue", "next please", "keep going", "and next", "what next",
+    "अगला", "और एक", "दूसरा", "एक और", "और सुनाओ", "आगे", "अगला चुटकुला", "एक और चुटकुला",
+    "अर्को", "अर्को भन", "अर्को जोक", "थप", "अगाडि बढ", "फेरि भन"
+}
+
+REFERENTIAL_TRIGGERS = {
+    "why", "why?", "why is that", "why is that?", "explain", "explain more", "elaborate",
+    "give an example", "give example", "show in python", "how does it work", "how does that work",
+    "ऐसा क्यों", "विस्तार से समझाओ", "और बताओ", "किन यस्तो भयो", "थप व्याख्या गर्नुहोस्"
+}
 
 class ChatEngine:
     def __init__(
@@ -63,7 +76,97 @@ class ChatEngine:
         self.commands = CommandHandler(self)
         self.promotion_threshold = promotion_threshold
 
-    def process_query(self, user_text: str, mode: str = "auto") -> Dict[str, Any]:
+    def save_message_to_db(self, conversation_id: str, role: str, content: str, token_count: int = 0) -> str:
+        """Persist a conversation turn to SQLite for persistent local chat storage."""
+        msg_id = str(uuid.uuid4())
+        try:
+            title = (content[:40] + "...") if role == "user" else "Chat Session"
+            self.db.execute(
+                "INSERT OR IGNORE INTO conversations (id, title) VALUES (?, ?);",
+                (conversation_id, title)
+            )
+            self.db.execute(
+                "UPDATE conversations SET last_active = CURRENT_TIMESTAMP WHERE id = ?;",
+                (conversation_id,)
+            )
+            self.db.execute(
+                "INSERT INTO messages (id, conversation_id, role, content, token_count) VALUES (?, ?, ?, ?, ?);",
+                (msg_id, conversation_id, role, content, token_count)
+            )
+            self.db.commit()
+        except Exception as e:
+            logger.warning("Failed to save message to SQLite: %s", e)
+        return msg_id
+
+    def get_chat_history(self, conversation_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retrieve locally stored conversation messages from SQLite."""
+        try:
+            if conversation_id:
+                cursor = self.db.execute(
+                    "SELECT id, conversation_id, role, content, timestamp, token_count FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC LIMIT ?;",
+                    (conversation_id, limit)
+                )
+            else:
+                cursor = self.db.execute(
+                    "SELECT id, conversation_id, role, content, timestamp, token_count FROM messages ORDER BY timestamp ASC LIMIT ?;",
+                    (limit,)
+                )
+            rows = cursor.fetchall()
+            return [dict(r) for r in rows]
+        except Exception as e:
+            logger.warning("Failed to retrieve chat history from SQLite: %s", e)
+            return []
+
+    def clear_chat_history(self, conversation_id: Optional[str] = None) -> int:
+        """Clear local chat messages from SQLite and reset memory buffers."""
+        try:
+            if conversation_id:
+                cursor = self.db.execute("DELETE FROM messages WHERE conversation_id = ?;", (conversation_id,))
+                self.db.execute("DELETE FROM conversations WHERE id = ?;", (conversation_id,))
+            else:
+                cursor = self.db.execute("DELETE FROM messages;")
+                self.db.execute("DELETE FROM conversations;")
+            self.db.commit()
+            deleted = cursor.rowcount
+        except Exception as e:
+            logger.warning("Failed to clear chat history from SQLite: %s", e)
+            deleted = 0
+        self.memory.short_term.clear()
+        return deleted
+
+    def _resolve_contextual_query(self, user_text: str) -> str:
+        """Enrich short follow-up queries ('next', 'why', 'explain that') with prior conversation context."""
+        clean = user_text.lower().strip("?!.,'\" ")
+        history = self.memory.short_term.get_messages()
+        if not history:
+            return user_text
+
+        # Find the last user and assistant interactions
+        last_user = next((m["content"] for m in reversed(history) if m.get("role") == "user"), "")
+        last_assistant = next((m["content"] for m in reversed(history) if m.get("role") == "assistant"), "")
+
+        if clean in FOLLOW_UP_TRIGGERS:
+            # If the user asks for "next" or "another one"
+            if "joke" in last_user.lower() or "joke" in last_assistant.lower():
+                return f"Tell me another funny joke (different from: {last_assistant[:60]})"
+            if "riddle" in last_user.lower():
+                return f"Tell me another clever riddle"
+            if "quote" in last_user.lower():
+                return f"Give me another motivational quote"
+            if "story" in last_user.lower() or "poem" in last_user.lower():
+                return f"Continue the story or poem"
+            if last_user:
+                return f"Next step or continuation for: {last_user}"
+
+        if clean in REFERENTIAL_TRIGGERS or clean.startswith("why ") or clean.startswith("explain "):
+            if last_assistant:
+                return f"Elaborate and explain the following concept in detail with examples: {last_assistant[:150]}"
+            if last_user:
+                return f"Elaborate in detail on: {last_user}"
+
+        return user_text
+
+    def process_query(self, user_text: str, mode: str = "auto", conversation_id: str = "default") -> Dict[str, Any]:
         user_text = SecurityGuard.sanitize_input(user_text.strip())
         if not user_text:
             return {"response": "", "source": "empty", "mode": "offline", "tokens": 0}
@@ -77,13 +180,16 @@ class ChatEngine:
                 "data": cmd_result.get("data")
             }
 
-        freq = self.research.record_query(user_text)
+        # Multi-turn context resolution
+        effective_query = self._resolve_contextual_query(user_text)
 
-        knowledge_matches = self.knowledge.search_knowledge(user_text, limit=2)
+        freq = self.research.record_query(effective_query)
+
+        knowledge_matches = self.knowledge.search_knowledge(effective_query, limit=2)
         source_type = "local_knowledge"
         knowledge_texts = [k["claim"] for k in knowledge_matches]
 
-        cache_key = f"research:{user_text.lower()}"
+        cache_key = f"research:{effective_query.lower()}"
         cached_entry = self.cache.get(cache_key)
 
         if not knowledge_matches and cached_entry:
@@ -92,30 +198,30 @@ class ChatEngine:
 
             if freq >= self.promotion_threshold or cached_entry["access_count"] >= self.promotion_threshold:
                 promoted_id = self.knowledge.promote_from_cache(
-                    topic=user_text.title(),
+                    topic=effective_query.title(),
                     claim=cached_entry["content"],
                     source=cached_entry.get("source")
                 )
-                logger.info("Promoted query '%s' to permanent knowledge (id=%s)", user_text, promoted_id)
+                logger.info("Promoted query '%s' to permanent knowledge (id=%s)", effective_query, promoted_id)
 
         if not knowledge_texts:
             is_online = (mode != "offline") and self.capabilities.check_network_connectivity()
             if is_online:
-                res = self.research.research(user_text)
+                res = self.research.research(effective_query)
                 if res.get("content"):
                     knowledge_texts.append(res["content"])
                     source_type = "web_research"
             else:
                 source_type = "local_offline"
 
-        doc_chunks = self.retriever.retrieve_context(user_text, top_k=2)
+        doc_chunks = self.retriever.retrieve_context(effective_query, top_k=2)
         for dc in doc_chunks:
             knowledge_texts.append(f"[{dc['source']}] {dc['content']}")
 
-        memories = self.memory.get_relevant_memory_strings(user_text)
+        memories = self.memory.get_relevant_memory_strings(effective_query)
 
         payload = self.context_budget.build_budgeted_prompt(
-            query=user_text,
+            query=effective_query,
             memory_items=memories,
             knowledge_items=knowledge_texts,
             history=self.memory.short_term.get_messages()
@@ -126,9 +232,14 @@ class ChatEngine:
         gen_request = GenerationRequest(prompt=prompt_str)
         gen_response = model.generate(gen_request)
 
+        # Update in-memory rolling history
         self.memory.add_interaction("user", user_text)
         self.memory.add_interaction("assistant", gen_response.text)
         self.memory.reset_active()
+
+        # Persist conversation turn in SQLite database
+        self.save_message_to_db(conversation_id, "user", user_text, token_count=len(user_text.split()))
+        self.save_message_to_db(conversation_id, "assistant", gen_response.text, token_count=gen_response.completion_tokens)
 
         is_offline_result = (mode == "offline") or (source_type != "web_research")
 
@@ -139,7 +250,8 @@ class ChatEngine:
             "prompt_tokens": gen_response.prompt_tokens,
             "completion_tokens": gen_response.completion_tokens,
             "model_name": gen_response.model_name,
-            "frequency": freq
+            "frequency": freq,
+            "conversation_id": conversation_id
         }
 
     def get_system_status(self) -> str:
@@ -165,3 +277,8 @@ class ChatEngine:
             "============================================================"
         ]
         return "\n".join(lines)
+
+    def close(self) -> None:
+        """Close underlying database connection and release resources."""
+        if hasattr(self, "db") and self.db:
+            self.db.close()
