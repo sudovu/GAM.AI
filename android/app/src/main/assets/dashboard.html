@@ -302,6 +302,60 @@
     color: var(--text-main); background: rgba(255, 255, 255, 0.08);
   }
 
+  /* Interactive Socratic Problem Solving & Diagnostic Choice Buttons */
+  .interactive-choice-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.38);
+    color: #f1f5f9;
+    padding: 8px 14px;
+    margin: 4px 6px 4px 0;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    line-height: 1.35;
+  }
+  .interactive-choice-btn:hover {
+    background: rgba(56, 189, 248, 0.28);
+    border-color: #38bdf8;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+  }
+  .interactive-choice-btn:active {
+    transform: translateY(0);
+  }
+
+  /* Related Search Tips Box */
+  .related-search-tips-box {
+    margin-top: 10px; padding: 10px 12px;
+    background: rgba(15, 23, 42, 0.65);
+    border-radius: 10px;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+  }
+  .tip-search-chip {
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 0.76rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .tip-search-chip:hover {
+    background: rgba(56, 189, 248, 0.25);
+    border-color: #38bdf8;
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
   /* ChatGPT-Inspired Bottom Input Section */
   .input-container {
     padding: 8px 16px max(14px, env(safe-area-inset-bottom)) 16px;
@@ -2163,46 +2217,341 @@ function processOfflineAIQuery(q) {
     };
   }
 
-  // ── 29. HOW TO SOLVE A PROBLEM / GENERAL TROUBLESHOOTING METHODOLOGY ────
-  if (qLower.indexOf('how to solve a problem') !== -1 || qLower.indexOf('how to solve problem') !== -1 ||
-      qLower.indexOf('problem solving') !== -1 || qLower.indexOf('troubleshooting methodology') !== -1 ||
-      qLower.indexOf('how to troubleshoot') !== -1 || qLower.indexOf('troubleshoot guide') !== -1 ||
-      qLower.indexOf('diagnostic methodology') !== -1 || qLower.indexOf('troubleshoot network') !== -1 ||
-      q.indexOf('समस्या समाधान') !== -1 || q.indexOf('कसरी समाधान गर्ने') !== -1) {
+  // ── 29. INTERACTIVE SOCRATIC TROUBLESHOOTING & DIAGNOSTIC WORKBENCH ─────
+  if (qLower.indexOf('diag:') !== -1 || qLower.indexOf('diag_') !== -1 ||
+      qLower === 'how to solve a problem' || qLower === 'how to solve problem' ||
+      qLower === 'cannot solve' || qLower === 'cant solve' || qLower === "can't solve" ||
+      qLower === 'not working' || qLower === 'troubleshoot' || qLower === 'troubleshooting' ||
+      qLower.indexOf('diagnostic methodology') !== -1 || q.indexOf('समस्या समाधान') !== -1 || q.indexOf('कसरी समाधान गर्ने') !== -1) {
+
+    // Fix / Resolution confirmation
+    if (qLower.indexOf('diag_fix') !== -1 || qLower === 'diag:resolved') {
+      return {
+        found: true,
+        response: '🎉 **Outstanding Work! Issue Verified and Resolved!**\n\n' +
+          'You methodically worked through the diagnostic decision tree like a professional network engineer:\n' +
+          '1. **Isolated the exact OSI layer** (Physical vs Data Link vs Network vs DNS).\n' +
+          '2. **Verified verifiable facts** instead of guessing.\n' +
+          '3. **Applied the precise targeted fix** with zero downtime or guesswork.\n\n' +
+          'What would you like to explore or troubleshoot next?\n\n' +
+          '[[btn:🛠️ Start Another Diagnostic|diag:start]]\n' +
+          '[[btn:📡 MikroTik Basic WAN Setup|mikrotik basic wan setup]]\n' +
+          '[[btn:🌐 OLT GPON Configuration Guide|gpon olt huawei ma5800 configuration]]'
+      };
+    }
+
+    // Branch 1: Fiber LOS
+    if (qLower === 'diag:fiber_red_los') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Step 1: Optical Physical Layer Verification**\n\n' +
+          'Let\'s inspect the Optical Network Terminal (ONT / ONU) indicator LEDs.\n' +
+          'Look closely at the LED panel on the front of your ONT:\n\n' +
+          '**What is the status of the LOS and PON lights?**\n\n' +
+          '[[btn:🔴 LOS is Blinking Red|diag_fact:los_red]]\n' +
+          '[[btn:🟢 PON is Solid Green, but WAN Down|diag_fact:pon_green_wan_down]]\n' +
+          '[[btn:⚪ Both PON and LOS are completely OFF|diag_fact:ont_no_power]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:los_red') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: Optical Signal Loss (< -27 dBm or Complete Break)**\n\n' +
+          'A blinking red LOS LED proves the internal photo-detector diode is receiving zero laser light from the fiber line.\n\n' +
+          '**Physical Inspection Steps:**\n' +
+          '1. Locate the yellow fiber patch cord running into the blue (SC/UPC) or green (SC/APC) port.\n' +
+          '2. Check for sharp bends (the bend radius must be greater than 30mm; tight kinks pinch light rays).\n' +
+          '3. Ensure the connector is fully inserted until it clicks firmly into place.\n\n' +
+          '**What do you find when inspecting the cable?**\n\n' +
+          '[[btn:Cable was bent or loose — I straightened & re-seated it|diag_step:fiber_reseated]]\n' +
+          '[[btn:Cable looks perfect & firmly plugged, still blinking Red|diag_step:fiber_break_isp]]'
+      };
+    }
+
+    if (qLower === 'diag_step:fiber_reseated') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Observation Check: Let\'s Verify the Receiver State**\n\n' +
+          'Allow 15 to 30 seconds for the ONT optical transceiver to re-lock the downstream 1490nm carrier wave.\n\n' +
+          '**Did the LOS light turn off?**\n\n' +
+          '[[btn:✅ Yes! LOS turned off & PON is solid green!|diag_fix:fiber_restored]]\n' +
+          '[[btn:❌ No, LOS is still blinking red|diag_step:fiber_break_isp]]'
+      };
+    }
+
+    if (qLower === 'diag_step:fiber_break_isp') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: Upstream Optical Fault**\n\n' +
+          'Because your indoor patch cord is clean and unbent, the optical attenuation fault is upstream:\n' +
+          '- Broken drop fiber between the pole/distribution box and your premises.\n' +
+          '- Faulty fusion splice inside the joint closure / FAT box.\n' +
+          '- Upstream OLT PON port or SFP transceiver shutdown at the ISP exchange.\n\n' +
+          '**Recommended Action for ISP NOC Support:**\n' +
+          'Call your ISP support and state:\n' +
+          '> *"My ONT PON MAC is [check barcode sticker]. The indoor patch cord is verified. The LOS LED is blinking red with zero optical rx power. Please test the PON port and schedule an optical time-domain reflectometer (OTDR) line check."*\n\n' +
+          'Would you like to test your local router and LAN while ISP repairs the optical link?\n\n' +
+          '[[btn:🛠️ Test Local LAN / Router|diag:winbox_unreachable]]\n' +
+          '[[btn:🔄 Restart Diagnostic Engine|diag:start]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:ont_no_power') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: Power Delivery Failure to ONT**\n\n' +
+          'If both PON and LOS are dark, the ONT motherboard is not receiving power.\n' +
+          '1. Check the 12V 1A/1.5A DC power adapter jack.\n' +
+          '2. Verify the power switch button on the side/rear of the ONT is clicked IN.\n' +
+          '3. Test with a known-working 12V center-positive DC adapter.\n\n' +
+          '**Did the ONT LEDs power on?**\n\n' +
+          '[[btn:✅ Power restored, ONT lights are ON|diag:fiber_red_los]]\n' +
+          '[[btn:❌ Power adapter tested, device completely dead|diag_step:ont_hardware_dead]]'
+      };
+    }
+
+    // Branch 2: No browsing / DNS
+    if (qLower === 'diag:no_browsing_dns' || qLower === 'diag_fact:pon_green_wan_down') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Step 2: Layer 3 (IP Routing) vs Layer 7 (DNS) Isolation**\n\n' +
+          'The optical carrier is healthy! Now let\'s determine whether the breakdown is IP routing or DNS domain resolution using the **Two-Ping Rule**.\n\n' +
+          'On your PC or phone terminal, run:\n' +
+          '```text\n' +
+          'ping 8.8.8.8\n' +
+          '```\n\n' +
+          '**What is the exact ping result?**\n\n' +
+          '[[btn:✅ 0% packet loss, ping replies come back!|diag_fact:ping_ip_ok]]\n' +
+          '[[btn:❌ Request timed out / Destination host unreachable|diag_fact:ping_ip_fail]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:ping_ip_ok') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Crucial Fact Verified: Layer 3 WAN Routing is 100% Functional!**\n\n' +
+          'Because `8.8.8.8` replies, your internet connection, WAN link, and routing are completely ALIVE!\n' +
+          'Your problem is purely **DNS Domain Resolution** (your device cannot translate domain names like `google.com` to IP addresses).\n\n' +
+          '**Apply this fix immediately:**\n' +
+          '1. **On MikroTik Router:**\n' +
+          '   ```text\n' +
+          '   /ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes\n' +
+          '   /ip dhcp-server network set [find] dns-server=8.8.8.8,1.1.1.1\n' +
+          '   ```\n' +
+          '2. **On Windows:** Open CMD and run: `ipconfig /flushdns`\n' +
+          '3. **On Phone:** In WiFi Details, set DNS 1: `8.8.8.8` and DNS 2: `1.1.1.1`.\n\n' +
+          '**Did websites start opening after setting DNS?**\n\n' +
+          '[[btn:✅ Yes! Websites open instantly now!|diag_fix:dns_resolved]]\n' +
+          '[[btn:❌ Still cannot open websites|diag_step:check_proxy_mtu]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:ping_ip_fail') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: No Layer 3 WAN Gateway Route**\n\n' +
+          'Packets cannot leave your local router. Let\'s inspect your WAN IP configuration.\n\n' +
+          'Log into your router (or check router status):\n' +
+          '**Does your router have an active WAN IP address assigned?**\n\n' +
+          '[[btn:Yes, has IP (e.g. 100.64.x.x or public IP)|diag_fact:wan_ip_bound]]\n' +
+          '[[btn:No, WAN shows 0.0.0.0 or Disconnected|diag_fact:wan_ip_unbound]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:wan_ip_bound') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: WAN IP is Bound, but Traffic Not Flowing**\n\n' +
+          'If the router has an IP but cannot reach `8.8.8.8`, there are two typical causes:\n' +
+          '1. **Missing NAT Masquerade**: If your private LAN packets (`192.168.88.0/24`) are sent to the ISP without NAT, the ISP drops them!\n' +
+          '   ```text\n' +
+          '   /ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade\n' +
+          '   ```\n' +
+          '2. **Missing Default Route**: Check `/ip route print`. You MUST have `dst-address=0.0.0.0/0 gateway=<ISP_Gateway_IP>`.\n\n' +
+          '**Did adding NAT masquerade restore internet?**\n\n' +
+          '[[btn:✅ NAT masquerade fixed it!|diag_fix:nat_resolved]]\n' +
+          '[[btn:❌ Route and NAT exist, still no ping|diag_step:check_isp_fup]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:wan_ip_unbound') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: WAN Connection Failed to Negotiate**\n\n' +
+          'Your router has not received an IP address from the ISP.\n\n' +
+          '**What WAN connection type does your ISP provide?**\n\n' +
+          '[[btn:PPPoE Dial-up (Username & Password)|diag_fact:pppoe_dialup]]\n' +
+          '[[btn:DHCP Client (Dynamic IP from ISP)|diag_fact:dhcp_client]]\n' +
+          '[[btn:Static IP (Manual IP, Subnet, Gateway)|diag_fact:static_ip]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:pppoe_dialup') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Diagnosing PPPoE Dial-Up Session**\n\n' +
+          'Open your router log (`/log print follow` on MikroTik):\n' +
+          '- `authenticating... terminated... authentication failed`: **Incorrect username or password, or expired account.**\n' +
+          '- `dialing...` with no response: **VLAN tagging missing on WAN, or PADI packet unanswered (check cable between ONT GE port and router WAN).**\n\n' +
+          '**Which log message do you observe?**\n\n' +
+          '[[btn:Authentication failed / wrong password|diag_step:pppoe_auth_failed]]\n' +
+          '[[btn:Dialing... no response / PADO timeout|diag_step:pppoe_pado_timeout]]'
+      };
+    }
+
+    // Branch 3: Winbox unreachable
+    if (qLower === 'diag:winbox_unreachable') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Diagnosing Router / Winbox Management Access**\n\n' +
+          'Let\'s verify connectivity to your MikroTik router step-by-step:\n' +
+          '1. Connect your PC via Ethernet cable to **port ether2, ether3, ether4, or ether5** (NEVER ether1 during initial setup, as ether1 is firewalled for WAN).\n' +
+          '2. Open Winbox and switch to the **Neighbors** tab.\n\n' +
+          '**Do you see your router\'s MAC address listed in the Neighbors tab?**\n\n' +
+          '[[btn:✅ Yes, MAC address is visible in Neighbors|diag_fact:winbox_mac_visible]]\n' +
+          '[[btn:❌ No, the Neighbors list is completely blank|diag_fact:winbox_neighbors_empty]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:winbox_mac_visible') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: Layer 2 MNDP Broadcast is Working!**\n\n' +
+          'Click directly on the **MAC Address column** (NOT the IP column). This uses MikroTik MAC-Telnet which connects even if the router has no IP address!\n\n' +
+          '- Default Login: Username `admin`, Password: *(leave blank, press Connect)*.\n' +
+          '- If it says \'Wrong username or password\': The router has custom credentials. If unknown, you must perform a hardware reset.\n\n' +
+          '**Did MAC connection succeed?**\n\n' +
+          '[[btn:✅ Connected successfully via MAC!|diag_fix:winbox_success]]\n' +
+          '[[btn:❌ Wrong password — show Hardware Reset guide|diag_step:mikrotik_hw_reset]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:winbox_neighbors_empty') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: Layer 2 Broadcast Discovery is Blocked**\n\n' +
+          'Let\'s identify why UDP port 5678 (MikroTik MNDP) cannot reach your PC:\n' +
+          '1. **Windows Firewall**: Temporarily toggle off Windows Defender Firewall on your private network adapter.\n' +
+          '2. **Physical Ethernet Link**: Look at the RJ45 port on the router and your PC — is the green/amber link LED illuminated?\n' +
+          '3. **Virtual Network Adapters**: Disable VMware / VirtualBox virtual adapters in `ncpa.cpl`.\n\n' +
+          '**Did the MAC appear after checking link LED and firewall?**\n\n' +
+          '[[btn:✅ MAC appeared in Neighbors now!|diag_fact:winbox_mac_visible]]\n' +
+          '[[btn:❌ Still completely empty, show Hardware Reset|diag_step:mikrotik_hw_reset]]'
+      };
+    }
+
+    if (qLower === 'diag_step:mikrotik_hw_reset') {
+      return {
+        found: true,
+        response: '👨‍🏫 **MikroTik RouterBOARD Hardware Factory Reset Procedure**\n\n' +
+          'To restore factory defaults and wipe lost passwords:\n' +
+          '1. Unplug power cable from the router.\n' +
+          '2. Press and hold the physical **RESET** button with a paperclip or pen tip.\n' +
+          '3. Keep holding the reset button, then plug the power cable back in.\n' +
+          '4. Watch the **ACT / USER LED**:\n' +
+          '   - Hold until the ACT LED starts **blinking** (approx 5 seconds).\n' +
+          '   - **Immediately release** the reset button when it starts blinking!\n' +
+          '5. Wait 2 minutes for the router to reboot. Port ether2 will respond with default IP `192.168.88.1` and user `admin` (no password).\n\n' +
+          '[[btn:✅ Router reset and accessible!|diag_fix:winbox_success]]\n' +
+          '[[btn:🔄 Return to Diagnostic Menu|diag:start]]'
+      };
+    }
+
+    // Branch 4: WiFi No Internet
+    if (qLower === 'diag:wifi_no_internet') {
+      return {
+        found: true,
+        response: '👨‍🏫 **WiFi Connected with \'No Internet\' or Exclamation Mark**\n\n' +
+          'Let\'s check the IP address your device was assigned by the Access Point:\n' +
+          'Open your phone\'s or computer\'s WiFi details:\n\n' +
+          '**What is your assigned IP Address?**\n\n' +
+          '[[btn:Starts with 169.254.x.x (APIPA)|diag_fact:apipa_fail]]\n' +
+          '[[btn:Valid IP like 192.168.x.x or 10.x.x.x|diag_fact:valid_local_ip]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:apipa_fail') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: DHCP Lease Assignment Failure**\n\n' +
+          'An IP starting with `169.254.x.x` means your device asked for an IP via DHCP, but received zero offers from the router.\n\n' +
+          '**Root Causes to Check:**\n' +
+          '1. **DHCP Pool Exhaustion**: On MikroTik, run `/ip pool print`. If all IPs are allocated, expand the range.\n' +
+          '2. **VLAN Mismatch**: If your WiFi AP uses a VLAN that is not tagged on the switch trunk port, DHCP requests get dropped.\n' +
+          '3. **DHCP Server Disabled**: Run `/ip dhcp-server print` to ensure the server is active.\n\n' +
+          '[[btn:Pool or VLAN adjusted — got valid IP now!|diag_fix:wifi_resolved]]\n' +
+          '[[btn:Test Gateway Ping|diag:no_browsing_dns]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:valid_local_ip') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: LAN DHCP Link is Intact!**\n\n' +
+          'Now ping your router gateway (e.g. `ping 192.168.88.1`). If the gateway replies, your local Wi-Fi and router link are solid!\n\n' +
+          'Let\'s test the upstream WAN connection:\n\n' +
+          '[[btn:Test Gateway & DNS Resolution|diag:no_browsing_dns]]'
+      };
+    }
+
+    // Branch 5: Tower Power Outage
+    if (qLower === 'diag:tower_power_outage') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Tower / WISP / PowerBox PoE Diagnostics**\n\n' +
+          'When outdoor wireless radios (PowerBeam, LiteBeam, NanoStation, NetMetal) go offline:\n\n' +
+          '**What does the PoE indicator LED on the PowerBox / EdgePoint show?**\n\n' +
+          '[[btn:🔴 PoE Out LED is Blinking Red (Overload / Short)|diag_fact:poe_short]]\n' +
+          '[[btn:⚪ PoE LED is completely Dark / OFF|diag_fact:poe_no_power]]\n' +
+          '[[btn:🟢 PoE LED is Solid Green, but Radio Unreachable|diag_fact:poe_radio_isolated]]'
+      };
+    }
+
+    if (qLower === 'diag_fact:poe_short') {
+      return {
+        found: true,
+        response: '👨‍🏫 **Fact Verified: Cable Short Circuit or Power Overload**\n\n' +
+          'A blinking red PoE status LED indicates the port controller\'s current-limiting circuit has tripped:\n' +
+          '- Water ingress inside the outdoor RJ45 connector or cable jacket.\n' +
+          '- Damaged cable pin short between pins 4,5 (+24V) and pins 7,8 (GND).\n' +
+          '- Device wattage exceeds port capability.\n\n' +
+          '**Action:** Unplug the tower cable. Inspect RJ45 crimps and replace the outdoor patch cable.\n\n' +
+          '[[btn:Cable replaced — radio powered up!|diag_fix:poe_resolved]]\n' +
+          '[[btn:🔄 Return to Diagnostic Menu|diag:start]]'
+      };
+    }
+
+    // Branch 6: Methodology
+    if (qLower === 'diag:methodology' || qLower.indexOf('diagnostic methodology') !== -1) {
+      return {
+        found: true,
+        response: '👨‍🏫 **Professional 5-Step Root Cause Analysis (RCA) Methodology**\n\n' +
+          'Whenever a network, device, or internet connection fails, always diagnose from the ground up:\n\n' +
+          '1. **Layer 1 (Physical)**: Fiber light levels, Ethernet link LEDs, PoE voltage.\n' +
+          '2. **Layer 2 (Data Link)**: MAC discovery, bridge membership, 802.1Q VLAN tags.\n' +
+          '3. **Layer 3 (Network)**: Subnet IP, default gateway reachable, routing table.\n' +
+          '4. **Layer 4 (Transport/NAT)**: NAT masquerade rules, firewall filter packet drops.\n' +
+          '5. **Layer 7 (Application/DNS)**: Domain resolution (`ping google.com`), SSL certificates.\n\n' +
+          '**Which layer would you like to troubleshoot now?**\n\n' +
+          '[[btn:🔴 Layer 1: Fiber & Physical Link|diag:fiber_red_los]]\n' +
+          '[[btn:🟢 Layer 3 & 7: Routing & DNS|diag:no_browsing_dns]]\n' +
+          '[[btn:⚡ Layer 2: Winbox & MAC Discovery|diag:winbox_unreachable]]'
+      };
+    }
+
+    // Root entry / Default menu
     return {
       found: true,
-      response: '🛠️ **Universal 5-Step Problem-Solving Methodology (Root Cause Analysis)**\n\n' +
-        'Whenever a network, device, or internet connection fails, always diagnose from the ground up (OSI Layers 1 to 7):\n\n' +
-        '```\n' +
-        'Step 1: Physical (Cables, PoE, LEDs)\n' +
-        '   ↓\n' +
-        'Step 2: Data Link (Port speed, Bridge, VLANs)\n' +
-        '   ↓\n' +
-        'Step 3: Network (IP address, Default Gateway Ping)\n' +
-        '   ↓\n' +
-        'Step 4: DNS & Transport (Public IP Ping vs Domain Ping)\n' +
-        '   ↓\n' +
-        'Step 5: Application / Firewall (NAT, Drop rules, Service state)\n' +
-        '```\n\n' +
-        '### 🪜 Step 1 — Check Physical Layer (Hardware & Power)\n' +
-        '- **LED check:** Are port lights solid or flashing? No light = dead cable, dead port, or no PoE.\n' +
-        '- **PoE injector:** Is the LED solid green? Blinking LED = short circuit or cable wire touch.\n' +
-        '- **Cable run:** Is cable ≤ 100m? Damaged pins 1,2,3,6 drop data entirely; pins 4,5,7,8 kill PoE.\n\n' +
-        '### 🪜 Step 2 — Check Data Link Layer (Switching & Bridge)\n' +
-        '- Is the Ethernet port negotiating at **1000 Mbps Full Duplex** or dropped to 10 Mbps/Half Duplex?\n' +
-        '- Is the port added to the router/switch bridge? (`/interface bridge port print`)\n' +
-        '- Is VLAN tagging blocking untagged traffic?\n\n' +
-        '### 🪜 Step 3 — Check Network Layer (IP & Gateway)\n' +
-        '- Did your device receive an IP address or `169.254.x.x` (DHCP failed)?\n' +
-        '- **Ping Gateway Test:** `ping 192.168.88.1`. If this fails, the problem is 100% inside your building, not the ISP!\n\n' +
-        '### 🪜 Step 4 — Check DNS & Routing (The 2-Ping Rule)\n' +
-        '- **Test A:** `ping 8.8.8.8` (Google Public IP)\n' +
-        '  - If replies come back → **Your internet route & WAN are working!**\n' +
-        '- **Test B:** `ping google.com` (Domain Name)\n' +
-        '  - If Test A works but Test B fails → **DNS is broken.** Set DNS to `8.8.8.8` and `1.1.1.1`.\n\n' +
-        '### 🪜 Step 5 — Check Firewall & NAT\n' +
-        '- Is NAT Masquerade active on the WAN interface?\n' +
-        '- Are firewall filter rules dropping outgoing packets? Check drop packet counters.'
+      response: '👨‍🏫 **Senior Network & Systems Diagnostic Workbench**\n\n' +
+        'Welcome! As an expert engineer, we solve problems using **Root-Cause Analysis** — we verify verifiable facts step-by-step instead of guessing.\n\n' +
+        '**What specific problem are you facing right now?**\n\n' +
+        '[[btn:🔴 Red Fiber LOS Light / Fiber Down|diag:fiber_red_los]]\n' +
+        '[[btn:🟢 Connected but No Browsing / DNS Issue|diag:no_browsing_dns]]\n' +
+        '[[btn:⚡ Router Unreachable / Cannot Login Winbox|diag:winbox_unreachable]]\n' +
+        '[[btn:📶 WiFi Connected but No Internet Access|diag:wifi_no_internet]]\n' +
+        '[[btn:🔋 Tower / PowerBox / AP Lost Power|diag:tower_power_outage]]\n' +
+        '[[btn:📖 Teach Me the 5-Step RCA Methodology|diag:methodology]]'
     };
   }
 
@@ -2392,6 +2741,54 @@ function stopSpeaking() {
   }
 }
 
+function extractSpokenResultOnly(text) {
+  if (!text) return '';
+  var s = text;
+  // 1. Remove code blocks completely (never read code syntax or say omitted)
+  s = s.replace(/```[\s\S]*?```/g, '');
+  // 2. Remove URLs
+  s = s.replace(/https?:\/\/\S+/g, '');
+  // 3. Remove interactive button markers [[btn:Label|query]]
+  s = s.replace(/\[\[btn:[^\|\]]+\|[^\]]+\]\]/g, '');
+  // 4. Remove metadata headers
+  s = s.replace(/^🌐\s*\*\*Live\s+Online\s+Research:[^\n]+\*\*\s*/i, '');
+  s = s.replace(/^🌐\s*\*\*Live\s+Web\s+Search\s+for[^\n]+\*\*\s*/i, '');
+  s = s.replace(/^ℹ️\s*\*\*Information\s+Not\s+Found[^\n]+\*\*\s*/i, '');
+  s = s.replace(/^🔍\s*\*\*GAM\.AI\s+Lens:[^\n]+\*\*\s*/i, '');
+  s = s.replace(/^🚨\s*\*\*Top\s+10\s+Network[^\n]+\*\*\s*/i, '');
+  s = s.replace(/^🔬\s*\*\*GAM\.AI\s+Knowledge\s+Pack:[^\n]+\*\*\s*/i, '');
+  s = s.replace(/^👨‍🏫[^\n]*\n+/gi, '');
+  s = s.replace(/🎉\s*\*\*[^\n]+\*\*\n*/gi, '');
+  
+  // 5. Remove metadata footers (Source, Search Tips, Related suggestions, etc.)
+  s = s.replace(/---\s*\n🔗\s*\*\*Source:\*\*[\s\S]*/i, '');
+  s = s.replace(/💡\s*\*\*Search\s+Tips:\*\*[\s\S]*/i, '');
+  s = s.replace(/💡\s*\*\*Related\s+Search\s+Suggestions:\*\*[\s\S]*/i, '');
+  s = s.replace(/💡\s*\*\*संबंधित\s+खोज[\s\S]*/i, '');
+  s = s.replace(/💡\s*\*\*सम्बन्धित\s+खोज[\s\S]*/i, '');
+  s = s.replace(/💡\s*\*\*सुझाव[\s\S]*/i, '');
+  s = s.replace(/###\s*🔍\s*Related\s+Insights[\s\S]*/i, '');
+
+  // 6. Remove HTML tags and markdown decorations
+  s = s.replace(/<[^>]+>/g, ' ');
+  s = s.replace(/[\*\#_`~|]/g, ' ');
+  
+  // 7. Remove emojis
+  s = s.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '');
+  
+  // 8. Clean up bullet dashes and list markers so voice doesn't stumble
+  s = s.replace(/^\s*[-•*]\s+/gm, '');
+  s = s.replace(/\n\s*[-•*]\s+/g, '\n');
+  
+  // 9. Collapse whitespace and newlines
+  s = s.replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '. ').trim();
+  
+  if (!s) {
+    s = text.replace(/<[^>]+>/g, ' ').replace(/[\*\#_`~|]/g, ' ').trim();
+  }
+  return s;
+}
+
 function speakText(text, btnElem) {
   if (!text) return;
 
@@ -2404,11 +2801,7 @@ function speakText(text, btnElem) {
   stopSpeaking();
   if (!availableVoices || availableVoices.length === 0) { loadVoices(); }
 
-  var cleanSpeech = text.replace(/```[\s\S]*?```/g, ' Code snippet omitted. ')
-                        .replace(/\*\*/g, '')
-                        .replace(/[#_`|]/g, '')
-                        .replace(/<[^>]+>/g, '')
-                        .replace(/https?:\/\/\S+/g, '');
+  var cleanSpeech = extractSpokenResultOnly(text);
 
   var isDevanagari = /[\u0900-\u097F]/.test(text);
 
@@ -3509,6 +3902,146 @@ function translateMsgText(msgId, targetLang) {
   }
 }
 
+// ─── STRICTLY RELATED CONTEXTUAL SEARCH TIPS GENERATOR ─────────────────────
+function generateContextualSearchTips(q, lang) {
+  if (!q) return [];
+  var qLower = q.toLowerCase().trim();
+
+  // Stop words to remove for clean topic extraction
+  var stopWords = [
+    'what', 'is', 'are', 'the', 'a', 'an', 'how', 'to', 'why', 'do', 'does', 'did', 'can', 'could',
+    'would', 'should', 'please', 'tell', 'me', 'about', 'in', 'on', 'at', 'of', 'for', 'with', 'by',
+    'from', 'and', 'or', 'where', 'when', 'who', 'which', 'explain', 'give', 'show', 'describe',
+    'क्या', 'है', 'हैं', 'कैसे', 'बताओ', 'बारे', 'में', 'के', 'का', 'की', 'को',
+    'के', 'हो', 'छ', 'छन्', 'कसरी', 'भन्नुहोस्', 'बारेमा'
+  ];
+
+  var cleaned = qLower.replace(/[?!.,"“”‘’`~@#$%^&*()_+={}\[\]|\\:;<>]/g, ' ');
+  var words = cleaned.split(/\s+/).filter(function(w) {
+    return w.length > 1 && stopWords.indexOf(w) === -1;
+  });
+
+  var topic = words.join(' ').trim();
+  if (!topic) topic = q.trim();
+
+  var tips = [];
+
+  // Domain-specific contextual tips
+  if (/webb|jwst|telescope|hubble|space|nasa|galaxy|star|planet|astronomy/i.test(qLower)) {
+    tips = [
+      'James Webb Space Telescope discoveries',
+      'JWST vs Hubble Space Telescope',
+      'NASA deep space exploration missions',
+      'How space telescopes capture infrared light'
+    ];
+  } else if (/quantum|physics|relativity|einstein|atom|electron/i.test(qLower)) {
+    tips = [
+      topic + ' explained simply',
+      'Principles of quantum mechanics',
+      'Real world applications of ' + topic,
+      'Future of quantum computing technology'
+    ];
+  } else if (/mikrotik|routerboard|winbox|routeros/i.test(qLower)) {
+    tips = [
+      'MikroTik basic WAN setup and firewall NAT',
+      'MikroTik bridge VLAN filtering configuration',
+      'MikroTik Winbox connection troubleshooting',
+      'MikroTik bandwidth queue and DHCP setup'
+    ];
+  } else if (/vlan|trunk|access port|802\.1q/i.test(qLower)) {
+    tips = [
+      'VLAN 802.1Q trunk port configuration',
+      'Inter-VLAN routing with router on a stick',
+      'Difference between access and trunk ports',
+      'VLAN tagging troubleshooting steps'
+    ];
+  } else if (/dhcp|ip address|subnet|cidr|gateway/i.test(qLower)) {
+    tips = [
+      'DHCP server configuration and pool sizing',
+      'Subnet calculation /24 vs /27 vs /30',
+      'Troubleshooting 169.254 APIPA IP address',
+      'Default gateway and static routing guide'
+    ];
+  } else if (/fiber|optical|olt|ont|pon|los|gpon/i.test(qLower)) {
+    tips = [
+      'Fiber ONT red LOS light troubleshooting',
+      'GPON optical power levels dBm specifications',
+      'Huawei OLT service-port configuration',
+      'SC/UPC vs SC/APC fiber patch cord differences'
+    ];
+  } else if (/tower|poe|powerbox|edgepoint|wireless|airmax|ubiquiti/i.test(qLower)) {
+    tips = [
+      'Tower wireless AP 24V passive PoE setup',
+      'Ubiquiti PowerBeam antenna alignment guide',
+      'MikroTik PowerBox PoE output troubleshooting',
+      'Lightning surge protector earthing on tower'
+    ];
+  } else if (/python|javascript|code|programming|function|api|html|css/i.test(qLower)) {
+    tips = [
+      topic + ' code examples and syntax',
+      'How to debug ' + topic + ' errors',
+      'Best practices for ' + topic,
+      topic + ' official documentation'
+    ];
+  } else if (/nepal|काठमाडौं|नेपाल|pokhara|himalaya/i.test(qLower)) {
+    tips = [
+      'Geography and history of Nepal',
+      'Major cultural heritage sites in Nepal',
+      'Current development and technology in Nepal',
+      'Tourism and trekking routes in Nepal'
+    ];
+  } else {
+    // Dynamic topic-derived tips using the user's actual keywords
+    if (words.length >= 2) {
+      var w12 = words.slice(0, 2).join(' ');
+      tips = [
+        w12 + ' overview and key concepts',
+        'Step-by-step guide to ' + topic,
+        'Common questions about ' + topic,
+        'Troubleshooting and best practices for ' + w12
+      ];
+    } else if (words.length === 1) {
+      tips = [
+        words[0] + ' definition and fundamentals',
+        'How does ' + words[0] + ' work?',
+        'Real world examples of ' + words[0],
+        'Beginner tutorial for ' + words[0]
+      ];
+    } else {
+      tips = [
+        'Search with specific keywords',
+        'Check network connectivity and retry',
+        'Switch to Online Mode with Gemini API key',
+        'Browse local offline knowledge catalog'
+      ];
+    }
+  }
+
+  return tips;
+}
+
+function generateRelatedSearchTipsHtml(q, lang) {
+  var tips = generateContextualSearchTips(q, lang);
+  if (!tips || tips.length === 0) return '';
+
+  var title = (lang === 'hi') ? '💡 संबंधित खोज सुझाव (Related Search Tips):' :
+              (lang === 'ne') ? '💡 सम्बन्धित खोज सुझावहरू (Related Search Tips):' :
+              '💡 Strictly Related Search Suggestions:';
+
+  var html = '<div class="related-search-tips-box">' +
+    '<div class="related-tips-title">' + title + '</div>' +
+    '<div class="related-tips-chips">';
+
+  for (var i = 0; i < tips.length; i++) {
+    var tipText = tips[i];
+    var escapedTip = tipText.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+    html += '<button type="button" class="tip-search-chip" onclick="submitQuick(\'' + escapedTip + '\')">🔍 ' + tipText + '</button>';
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
 function renderAssistantMessage(opts) {
   var stream = document.getElementById('messages-stream');
   var msgId = opts.msgId || ('msg-' + Date.now());
@@ -3575,6 +4108,7 @@ function renderAssistantMessage(opts) {
           '<button class="btn-action-subtle" onclick="submitQuick(\'how to solve a problem\')">🛠️ Troubleshooting Guide</button>' +
           '<button class="btn-action-subtle" onclick="showModal(\'modal-models\')">' + btnModelText + '</button>' +
         '</div>' +
+        generateRelatedSearchTipsHtml(q, currentLang) +
       '</div>';
   }
 
@@ -4090,6 +4624,11 @@ function formatResponse(text) {
   for (var i = 0; i < parts.length; i++) {
     if (i % 2 === 0) {
       var s = escapeHtml(parts[i]);
+      // Support interactive action buttons [[btn:Display Label|command]]
+      s = s.replace(/\[\[btn:([^\|\]]+)\|([^\]]+)\]\]/g, function(match, label, cmd) {
+        var cleanCmd = cmd.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        return '<button type="button" class="interactive-choice-btn" onclick="submitQuick(\'' + cleanCmd + '\')">' + label + '</button>';
+      });
       var boldParts = s.split('**');
       var bFormatted = '';
       for (var j = 0; j < boldParts.length; j++) {
@@ -4351,11 +4890,13 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
           shouldReadAloud: shouldReadAloud
         });
       } else {
+        var tips = generateContextualSearchTips(q, currentLang);
+        var tipsText = tips.map(function(t){ return '- *"' + t + '"*'; }).join('\n');
         var noResultMsg = isHi
-          ? '🌐 **लाइव वेब खोज परिणाम:** "' + escapeHtml(q) + '" के लिए कोई सटीक विकिपीडिया या वेब प्रविष्टि नहीं मिली।\n\n💡 **सुझाव:** अलग कीवर्ड से खोजें (जैसे *"MikroTik"*, *"VLAN"*, *"DHCP"*), या सेटिंग्स में free Gemini API Key जोड़ें।'
+          ? '🌐 **लाइव वेब खोज परिणाम:** "' + escapeHtml(q) + '" के लिए कोई सटीक विकिपीडिया या वेब प्रविष्टि नहीं मिली।\n\n💡 **संबंधित खोज सुझाव:**\n' + tipsText + '\n\nया सेटिंग्स में मुफ्त Gemini API Key जोड़ें।'
           : (isNe
-            ? '🌐 **लाइभ वेब खोज नतिजा:** "' + escapeHtml(q) + '" का लागि कुनै प्रत्यक्ष विकिपीडिया वा वेब प्रविष्टि भेटिएन।\n\n💡 **सुझाव:** मुख्य शब्दहरूबाट खोज्नुहोस् (जस्तै *"MikroTik"*, *"VLAN"*, *"DHCP"*), वा सेटिङ्समा निःशुल्क Gemini API Key थप्नुहोस्।'
-            : '🌐 **Live Web Search for "' + escapeHtml(q) + '"**\n\nNo direct encyclopedia or instant answer entry was found on the live web for this specific phrasing.\n\n💡 **Search Tips:**\n- Try broader keywords (e.g. *"MikroTik router"*, *"VLAN configuration"*, *"DHCP"*)\n- Or add your free Google Gemini API Key in ⚙️ Settings for full conversational generative AI answers in Online Mode.');
+            ? '🌐 **लाइभ वेब खोज नतिजा:** "' + escapeHtml(q) + '" का लागि कुनै प्रत्यक्ष विकिपीडिया वा वेब प्रविष्टि भेटिएन।\n\n💡 **सम्बन्धित खोज सुझावहरू:**\n' + tipsText + '\n\nवा सेटिङ्समा निःशुल्क Gemini API Key थप्नुहोस्।'
+            : '🌐 **Live Web Search for "' + escapeHtml(q) + '"**\n\nNo direct encyclopedia or instant answer entry was found on the live web for this specific phrasing.\n\n💡 **Related Search Tips:**\n' + tipsText + '\n- Or add your free Google Gemini API Key in ⚙️ Settings for full conversational generative AI answers in Online Mode.');
 
         renderAssistantMessage({
           text: noResultMsg,
@@ -4426,8 +4967,13 @@ function executeSend(userText, wasSpoken) {
     q.indexOf('सुनाउनु') !== -1 || q.indexOf('बोलेर') !== -1 ||
     q.indexOf('सुनाओ') !== -1 || q.indexOf('बोलकर') !== -1 || q.indexOf('पढ़कर') !== -1;
 
-  if (currentExecutionMode === 'offline') {
-    // 100% PURE LOCAL ON-DEVICE OFFLINE EXECUTION
+  var isInteractiveDiag = (qLower.indexOf('diag:') !== -1 || qLower.indexOf('diag_') !== -1 ||
+                           qLower === 'how to solve a problem' || qLower === 'how to solve problem' ||
+                           qLower === 'cannot solve' || qLower === 'cant solve' || qLower === "can't solve" ||
+                           qLower === 'not working' || qLower === 'troubleshoot' || qLower === 'troubleshooting');
+
+  if (currentExecutionMode === 'offline' || isInteractiveDiag) {
+    // 100% PURE LOCAL ON-DEVICE OFFLINE / INTERACTIVE DIAGNOSTIC EXECUTION
     setTimeout(function() {
       var t0 = performance.now();
       var offlineResult = processOfflineAIQuery(q);
@@ -4439,9 +4985,9 @@ function executeSend(userText, wasSpoken) {
 
       renderAssistantMessage({
         text: offlineResult.response,
-        isOffline: true,
-        modelName: activeModelName,
-        sourceTag: '💾 On-Device Local AI',
+        isOffline: (currentExecutionMode === 'offline'),
+        modelName: isInteractiveDiag ? '🛠️ Diagnostic Tutor' : activeModelName,
+        sourceTag: isInteractiveDiag ? '👨‍🏫 Expert Engineering Engine' : '💾 On-Device Local AI',
         latencyMs: latencyMs,
         isNotFound: (offlineResult.found === false),
         query: q,
