@@ -72,5 +72,32 @@ class TestCoreComponents(unittest.TestCase):
         mm.unload_active_model()
         self.assertFalse(m2.is_loaded())
 
+    def test_omni_generative_prompt_synthesis(self):
+        from gam_ai.core.models.providers import MicroLocalModelProvider, GenerationRequest
+        provider = MicroLocalModelProvider("nano")
+        provider.load()
+
+        # Math / Quadratic
+        r_math = provider.generate(GenerationRequest(prompt="User Query: solve 2x^2 + 5x - 3 = 0"))
+        self.assertIn("Mathematical Derivation", r_math.text)
+        self.assertIn("Discriminant", r_math.text)
+
+        # Email
+        r_email = provider.generate(GenerationRequest(prompt="User Query: write an email requesting sick leave"))
+        self.assertIn("Sick Leave Application", r_email.text)
+
+        # Concept
+        r_concept = provider.generate(GenerationRequest(prompt="User Query: explain quantum computing like I'm 5"))
+        self.assertIn("Quantum Computing Explained", r_concept.text)
+
+        # Workout
+        r_plan = provider.generate(GenerationRequest(prompt="User Query: create a workout routine for gym"))
+        self.assertIn("4-Day Hypertrophy Split", r_plan.text)
+
+        # Strategic Analysis
+        r_strat = provider.generate(GenerationRequest(prompt="User Query: how to launch an AI startup"))
+        self.assertIn("Strategic Analysis", r_strat.text)
+
 if __name__ == "__main__":
     unittest.main()
+

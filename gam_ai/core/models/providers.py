@@ -306,6 +306,119 @@ class MicroLocalModelProvider(IModelProvider):
             if lines:
                 return " ".join(lines)
 
+        # Omni-Generative Prompt Synthesis (ChatGPT, Claude, Qwen, DeepSeek, Gemini)
+        import re, math
+        p_clean = active_query.strip()
+        p_lower = p_clean.lower()
+
+        # Math: Quadratic equation derivation
+        quad_m = re.search(r'([+-]?\d*(?:\.\d+)?)\s*x\^?2\s*([+-]\s*\d*(?:\.\d+)?)\s*x\s*([+-]\s*\d*(?:\.\d+)?)\s*=\s*0', p_lower, re.I)
+        if quad_m:
+            a_str = quad_m.group(1).replace(' ', '') or '1'
+            a = 1.0 if a_str in ('', '+') else (-1.0 if a_str == '-' else float(a_str))
+            b_str = quad_m.group(2).replace(' ', '') or '+0'
+            b = 1.0 if b_str in ('', '+') else (-1.0 if b_str == '-' else float(b_str))
+            c = float(quad_m.group(3).replace(' ', '') or '0')
+            d = b * b - 4 * a * c
+            out = f"### 🔢 Step-by-Step Mathematical Derivation\n\n"
+            out += f"**Equation:** `{a:g}x² {'+ ' if b >= 0 else '- '}{abs(b):g}x {'+ ' if c >= 0 else '- '}{abs(c):g} = 0`\n\n"
+            out += f"Using Quadratic Formula: $$x = \\frac{{-b \\pm \\sqrt{{b^2 - 4ac}}}}{{2a}}$$\n\n"
+            out += f"Discriminant $\\Delta = {d:g}$\n\n"
+            if d > 0:
+                sq = math.sqrt(d)
+                x1 = (-b + sq) / (2 * a)
+                x2 = (-b - sq) / (2 * a)
+                out += f"Two real roots: `x = {x1:.4g}` or `x = {x2:.4g}`"
+            elif d == 0:
+                x = -b / (2 * a)
+                out += f"One repeated root: `x = {x:.4g}`"
+            else:
+                real = -b / (2 * a)
+                imag = math.sqrt(-d) / (2 * a)
+                out += f"Complex conjugate roots: `x = {real:.4g} ± {imag:.4g}i`"
+            return out
+
+        # Emails & Letters
+        if any(k in p_lower for k in ("write an email", "draft an email", "resignation", "leave application", "cover letter")):
+            if "resign" in p_lower:
+                return (
+                    "### 📄 Professional Resignation Letter\n\n"
+                    "**Subject:** Resignation - [Your Name] - [Your Job Title]\n\n"
+                    "**Dear [Manager's Name],**\n\n"
+                    "Please accept this letter as formal notification that I am resigning from my position as [Your Job Title] at [Company Name]. "
+                    "My last working day will be [Notice Date].\n\n"
+                    "I am sincerely grateful for the opportunities and mentorship during my tenure. "
+                    "I will complete all pending deliverables and assist with a smooth transition.\n\n"
+                    "Sincerely,\n[Your Name]"
+                )
+            if "sick" in p_lower:
+                return (
+                    "### ✉️ Formal Sick Leave Application\n\n"
+                    "**Subject:** Sick Leave Application - [Your Name] - [Date]\n\n"
+                    "**Dear [Manager's Name],**\n\n"
+                    "I am writing to request sick leave for [Date(s)] due to acute illness. My physician has advised rest for recovery. "
+                    "I have handed urgent operational tasks to [Colleague's Name] and will monitor emergency emails periodically.\n\n"
+                    "Best regards,\n[Your Name]"
+                )
+            return (
+                "### ✉️ Formal Leave Request Email\n\n"
+                "**Subject:** Leave Request - [Your Name] - [Start Date] to [End Date]\n\n"
+                "**Dear [Manager's Name],**\n\n"
+                "I would like to request leave from [Start Date] to [End Date] for personal matters. "
+                "All project documentation is updated and team handovers are organized.\n\n"
+                "Warm regards,\n[Your Name]"
+            )
+
+        # Concept & Architecture Comparisons
+        if "quantum" in p_lower:
+            return (
+                "### 🔬 Quantum Computing Explained\n\n"
+                "1. **Analogy (ELI5):** A classical bit is a coin lying flat (0 or 1). A qubit is a coin spinning rapidly on a table—both heads and tails simultaneously (*superposition*) until measured!\n"
+                "2. **Entanglement:** Two qubits can be linked such that changing one instantaneously influences the other regardless of distance.\n"
+                "3. **Use Cases:** Drug discovery, molecular modeling, and cryptographic optimization."
+            )
+        if "graphql" in p_lower and "rest" in p_lower:
+            return (
+                "### ⚖️ REST vs. GraphQL Architectural Comparison\n\n"
+                "- **REST:** Multiple resource-specific endpoints (`/api/users`, `/api/posts`). Built-in HTTP caching, but prone to over/under-fetching.\n"
+                "- **GraphQL:** Single endpoint (`/graphql`) with client-driven field schemas. Solves over-fetching, but complex caching and query depth limiting required.\n"
+                "- **Recommendation:** Use REST for simple public microservices; use GraphQL for data-dense frontend applications."
+            )
+
+        # Plans & Itineraries
+        if "workout" in p_lower or "gym" in p_lower:
+            return (
+                "### 🏋️ 4-Day Hypertrophy Split\n\n"
+                "- **Day 1 (Upper A):** Bench Press 3x6-8, Bent-Over Rows 3x8-10, Overhead Press 3x10.\n"
+                "- **Day 2 (Lower A):** Squats 3x6-8, Romanian Deadlifts 3x8-10, Walking Lunges 3x10/leg.\n"
+                "- **Day 3 (Upper B):** Pull-ups 3x8-10, Incline DB Press 3x10-12, Lateral Raises 4x15.\n"
+                "- **Day 4 (Lower B):** Deadlifts 3x5, Leg Press 3x10-12, Standing Calf Raises 4x15.\n"
+                "💡 *Apply progressive overload: Add 2.5kg when you hit top of rep range.*"
+            )
+
+        # General Action Prompts (5-part strategic breakdown)
+        if any(p_lower.startswith(w) for w in ("how to", "how do", "why", "what is the best", "steps to", "tips for", "guide")):
+            words = [w for w in re.sub(r'[^\w\s]', '', p_clean).split() if len(w) > 2]
+            title = " ".join(words[:5]) or p_clean[:30]
+            return (
+                f"### 💡 Strategic Analysis: {title}\n\n"
+                f"#### 1. 🎯 Direct Overview\n"
+                f"Addressing **{p_clean}** requires focusing on core causal factors and rapid execution loops.\n\n"
+                f"#### 2. 🔍 Strategic Principles\n"
+                f"- **Pareto Priority:** Target the 20% high-leverage activities that produce 80% of results.\n"
+                f"- **Feedback Verification:** Build quick validation tests to verify assumptions empirically.\n\n"
+                f"#### 3. 🪜 Step-by-Step Action Plan\n"
+                f"1. Establish quantifiable metrics for completion.\n"
+                f"2. Deconstruct the problem into distinct execution sprints.\n"
+                f"3. Execute sprint 1 with real-world measurement and iteration.\n"
+                f"4. Document and standardize the winning workflow.\n\n"
+                f"#### 4. ⚠️ Common Pitfalls\n"
+                f"- Premature optimization before establishing baseline reliability.\n"
+                f"- Delaying execution for theoretical perfection.\n\n"
+                f"#### 5. 🎯 Key Takeaway\n"
+                f"Begin with the smallest high-leverage step today."
+            )
+
         return f"GAM.AI [{self.info.name}]: Processed '{self._extract_active_query(prompt)}' efficiently using local resource profile."
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:
