@@ -699,6 +699,19 @@
       </div>
     </div>
 
+    <!-- Voice Gender Toggle -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">🔊 Voice Gender</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Choose male or female AI voice for read-aloud responses</div>
+        </div>
+        <button class="btn-action ready" id="btn-voice-gender" onclick="toggleVoiceGender()" style="min-width:130px; display:flex; align-items:center; gap:6px; justify-content:center;">
+          <span style="font-size:1rem;">♀️</span> Female Voice
+        </button>
+      </div>
+    </div>
+
     <!-- SmartCache -->
     <div class="model-card">
       <div class="model-header-row">
@@ -1125,39 +1138,262 @@ function generateOfflineVendorConfig(vendor) {
   return '# Generic router interface configuration\ninterface GigabitEthernet0/0\n ip address 192.168.1.1 255.255.255.0\n no shutdown';
 }
 
+// ─── GEMINI API KEY for online fallback (set this for live responses) ───────
+var GEMINI_API_KEY = '';
+
 function processOfflineAIQuery(q) {
   var qLower = q.toLowerCase().trim();
   var isDevanagari = /[\u0900-\u097F]/.test(q);
   var isHi = (currentLang === 'hi') || (isDevanagari && (q.indexOf('क्या') !== -1 || q.indexOf('है') !== -1 || q.indexOf('गाना') !== -1 || q.indexOf('सुनाओ') !== -1 || q.indexOf('बताओ') !== -1 || q.indexOf('कैसे') !== -1 || q.indexOf('नमस्ते') !== -1 || q.indexOf('सहायक') !== -1));
   var isNe = (currentLang === 'ne') || (isDevanagari && !isHi);
 
-  // 1. Music / Audio playback triggers
-  if (qLower.indexOf('music') !== -1 || qLower.indexOf('song') !== -1 || q.indexOf('गीत') !== -1 || q.indexOf('गाना') !== -1 || q.indexOf('संगीत') !== -1 || q.indexOf('प्लेयर') !== -1 || q.indexOf('बजाओ') !== -1 || q.indexOf('बजाउ') !== -1) {
-    setTimeout(function() { showModal('modal-music'); }, 300);
-    if (isHi) {
-      return { found: true, response: '🎵 **ऑफ़लाइन म्यूज़िक प्लेयर खोल दिया गया है!**\n\nआप अपने फ़ोन से गाने (MP3, WAV, FLAC) लोड कर सकते हैं या ऑफ़लाइन ध्यान केंद्रित करने वाले साउंडस्केप (वर्षा, अल्फा वेव्स) सुन सकते हैं।' };
-    }
-    if (isNe) {
-      return { found: true, response: '🎵 **अफलाइन म्युजिक प्लेयर खोलिएको छ!**\n\nतपाईं आफ्नो फोन/ट्याब्लेटबाट MP3, WAV, FLAC गीतहरू थप्न सक्नुहुन्छ वा 100% अफलाइन ध्यान केन्द्रित गर्ने साउन्डस्केप (वर्षा, अल्फा वेभ्स) सुन्न सक्नुहुन्छ।' };
-    }
-    return { found: true, response: '🎵 **Offline Music & Soundscape Player Opened!**\n\nYou can load local audio tracks (MP3, WAV, FLAC) from your device or enjoy 100% offline Web Audio focus ambient soundscapes (Alpha Waves, Soft Rain, Space Drone).' };
+  // ── 0a. GREETINGS ──────────────────────────────────────────────────────────
+  var greetWords = ['hi','hello','hey','good morning','good afternoon','good evening','good night','howdy','sup',"what's up",'whats up','hiya'];
+  var isSimpleGreeting = greetWords.some(function(w){ return qLower === w || qLower.startsWith(w+' ') || qLower.startsWith(w+','); });
+  if (isSimpleGreeting || q.indexOf('नमस्ते') !== -1 || q.indexOf('नमस्कार') !== -1 || q.indexOf('हाय') !== -1 || q.indexOf('हेलो') !== -1) {
+    var nd0 = new Date(); var hr0 = nd0.getHours();
+    var greetTime = hr0 < 12 ? 'Good morning' : (hr0 < 17 ? 'Good afternoon' : 'Good evening');
+    var greetHi = hr0 < 12 ? 'सुप्रभात' : (hr0 < 17 ? 'नमस्ते' : 'शुभ संध्या');
+    var greetNe = hr0 < 12 ? 'शुभ बिहानी' : (hr0 < 17 ? 'नमस्ते' : 'शुभ साँझ');
+    if (isHi) return { found: true, response: greetHi + '! 😊 मैं **GAM.AI** हूँ — आपका AI सहायक। आप मुझसे कुछ भी पूछ सकते हैं: सामान्य ज्ञान, गणित, मज़ाक, समय, या नेटवर्किंग!' };
+    if (isNe) return { found: true, response: greetNe + '! 😊 म **GAM.AI** हुँ — तपाईंको AI सहायक। मलाई जुनसुकै प्रश्न सोध्न सक्नुहुन्छ!' };
+    return { found: true, response: greetTime + '! 😊 I\'m **GAM.AI**, your on-device AI assistant. Ask me anything — general knowledge, math, jokes, the time, network configs, and more!' };
   }
 
-  // 2. Ambient soundscapes triggers
+  // ── 0b. HOW ARE YOU ────────────────────────────────────────────────────────
+  if (qLower.indexOf('how are you') !== -1 || qLower.indexOf('how r u') !== -1 || qLower.indexOf('are you ok') !== -1 ||
+      q.indexOf('कैसे हो') !== -1 || q.indexOf('कैसे हैं') !== -1 || q.indexOf('ठीक हो') !== -1 ||
+      q.indexOf('कस्तो छ') !== -1 || q.indexOf('कस्तो हुनुहुन्छ') !== -1) {
+    if (isHi) return { found: true, response: 'मैं बिल्कुल ठीक हूँ, धन्यवाद! 😄 आपकी मदद के लिए हमेशा तैयार हूँ। आप कैसे हैं?' };
+    if (isNe) return { found: true, response: 'म एकदम राम्रो छु, धन्यवाद! 😄 तपाईं कस्तो हुनुहुन्छ? कुनै प्रश्न छ?' };
+    return { found: true, response: 'I\'m doing great, thanks for asking! 😄 All systems running smoothly on your device. How can I help you today?' };
+  }
+
+  // ── 0c. WHO ARE YOU / WHAT CAN YOU DO ──────────────────────────────────────
+  if (qLower.indexOf('who are you') !== -1 || qLower.indexOf('what are you') !== -1 ||
+      qLower.indexOf('what can you do') !== -1 || qLower.indexOf('your name') !== -1 ||
+      qLower.indexOf('tell me about yourself') !== -1 ||
+      q.indexOf('तुम कौन हो') !== -1 || q.indexOf('आप कौन हैं') !== -1 || q.indexOf('तपाईं को हुनुहुन्छ') !== -1) {
+    if (isHi) return { found: true, response: '🤖 मैं **GAM.AI** हूँ — एक स्थानीय ऑफ़लाइन AI सहायक जो सीधे आपके Google Pixel पर चलता है।\n\nमैं इन कार्यों में मदद कर सकता हूँ:\n- 💬 सामान्य बातचीत व सवाल-जवाब\n- 🔢 गणित की गणनाएं\n- 🌐 नेटवर्क व सबनेट कैलकुलेशन\n- 🔧 Cisco, Huawei, MikroTik कॉन्फ़िग\n- 📷 कैमरा लेंस से टेक्स्ट पहचान\n- 🎵 ऑफ़लाइन संगीत व साउंडस्केप\n- 🔊 आवाज़ में जवाब\n\nVhuwon Mathers द्वारा निर्मित। 100% ऑफ़लाइन।' };
+    if (isNe) return { found: true, response: '🤖 म **GAM.AI** हुँ — तपाईंको Google Pixel मा स्थानीय रूपमा चल्ने अफलाइन AI सहायक।\n\nम यी काम गर्न सक्छु:\n- 💬 सामान्य कुराकानी\n- 🔢 गणित हिसाब\n- 🌐 नेटवर्क सबनेट हिसाब\n- 🔧 राउटर कन्फिगरेसन\n- 📷 क्यामेरा लेन्स विश्लेषण\n\nVhuwon Mathers द्वारा निर्मित।' };
+    return { found: true, response: '🤖 I\'m **GAM.AI** — a fully offline, on-device AI assistant running locally on your Google Pixel.\n\nHere\'s what I can do:\n- 💬 General conversation & Q&A\n- 🔢 Math calculations\n- 🌐 Subnet & network calculations\n- 🔧 Router configs (Cisco, Huawei, MikroTik, FortiGate)\n- 📷 Camera Lens & OCR analysis\n- 🎵 Offline music & soundscapes\n- 🔊 Voice responses (TTS)\n- 🌏 English, हिन्दी & नेपाली\n\nBuilt by Vhuwon Mathers. 100% offline & private.' };
+  }
+
+  // ── 0d. THANK YOU ──────────────────────────────────────────────────────────
+  if (qLower === 'thanks' || qLower === 'thank you' || qLower === 'thx' || qLower === 'ty' ||
+      qLower.startsWith('thank') || q.indexOf('धन्यवाद') !== -1 || q.indexOf('शुक्रिया') !== -1) {
+    if (isHi) return { found: true, response: 'आपका स्वागत है! 😊 कभी भी पूछें।' };
+    if (isNe) return { found: true, response: 'सहर्ष! 😊 जहिले पनि सोध्नुस्।' };
+    return { found: true, response: 'You\'re welcome! 😊 Feel free to ask anything anytime.' };
+  }
+
+  // ── 1. TIME & DATE ─────────────────────────────────────────────────────────
+  if (qLower.indexOf('time') !== -1 || qLower.indexOf('what time') !== -1 ||
+      q.indexOf('समय') !== -1 || q.indexOf('वक्त') !== -1 || q.indexOf('बजे') !== -1) {
+    var nd = new Date();
+    var timeStr = nd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    if (isHi) return { found: true, response: '🕐 अभी का समय है: **' + timeStr + '**' };
+    if (isNe) return { found: true, response: '🕐 हालको समय: **' + timeStr + '**' };
+    return { found: true, response: '🕐 Current time: **' + timeStr + '**' };
+  }
+  if (qLower.indexOf('date') !== -1 || qLower.indexOf('today') !== -1 || qLower.indexOf('what day') !== -1 ||
+      q.indexOf('तारीख') !== -1 || q.indexOf('आज') !== -1 || q.indexOf('मिति') !== -1) {
+    var nd2 = new Date();
+    var dateStr = nd2.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (isHi) return { found: true, response: '📅 आज की तारीख है: **' + dateStr + '**' };
+    if (isNe) return { found: true, response: '📅 आजको मिति: **' + dateStr + '**' };
+    return { found: true, response: '📅 Today is: **' + dateStr + '**' };
+  }
+
+  // ── 2. MATH CALCULATIONS ───────────────────────────────────────────────────
+  var hasMathOp = /[\+\-\*\/]/.test(q) && /\d/.test(q) && qLower.length < 80;
+  if (hasMathOp || (qLower.indexOf('calculate') !== -1 && /\d/.test(q)) ||
+      (qLower.indexOf('what is') !== -1 && /\d/.test(q) && /[\+\-\*\/]/.test(q))) {
+    try {
+      var expr = qLower.replace(/what\s+is/g,'').replace(/[?]/g,'').replace(/\^/g,'**').replace(/\bx\b/g,'*').trim();
+      expr = expr.replace(/[^0-9\.\+\-\*\/\(\)\s%]/g,'').trim();
+      if (expr && /\d/.test(expr) && /[\+\-\*\/]/.test(expr)) {
+        var mathResult = Function('"use strict"; return (' + expr + ')')();
+        if (typeof mathResult === 'number' && isFinite(mathResult)) {
+          return { found: true, response: '🔢 **' + expr.replace(/\*\*/g,'^') + ' = ' + mathResult + '**' };
+        }
+      }
+    } catch(e) {}
+  }
+
+  // ── 3. UNIT CONVERSIONS ────────────────────────────────────────────────────
+  var kmToMi = qLower.match(/(\d+(?:\.\d+)?)\s*km\s*(?:to|in)\s*miles?/i);
+  if (kmToMi) return { found: true, response: '📏 ' + kmToMi[1] + ' km = **' + (parseFloat(kmToMi[1]) * 0.621371).toFixed(3) + ' miles**' };
+  var miToKm = qLower.match(/(\d+(?:\.\d+)?)\s*miles?\s*(?:to|in)\s*km/i);
+  if (miToKm) return { found: true, response: '📏 ' + miToKm[1] + ' miles = **' + (parseFloat(miToKm[1]) / 0.621371).toFixed(3) + ' km**' };
+  var cToF = qLower.match(/(\d+(?:\.\d+)?)\s*(?:°?c|celsius)\s*(?:to|in)\s*(?:°?f|fahrenheit)/i);
+  if (cToF) return { found: true, response: '🌡️ ' + cToF[1] + '°C = **' + ((parseFloat(cToF[1]) * 9/5) + 32).toFixed(2) + '°F**' };
+  var fToC = qLower.match(/(\d+(?:\.\d+)?)\s*(?:°?f|fahrenheit)\s*(?:to|in)\s*(?:°?c|celsius)/i);
+  if (fToC) return { found: true, response: '🌡️ ' + fToC[1] + '°F = **' + ((parseFloat(fToC[1]) - 32) * 5/9).toFixed(2) + '°C**' };
+
+  // ── 4. JOKES ───────────────────────────────────────────────────────────────
+  if (qLower.indexOf('joke') !== -1 || qLower.indexOf('funny') !== -1 || qLower.indexOf('make me laugh') !== -1 ||
+      q.indexOf('चुटकुला') !== -1 || q.indexOf('मज़ाक') !== -1 || q.indexOf('जोक') !== -1 || q.indexOf('मजाक') !== -1) {
+    var jokes = [
+      'Why don\'t scientists trust atoms?\n\n**Because they make up everything!** 😄',
+      'I told my computer I needed a break...\n\n**Now it won\'t stop sending me Kit-Kat ads.** 😂',
+      'Why do programmers prefer dark mode?\n\n**Because light attracts bugs!** 🐛',
+      'What do you call a fish without eyes?\n\n**A fsh!** 🐟😄',
+      'Why did the smartphone go to school?\n\n**To improve its screen time!** 📱😂'
+    ];
+    var jokesHi = [
+      'एक आदमी दौड़ रहा था। पुलिसवाले ने पूछा — "क्यों भाग रहे हो?"\nवो बोला — "डॉक्टर ने कहा था हर रोज़ दौड़ो!" 😄',
+      'शिक्षक: "नदी में क्या होता है?"\nछात्र: "पानी सर!"\nशिक्षक: "और क्या?"\nछात्र: "मगरमच्छ भी सर!" 😂',
+      'दो दोस्त मिले।\nपहला: "यार, मेरा फ़ोन बात नहीं करता।"\nदूसरा: "मेरा भी — दोनों का GPS ज़रूर काम करता है, बस दोनों खो गए हैं!" 📱😄'
+    ];
+    var jokesNe = [
+      'एक जना दौडिरहेका थिए। पुलिसले सोध्यो — "किन दौडिरहेको?"\nउनले भने — "डाक्टरले रोज दौड भन्नुभयो!" 😄',
+      'साथीले सोध्यो: "तपाईंको फोन किन बोल्दैन?"\nउत्तर: "किनभने ऊ introvert छ!" 😂'
+    ];
+    var selJoke = isHi ? jokesHi[Math.floor(Math.random()*jokesHi.length)] : (isNe ? jokesNe[Math.floor(Math.random()*jokesNe.length)] : jokes[Math.floor(Math.random()*jokes.length)]);
+    return { found: true, response: selJoke };
+  }
+
+  // ── 5. MOTIVATIONAL QUOTES ────────────────────────────────────────────────
+  if (qLower.indexOf('motivat') !== -1 || qLower.indexOf('inspir') !== -1 || qLower.indexOf('quote') !== -1 ||
+      qLower.indexOf('encourage') !== -1 || q.indexOf('प्रेरणा') !== -1 || q.indexOf('मोटिवेशन') !== -1 || q.indexOf('सुविचार') !== -1) {
+    var quotes = [
+      '💪 *"The only way to do great work is to love what you do."* — Steve Jobs',
+      '🌟 *"It does not matter how slowly you go as long as you do not stop."* — Confucius',
+      '🚀 *"Success is not final, failure is not fatal: It is the courage to continue that counts."* — Churchill',
+      '🔥 *"Believe you can and you\'re halfway there."* — Theodore Roosevelt',
+      '⭐ *"The future belongs to those who believe in the beauty of their dreams."* — Eleanor Roosevelt'
+    ];
+    var quotesHi = [
+      '💪 *"महान कार्य करने का एकमात्र तरीका है — वह करना जो आप प्यार करते हैं।"* — Steve Jobs',
+      '🌟 *"चाहे कितनी धीमी गति से चलो, लेकिन रुकना नहीं चाहिए।"* — Confucius',
+      '🔥 *"विश्वास रखो और आप आधे रास्ते पहुँच गए हो।"* — Theodore Roosevelt'
+    ];
+    var quotesNe = [
+      '💪 *"महान काम गर्ने एकमात्र तरिका भनेको तपाईंले गर्ने काम मन पराउनु हो।"* — Steve Jobs',
+      '🌟 *"सपना हेर्नुहोस् र त्यसलाई पूरा गर्न लाग्नुहोस्।"*',
+      '🔥 *"आफूमाथि विश्वास राख्नुहोस् — तपाईं सक्षम हुनुहुन्छ।"*'
+    ];
+    var selQ = isHi ? quotesHi[Math.floor(Math.random()*quotesHi.length)] : (isNe ? quotesNe[Math.floor(Math.random()*quotesNe.length)] : quotes[Math.floor(Math.random()*quotes.length)]);
+    return { found: true, response: selQ };
+  }
+
+  // ── 6. GENERAL KNOWLEDGE ──────────────────────────────────────────────────
+  var capitalMap = { 'india':'New Delhi 🇮🇳','nepal':'Kathmandu 🇳🇵','usa':'Washington D.C. 🇺🇸','united states':'Washington D.C. 🇺🇸','china':'Beijing 🇨🇳','japan':'Tokyo 🇯🇵','uk':'London 🇬🇧','united kingdom':'London 🇬🇧','france':'Paris 🇫🇷','germany':'Berlin 🇩🇪','australia':'Canberra 🇦🇺','canada':'Ottawa 🇨🇦','brazil':'Brasília 🇧🇷','russia':'Moscow 🇷🇺','pakistan':'Islamabad 🇵🇰','bangladesh':'Dhaka 🇧🇩','sri lanka':'Colombo 🇱🇰','south korea':'Seoul 🇰🇷','italy':'Rome 🇮🇹','spain':'Madrid 🇪🇸' };
+  var capMatch = qLower.match(/capital\s+of\s+([a-z\s]+?)(?:\?|$)/) || qLower.match(/([a-z\s]+?)\s+(?:capital|राजधानी)/);
+  if (capMatch) {
+    var country = (capMatch[1] || '').trim().toLowerCase();
+    if (capitalMap[country]) return { found: true, response: '🏛️ The capital of **' + (country.charAt(0).toUpperCase()+country.slice(1)) + '** is **' + capitalMap[country] + '**.' };
+  }
+  if (q.indexOf('भारत की राजधानी') !== -1 || q.indexOf('भारत का राजधानी') !== -1) return { found: true, response: '🏛️ भारत की राजधानी **नई दिल्ली** है।' };
+  if (q.indexOf('नेपाल की राजधानी') !== -1 || q.indexOf('नेपालको राजधानी') !== -1 || q.indexOf('नेपाल को राजधानी') !== -1) return { found: true, response: '🏛️ नेपाल की राजधानी / नेपालको राजधानी **काठमांडू / काठमाडौं** है।' };
+
+  if (qLower.indexOf('planet') !== -1 || qLower.indexOf('solar system') !== -1 || q.indexOf('ग्रह') !== -1) {
+    return { found: true, response: '🪐 **The 8 Planets (in order from the Sun):**\n\n1. ☿ Mercury\n2. ♀ Venus\n3. 🌍 Earth\n4. ♂ Mars\n5. ♃ Jupiter\n6. ♄ Saturn\n7. ⛢ Uranus\n8. ♆ Neptune\n\n*Pluto was reclassified as a Dwarf Planet in 2006.*' };
+  }
+  if ((qLower.indexOf('boil') !== -1 && qLower.indexOf('water') !== -1) || qLower.indexOf('boiling point') !== -1) {
+    return { found: true, response: '🌡️ Water boils at **100°C (212°F)** at standard atmospheric pressure (sea level).' };
+  }
+  if (qLower.indexOf('speed of light') !== -1 || q.indexOf('प्रकाश की गति') !== -1) {
+    return { found: true, response: '💡 Speed of light in vacuum: **299,792,458 m/s** (≈ 3×10⁸ m/s)' };
+  }
+  if (qLower.indexOf('largest country') !== -1) return { found: true, response: '🌍 The **largest country** by area is **Russia** (~17.1 million km²).' };
+  if (qLower.indexOf('smallest country') !== -1) return { found: true, response: '🌍 The **smallest country** is **Vatican City** (~0.44 km²), within Rome, Italy.' };
+  if (qLower.indexOf('tallest mountain') !== -1 || qLower.indexOf('highest mountain') !== -1 || q.indexOf('सबसे ऊंचा पहाड़') !== -1 || q.indexOf('सगरमाथा') !== -1) {
+    if (isHi) return { found: true, response: '🏔️ दुनिया का सबसे ऊंचा पर्वत **माउंट एवरेस्ट (सागरमाथा)** है — ऊंचाई: **8,848.86 मीटर**, नेपाल-चीन सीमा।' };
+    if (isNe) return { found: true, response: '🏔️ **सगरमाथा (Mount Everest)** संसारको सबैभन्दा अग्लो पर्वत — उचाइ: **8,848.86 मिटर**, नेपाल-चीन सिमाना। 🇳🇵 नेपालको गर्व!' };
+    return { found: true, response: '🏔️ The tallest mountain is **Mount Everest (Sagarmatha)** — **8,848.86 m (29,031.7 ft)**, Nepal-China border.' };
+  }
+  if (qLower.indexOf('largest ocean') !== -1) return { found: true, response: '🌊 The **largest ocean** is the **Pacific Ocean** (~165 million km²).' };
+  if (qLower.indexOf('longest river') !== -1 || q.indexOf('सबसे लंबी नदी') !== -1) return { found: true, response: '🏞️ The world\'s **longest river** is the **Nile River** (~6,650 km), flowing through northeastern Africa.' };
+
+  if (qLower.indexOf('who invented') !== -1 || qLower.indexOf('invented by') !== -1) {
+    var inventions = { 'telephone':'Alexander Graham Bell (1876) 📞','light bulb':'Thomas Edison (1879) 💡','internet':'Tim Berners-Lee (World Wide Web, 1989) 🌐','airplane':'Wright Brothers (1903) ✈️','computer':'Charles Babbage / Alan Turing 💻','television':'John Logie Baird (1926) 📺','radio':'Guglielmo Marconi (1895) 📻' };
+    for (var inv in inventions) {
+      if (qLower.indexOf(inv) !== -1) return { found: true, response: '🔬 The **' + inv + '** was invented by **' + inventions[inv] + '**.' };
+    }
+  }
+
+  // ── 7. HEALTH & WELLNESS ──────────────────────────────────────────────────
+  if (qLower.indexOf('headache') !== -1 || q.indexOf('सिरदर्द') !== -1 || q.indexOf('टाउको दुखेको') !== -1) {
+    return { found: true, response: '🏥 **Headache Relief Tips:**\n\n1. 💧 Drink a full glass of water\n2. 😌 Rest in a quiet, dark room for 15 minutes\n3. 🌬️ Apply cold/warm compress on forehead\n4. 🧘 Gentle neck stretches\n5. 💊 OTC: Paracetamol / Ibuprofen if needed\n\n> ⚠️ Severe or persistent headaches — see a doctor.' };
+  }
+  if (qLower.indexOf('stress') !== -1 || qLower.indexOf('anxiety') !== -1 || q.indexOf('तनाव') !== -1) {
+    return { found: true, response: '🧘 **Quick Stress Relief:**\n\n1. **Box Breathing:** Inhale 4s → Hold 4s → Exhale 4s → Hold 4s (×4)\n2. 🚶 Short walk outside\n3. 🎵 Calming music (try Rain soundscape)\n4. ✍️ Write down your worries\n5. 😴 Get 7–8 hours of sleep\n\n> You\'re stronger than you think! 💪' };
+  }
+  if (qLower.indexOf('sleep') !== -1 || qLower.indexOf('insomnia') !== -1 || q.indexOf('नींद') !== -1 || q.indexOf('निद्रा') !== -1) {
+    return { found: true, response: '😴 **Better Sleep Tips:**\n\n1. ⏰ Sleep & wake at same time daily\n2. 📵 No screens 30 min before bed\n3. 🌡️ Keep room cool (18–20°C)\n4. ☕ No caffeine after 3 PM\n5. 🎵 Try Alpha Waves soundscape in GAM.AI\n6. 🧘 4-7-8 breathing: Inhale 4s, Hold 7s, Exhale 8s' };
+  }
+  if (qLower.indexOf('water') !== -1 && (qLower.indexOf('drink') !== -1 || qLower.indexOf('per day') !== -1 || qLower.indexOf('how much') !== -1)) {
+    return { found: true, response: '💧 **Daily Water Intake:**\n\n- Adults: **8 glasses (≈2 liters)** per day\n- Athletes: 3–4 liters\n- Hot weather: add 0.5–1 liter\n\n> Drink a glass of water first thing in the morning! 🌅' };
+  }
+
+  // ── 8. FOOD / COOKING ─────────────────────────────────────────────────────
+  if ((qLower.indexOf('how to make') !== -1 || qLower.indexOf('recipe') !== -1 || qLower.indexOf('cook') !== -1) &&
+      (qLower.indexOf('chai') !== -1 || qLower.indexOf('tea') !== -1 || q.indexOf('चाय') !== -1 || q.indexOf('चिया') !== -1)) {
+    return { found: true, response: '☕ **Masala Chai Recipe (2 cups):**\n\n**Ingredients:** 1.5 cups water, 0.5 cup milk, 2 tsp tea leaves, 2 tsp sugar, 3 cardamom pods, grated ginger\n\n**Steps:**\n1. Boil water + ginger + cardamom for 2 min\n2. Add tea leaves, boil 1 min\n3. Add milk + sugar, simmer 2 min\n4. Strain & enjoy! 😊' };
+  }
+  if ((qLower.indexOf('how to make') !== -1 || qLower.indexOf('cook') !== -1) && qLower.indexOf('rice') !== -1) {
+    return { found: true, response: '🍚 **Steamed Rice (2 servings):**\n\n1. Rinse 1 cup rice until clear\n2. Add 2 cups water + pinch of salt\n3. Boil, then low heat, cover\n4. Simmer **15–18 minutes**\n5. Rest 5 min, fluff with fork\n\n✅ Perfect ratio: **1 cup rice : 2 cups water**' };
+  }
+  if ((qLower.indexOf('how to make') !== -1 || qLower.indexOf('cook') !== -1) && (qLower.indexOf('egg') !== -1 || qLower.indexOf('omelette') !== -1)) {
+    return { found: true, response: '🍳 **Easy Omelette (1 serving):**\n\n1. Beat 2 eggs + salt + pepper + splash of milk\n2. Heat pan on medium with butter\n3. Pour eggs — tilt to spread evenly\n4. Add cheese/veggies\n5. Fold & serve!\n\n⏱️ Total: ~5 minutes' };
+  }
+
+  // ── 9. RIDDLES ────────────────────────────────────────────────────────────
+  if (qLower.indexOf('riddle') !== -1 || qLower.indexOf('puzzle') !== -1 || q.indexOf('पहेली') !== -1) {
+    var riddles = [
+      '🧩 **Riddle:** I have hands but cannot clap. What am I?\n\n**Answer: A clock! ⏰**',
+      '🧩 **Riddle:** The more you take, the more you leave behind. What am I?\n\n**Answer: Footsteps! 👣**',
+      '🧩 **Riddle:** I\'m tall when young, short when old. What am I?\n\n**Answer: A candle! 🕯️**'
+    ];
+    return { found: true, response: riddles[Math.floor(Math.random()*riddles.length)] };
+  }
+
+  // ── 10. SCIENCE & TECH ────────────────────────────────────────────────────
+  if (qLower.indexOf('gravity') !== -1 || q.indexOf('गुरुत्वाकर्षण') !== -1) {
+    return { found: true, response: '🍎 **Gravity:** The force attracting objects with mass toward each other.\n\n- Earth: **9.8 m/s²**\n- Moon: **1.62 m/s²** (~1/6 of Earth\'s)\n- Formulated by **Isaac Newton (1687)**, extended by **Einstein\'s General Relativity (1915)**' };
+  }
+  if (qLower.indexOf('photosynthesis') !== -1 || q.indexOf('प्रकाश संश्लेषण') !== -1) {
+    return { found: true, response: '🌿 **Photosynthesis:**\n\n> **6CO₂ + 6H₂O + Light → C₆H₁₂O₆ + 6O₂**\n\nPlants convert sunlight → food + oxygen. Happens in **chloroplasts** (green chlorophyll).' };
+  }
+  if (qLower.indexOf('what is ai') !== -1 || qLower.indexOf('artificial intelligence') !== -1) {
+    return { found: true, response: '🤖 **Artificial Intelligence (AI):**\n\nSimulation of human intelligence by machines.\n\n- 🟢 **Narrow AI** — specific tasks (like me!)\n- 🟡 **General AI (AGI)** — human-level (future)\n- 🔴 **Super AI (ASI)** — beyond human (theoretical)\n\nI\'m a **Narrow Edge AI** running 100% offline on your Pixel! 😊' };
+  }
+  if (qLower.indexOf('blockchain') !== -1) {
+    return { found: true, response: '⛓️ **Blockchain:** A decentralized digital ledger recording transactions across many computers.\n\n**Properties:** Immutable · Decentralized · Cryptographically secured\n\n**Examples:** Bitcoin, Ethereum\n**Uses:** Crypto, supply chain, smart contracts' };
+  }
+
+  // ── 11. SHAYARI / POETRY (Hindi/Nepali cultural) ──────────────────────────
+  if (q.indexOf('शायरी') !== -1 || q.indexOf('कविता') !== -1 || q.indexOf('कविता') !== -1 || q.indexOf('poem') !== -1) {
+    if (isHi) return { found: true, response: '✍️ **एक छोटी शायरी:**\n\n*मंज़िल तो मिलेगी भटकते हुए ही,\nगुमराह तो वो हैं जो घर से निकले ही नहीं।*\n\n— हिंदी साहित्य 🌸' };
+    if (isNe) return { found: true, response: '✍️ **एक छोटो कविता:**\n\n*यो जीवन हो एउटा यात्रा,\nहिंड्दै जाऊ, हार नमाऊ।\nसपना देख, आफ्नो बाटो\nआफैं बनाउ।*\n\n— नेपाली कविता 🌸' };
+    return { found: true, response: '✍️ **A little poem:**\n\n*Shoot for the moon.\nEven if you miss,\nyou\'ll land among the stars.* 🌟\n\n— Norman Vincent Peale' };
+  }
+
+  // ── 12. MUSIC / AUDIO ─────────────────────────────────────────────────────
+  if (qLower.indexOf('music') !== -1 || qLower.indexOf('song') !== -1 || q.indexOf('गीत') !== -1 || q.indexOf('गाना') !== -1 || q.indexOf('संगीत') !== -1 || q.indexOf('प्लेयर') !== -1 || q.indexOf('बजाओ') !== -1 || q.indexOf('बजाउ') !== -1) {
+    setTimeout(function() { showModal('modal-music'); }, 300);
+    if (isHi) return { found: true, response: '🎵 **ऑफ़लाइन म्यूज़िक प्लेयर खुल गया है!**\n\nआप MP3, WAV, FLAC गाने लोड कर सकते हैं या ऑफ़लाइन साउंडस्केप (वर्षा, अल्फा वेव्स) सुन सकते हैं।' };
+    if (isNe) return { found: true, response: '🎵 **अफलाइन म्युजिक प्लेयर खोलिएको छ!**\n\nMP3, WAV, FLAC गीतहरू थप्नुहोस् वा अफलाइन साउन्डस्केप सुन्नुहोस्।' };
+    return { found: true, response: '🎵 **Offline Music & Soundscape Player Opened!**\n\nLoad local audio tracks (MP3, WAV, FLAC) or enjoy offline ambient soundscapes (Alpha Waves, Soft Rain, Space Drone).' };
+  }
+
+  // ── 13. AMBIENT SOUNDSCAPES ───────────────────────────────────────────────
   if (qLower.indexOf('rain') !== -1 || q.indexOf('वर्षा') !== -1 || q.indexOf('बारिश') !== -1 || q.indexOf('पानी') !== -1) {
     toggleAmbientSound('rain');
-    if (isHi) return { found: true, response: '🌧️ **बारिश का साउंडस्केप बजना शुरू हो गया है!** 100% ऑफ़लाइन हार्डवेयर ऑडियो द्वारा संश्लेषित।' };
-    if (isNe) return { found: true, response: '🌧️ **वर्षाको साउन्डस्केप बज्न सुरु भयो!** 100% अफलाइन सिन्थेसाइजर प्रयोग भइरहेको छ।' };
-    return { found: true, response: '🌧️ **Soft Rainfall Ambient Soundscape Started!** Synthesized 100% offline directly via your device Web Audio hardware.' };
+    if (isHi) return { found: true, response: '🌧️ **बारिश का साउंडस्केप शुरू हो गया है!** 100% ऑफ़लाइन हार्डवेयर ऑडियो।' };
+    if (isNe) return { found: true, response: '🌧️ **वर्षाको साउन्डस्केप सुरु भयो!** 100% अफलाइन।' };
+    return { found: true, response: '🌧️ **Soft Rainfall Soundscape Started!** Synthesized 100% offline via your device Web Audio hardware.' };
   }
   if (qLower.indexOf('alpha') !== -1 || qLower.indexOf('focus') !== -1 || q.indexOf('ध्यान') !== -1 || q.indexOf('एकाग्रता') !== -1) {
     toggleAmbientSound('alpha');
-    if (isHi) return { found: true, response: '🧠 **अल्फा वेव्स (10 Hz बाइनॉरल बीट्स) शुरू हो गई हैं!** पढ़ाई और ध्यान केंद्रित करने के लिए सर्वोत्तम।' };
-    if (isNe) return { found: true, response: '🧠 **अल्फा वेभ्स (10 Hz बाइनोरल बिट्स) सुरु भयो!** अध्ययन र ध्यान केन्द्रित गर्न उपयुक्त छ।' };
-    return { found: true, response: '🧠 **Alpha Waves (10 Hz Binaural Focus Beats) Started!** Designed for deep cognitive focus and study sessions.' };
+    if (isHi) return { found: true, response: '🧠 **अल्फा वेव्स (10 Hz बाइनॉरल) शुरू हो गई!** पढ़ाई और ध्यान के लिए सर्वोत्तम।' };
+    if (isNe) return { found: true, response: '🧠 **अल्फा वेभ्स (10 Hz) सुरु भयो!** अध्ययनका लागि उपयुक्त।' };
+    return { found: true, response: '🧠 **Alpha Waves (10 Hz Binaural) Started!** Designed for deep focus and study sessions.' };
   }
 
-  // 3. Device Diagnostics & Hardware Info
+  // ── 14. DEVICE DIAGNOSTICS ────────────────────────────────────────────────
   if (qLower.indexOf('battery') !== -1 || qLower.indexOf('ram') !== -1 || qLower.indexOf('device') !== -1 || q.indexOf('बैटरी') !== -1 || q.indexOf('ब्याट्री') !== -1 || q.indexOf('फ़ोन') !== -1 || q.indexOf('फोन') !== -1) {
     var bLevel = (window.AndroidBridge && typeof window.AndroidBridge.getBatteryLevel === 'function') ? window.AndroidBridge.getBatteryLevel() : 100;
     var isChg = (window.AndroidBridge && typeof window.AndroidBridge.isCharging === 'function') ? window.AndroidBridge.isCharging() : false;
@@ -1165,157 +1401,60 @@ function processOfflineAIQuery(q) {
     var tRam = (window.AndroidBridge && typeof window.AndroidBridge.getTotalRamMb === 'function') ? window.AndroidBridge.getTotalRamMb() : 4096;
     var isTab = (window.AndroidBridge && typeof window.AndroidBridge.isTablet === 'function') ? window.AndroidBridge.isTablet() : (window.innerWidth >= 768);
     var wake = (window.AndroidBridge && typeof window.AndroidBridge.isWakeLockHeld === 'function') ? window.AndroidBridge.isWakeLockHeld() : false;
-
-    if (isHi) {
-      return {
-        found: true,
-        response: '📱 **डिवाइस हार्डवेयर विवरण (Google Pixel / Android):**\n\n' +
-          '| पैरामीटर | स्थिति |\n|---|---|\n' +
-          '| **बैटरी स्थिति** | ' + bLevel + '% ' + (isChg ? '⚡ (चार्ज हो रहा है)' : '🔋') + ' |\n' +
-          '| **उपलब्ध रैम** | ' + aRam + ' MB / ' + tRam + ' MB |\n' +
-          '| **डिवाइस प्रकार** | ' + (isTab ? 'Android टैबलेट' : 'Google Pixel फ़ोन') + ' |\n' +
-          '| **ऑडियो वेकलॉक** | ' + (wake ? 'सक्रिय 🔒 (बैकग्राउंड प्लेबैक चालू)' : 'स्टैंडबाय') + ' |\n' +
-          '| **इंजन स्थिति** | स्टैंडअलोन ऑफ़लाइन हाइब्रिड वेबइंजन |'
-      };
-    }
-    if (isNe) {
-      return {
-        found: true,
-        response: '📱 **डिभाइस हार्डवेयर विवरण (Google Pixel / Android):**\n\n' +
-          '- **ब्याट्री स्थिति:** ' + bLevel + '% ' + (isChg ? '⚡ (चार्ज हुँदै)' : '🔋') + '\n' +
-          '- **उपलब्ध र्याम:** ' + aRam + ' MB / ' + tRam + ' MB\n' +
-          '- **डिभाइस प्रकार:** ' + (isTab ? 'Android ट्याब्लेट' : 'Android मोबाइल (Pixel 7 Pro)') + '\n' +
-          '- **अडियो वेकलक:** ' + (wake ? 'सक्रिय 🔒 (पृष्ठभूमि प्लेब्याक)' : 'स्ट्यान्डबाइ') + '\n' +
-          '- **अपरेटिङ मोड:** अफलाइन स्ट्यान्डअलोन / USB डिबगिङ'
-      };
-    }
-    return {
-      found: true,
-      response: '📱 **Device Hardware Diagnostics (Google Pixel / Android):**\n\n' +
-        '| Metric | Status |\n|---|---|\n' +
-        '| **Battery Level** | ' + bLevel + '% ' + (isChg ? '⚡ Charging' : '🔋 Discharging') + ' |\n' +
-        '| **RAM Available** | ' + aRam + ' MB / ' + tRam + ' MB |\n' +
-        '| **Form Factor** | ' + (isTab ? 'Android Tablet' : 'Android Phone (Pixel 7 Pro)') + ' |\n' +
-        '| **Audio WakeLock** | ' + (wake ? 'Active 🔒 (Background Playback ON)' : 'Standby') + ' |\n' +
-        '| **Platform Engine** | Standalone Native Hybrid WebView |'
-    };
+    if (isHi) return { found: true, response: '📱 **डिवाइस हार्डवेयर विवरण:**\n\n| पैरामीटर | स्थिति |\n|---|---|\n| **बैटरी** | ' + bLevel + '% ' + (isChg ? '⚡ चार्ज हो रहा है' : '🔋') + ' |\n| **रैम** | ' + aRam + ' MB / ' + tRam + ' MB |\n| **डिवाइस** | ' + (isTab ? 'Android टैबलेट' : 'Google Pixel फ़ोन') + ' |\n| **वेकलॉक** | ' + (wake ? '🔒 सक्रिय' : 'स्टैंडबाय') + ' |' };
+    if (isNe) return { found: true, response: '📱 **डिभाइस हार्डवेयर:**\n\n- **ब्याट्री:** ' + bLevel + '% ' + (isChg ? '⚡' : '🔋') + '\n- **र्याम:** ' + aRam + ' MB / ' + tRam + ' MB\n- **डिभाइस:** ' + (isTab ? 'ट्याब्लेट' : 'Pixel 7 Pro') + '\n- **वेकलक:** ' + (wake ? '🔒 सक्रिय' : 'स्ट्यान्डबाइ') };
+    return { found: true, response: '📱 **Device Hardware:**\n\n| Metric | Status |\n|---|---|\n| **Battery** | ' + bLevel + '% ' + (isChg ? '⚡ Charging' : '🔋 Discharging') + ' |\n| **RAM** | ' + aRam + ' MB / ' + tRam + ' MB |\n| **Form** | ' + (isTab ? 'Android Tablet' : 'Android Phone (Pixel 7 Pro)') + ' |\n| **WakeLock** | ' + (wake ? '🔒 Active' : 'Standby') + ' |' };
   }
 
-  // 4. Subnet & CIDR Calculation
+  // ── 15. SUBNET & CIDR ─────────────────────────────────────────────────────
   var cidrMatch = q.match(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2})\b/);
   if (cidrMatch || qLower.indexOf('subnet') !== -1 || qLower.indexOf('cidr') !== -1 || q.indexOf('सबनेट') !== -1) {
     var targetCidr = cidrMatch ? cidrMatch[1] : '192.168.1.0/24';
     var subRes = calculateOfflineSubnet(targetCidr);
     if (!subRes.error) {
-      var headerText = isHi ? ('🌐 **IPv4 सबनेट गणना `' + targetCidr + '` के लिए:**') : (isNe ? ('🌐 **IPv4 सबनेट गणना `' + targetCidr + '` को लागि:**') : ('🌐 **IPv4 Subnet Calculation for `' + targetCidr + '`**:'));
-      return {
-        found: true,
-        response: headerText + '\n\n' +
-          '| Parameter | Value |\n|---|---|\n' +
-          '| **Network Address** | `' + subRes.network_address + '` |\n' +
-          '| **Broadcast Address** | `' + subRes.broadcast_address + '` |\n' +
-          '| **Subnet Mask** | `' + subRes.netmask + '` |\n' +
-          '| **Wildcard Mask** | `' + subRes.wildcard_mask + '` |\n' +
-          '| **First Usable Host** | `' + subRes.first_usable_host + '` |\n' +
-          '| **Last Usable Host** | `' + subRes.last_usable_host + '` |\n' +
-          '| **Total Usable Hosts** | **' + subRes.total_usable_hosts.toLocaleString() + '** |\n' +
-          '| **Scope** | ' + (subRes.is_private ? 'RFC 1918 Private' : 'Public') + ' |'
-      };
+      var headerText = isHi ? ('🌐 **IPv4 सबनेट गणना `' + targetCidr + '` के लिए:**') : (isNe ? ('🌐 **IPv4 सबनेट गणना `' + targetCidr + '` को लागि:**') : ('🌐 **IPv4 Subnet for `' + targetCidr + '`:**'));
+      return { found: true, response: headerText + '\n\n| Parameter | Value |\n|---|---|\n| **Network Address** | `' + subRes.network_address + '` |\n| **Broadcast** | `' + subRes.broadcast_address + '` |\n| **Subnet Mask** | `' + subRes.netmask + '` |\n| **First Host** | `' + subRes.first_usable_host + '` |\n| **Last Host** | `' + subRes.last_usable_host + '` |\n| **Usable Hosts** | **' + subRes.total_usable_hosts.toLocaleString() + '** |\n| **Scope** | ' + (subRes.is_private ? 'RFC 1918 Private' : 'Public') + ' |' };
     }
   }
 
-  // 5. Multi-Vendor Router / Switch Configs
+  // ── 16. ROUTER CONFIGS ────────────────────────────────────────────────────
   if (qLower.indexOf('cisco') !== -1 || qLower.indexOf('ospf') !== -1) {
-    return {
-      found: true,
-      response: '🔧 **Cisco OSPF Routing Configuration Template:**\n\n```text\n' + generateOfflineVendorConfig('cisco') + '\n```'
-    };
+    return { found: true, response: '🔧 **Cisco OSPF Configuration Template:**\n\n```text\n' + generateOfflineVendorConfig('cisco') + '\n```' };
   }
   if (qLower.indexOf('huawei') !== -1 || qLower.indexOf('trunk') !== -1) {
-    return {
-      found: true,
-      response: '🔧 **Huawei Switch Trunk Configuration Template:**\n\n```text\n' + generateOfflineVendorConfig('huawei') + '\n```'
-    };
+    return { found: true, response: '🔧 **Huawei Switch Trunk Configuration:**\n\n```text\n' + generateOfflineVendorConfig('huawei') + '\n```' };
   }
   if (qLower.indexOf('mikrotik') !== -1) {
-    return {
-      found: true,
-      response: '🔧 **MikroTik RouterOS Bridge & DHCP Setup:**\n\n```text\n' + generateOfflineVendorConfig('mikrotik') + '\n```'
-    };
+    return { found: true, response: '🔧 **MikroTik RouterOS Setup:**\n\n```text\n' + generateOfflineVendorConfig('mikrotik') + '\n```' };
   }
   if (qLower.indexOf('fortigate') !== -1 || qLower.indexOf('firewall') !== -1) {
-    return {
-      found: true,
-      response: '🔧 **FortiGate Firewall NAT Policy Template:**\n\n```text\n' + generateOfflineVendorConfig('fortigate') + '\n```'
-    };
+    return { found: true, response: '🔧 **FortiGate Firewall NAT Template:**\n\n```text\n' + generateOfflineVendorConfig('fortigate') + '\n```' };
   }
 
-  // 6. Camera / Lens query
+  // ── 17. CAMERA / LENS ─────────────────────────────────────────────────────
   if (qLower.indexOf('lens') !== -1 || qLower.indexOf('camera') !== -1 || q.indexOf('कैमरा') !== -1 || q.indexOf('फोटो') !== -1) {
     setTimeout(openGoogleLens, 300);
-    if (isHi) return { found: true, response: '📷 **GAM.AI लेंस खुल गया है!** आप अपने कैमरे से नेटवर्क डिवाइस, पोर्ट्स या टेक्स्ट स्कैन कर सकते हैं।' };
-    if (isNe) return { found: true, response: '📷 **GAM.AI लेन्स खोलियो!** तपाईं क्यामेराबाट नेटवर्क उपकरण वा अक्षर स्क्यान गर्न सक्नुहुन्छ।' };
+    if (isHi) return { found: true, response: '📷 **GAM.AI लेंस खुल गया है!** कैमरे से नेटवर्क डिवाइस, पोर्ट्स या टेक्स्ट स्कैन करें।' };
+    if (isNe) return { found: true, response: '📷 **GAM.AI लेन्स खोलियो!** क्यामेराबाट नेटवर्क उपकरण वा अक्षर स्क्यान गर्नुहोस्।' };
     return { found: true, response: '📷 **GAM.AI Lens opened!** Point camera at routers, switches, or text labels to analyze.' };
   }
 
-  // 7. General Greetings (found: true)
-  var isGreeting = (qLower === 'hi' || qLower === 'hello' || qLower === 'hey' || qLower === 'help' ||
-    q.indexOf('नमस्ते') !== -1 || q.indexOf('नमस्कार') !== -1 || qLower.indexOf('who are you') !== -1 ||
-    qLower.indexOf('what can you do') !== -1 || q.indexOf('सहायक') !== -1);
-
-  if (isGreeting) {
-    if (isHi) {
-      return {
-        found: true,
-        response: 'नमस्ते! मैं **GAM.AI** मोबाइल सहायक हूँ।\n\n' +
-          'यहाँ आप पूरी तरह ऑफ़लाइन निम्न सुविधाओं का उपयोग कर सकते हैं:\n' +
-          '- 📷 **GAM.AI लेंस:** कैमरे से नेटवर्क उपकरण, पोर्ट्स व टेक्स्ट स्कैन करें\n' +
-          '- 🎤 **बोलकर पूछें:** 🎤 बटन दबाकर हिंदी में बोलें, उत्तर बोलकर सुनाया जाएगा\n' +
-          '- 🎵 **ऑफ़लाइन म्यूज़िक व साउंडस्केप:** बारिश व अल्फा वेव्स एकाग्रता के लिए\n' +
-          '- 🌐 **सबनेट कैलकुलेटर:** CIDR जैसे `192.168.1.0/24` की तुरंत गणना करें\n' +
-          '- 🔧 **राउटर कॉन्फ़िग:** Cisco, Huawei, MikroTik व FortiGate कमांड्स\n\n' +
-          '🏠 कभी भी होम मेनू पर लौटने के लिए ऊपर 🏠 बटन दबाएं या बैक करें।'
-      };
-    }
-    if (isNe) {
-      return {
-        found: true,
-        response: 'नमस्ते! म **GAM.AI** अफलाइन सहायक हुँ।\n\n' +
-          'तपाईं यहाँ:\n' +
-          '- 📷 **GAM.AI लेन्स:** क्यामेराबाट नेटवर्क उपकरण र अक्षर स्क्यान गर्नुहोस्\n' +
-          '- 🎤 **बोलेर सोध्नुहोस्:** 🎤 थिचेर नेपालीमा बोल्नुहोस्, जवाफ पढेर सुनाइनेछ\n' +
-          '- 🎵 **अफलाइन संगीत तथा साउन्डस्केप** (अल्फा वेभ्स, वर्षाको आवाज)\n' +
-          '- 🌐 **नेटवर्क सबनेट हिसाब** (उदा. `192.168.1.0/24`)\n' +
-          '- 🔧 **Cisco, Huawei, MikroTik** राउटर कन्फिगरेसन\n\n' +
-          '🏠 होम मेनुमा फर्कन माथिको 🏠 थिच्नुहोस् वा ब्याक बटन थिच्नुहोस्।'
-      };
-    }
-    return {
-      found: true,
-      response: 
-        '👋 Hello! I am **GAM.AI Mobile Engine** running on your device.\n\n' +
-        'Here are key tools you can use right now completely offline:\n' +
-        '- 📷 **GAM.AI Lens:** Tap 📷 to point camera and identify routers, ports, LEDs, or scan text.\n' +
-        '- 🎤 **Tap to Speak:** Tap 🎤 to ask questions by voice (English / हिंदी / नेपाली), answers are spoken aloud.\n' +
-        '- 🏠 **Home Navigation:** Tap 🏠 or press Android Back anytime to return to Home Menu.\n' +
-        '- 🎵 **Offline Music & Soundscapes:** Type *"play music"*, *"rain"*, or *"alpha waves"*.\n' +
-        '- 🌐 **Subnet Calculator:** Enter any CIDR like `192.168.1.0/24` or `10.0.0.0/22`.\n' +
-        '- 🔧 **Router Configs:** Ask for *"cisco ospf"*, *"huawei trunk"*, or *"fortigate nat"*.'
-    };
+  // ── 18. HELP / HOME ──────────────────────────────────────────────────────
+  if (qLower === 'help' || qLower === 'menu' || qLower === 'home' || q.indexOf('सहायक') !== -1 || q.indexOf('मदद') !== -1 || q.indexOf('सहयोग') !== -1) {
+    if (isHi) return { found: true, response: 'नमस्ते! मैं **GAM.AI** मोबाइल सहायक हूँ।\n\nमैं आपकी मदद कर सकता हूँ:\n- 💬 सामान्य बातचीत व सवाल-जवाब\n- 🔢 गणित, रूपांतरण\n- 📅 समय व तारीख\n- 🌐 सबनेट कैलकुलेटर\n- 🔧 राउटर कॉन्फ़िग\n- 📷 कैमरा लेंस\n- 🎵 ऑफ़लाइन संगीत\n- 😄 मज़ाक व प्रेरणा\n\n🏠 होम मेनू के लिए 🏠 बटन दबाएं।' };
+    if (isNe) return { found: true, response: 'नमस्ते! म **GAM.AI** अफलाइन सहायक हुँ।\n\nम गर्न सक्छु:\n- 💬 सामान्य कुराकानी\n- 🔢 गणित हिसाब\n- 📅 समय र मिति\n- 🌐 नेटवर्क सबनेट\n- 🔧 राउटर कन्फिग\n- 📷 क्यामेरा लेन्स\n- 🎵 अफलाइन संगीत\n\n🏠 होम मेनुमा फर्कन 🏠 थिच्नुहोस्।' };
+    return { found: true, response: 'Hello! I\'m **GAM.AI Mobile Engine**.\n\nI can help you with:\n- 💬 General conversation & Q&A\n- 🔢 Math & unit conversions\n- 📅 Time & date\n- 🌐 Subnet calculator\n- 🔧 Router configs (Cisco, Huawei, MikroTik)\n- 📷 Camera Lens analysis\n- 🎵 Offline music & soundscapes\n- 😄 Jokes, riddles & motivation\n- 🌱 Health tips, recipes\n\n🏠 Tap 🏠 or press Back to return to Home Menu.' };
   }
 
-  // 8. Topic Not Found in local offline packs -> Request user to switch online & download knowledge
+  // ── 19. TOPIC NOT FOUND → Request switch to Online ────────────────────────
   var notFoundText = isHi
     ? 'ℹ️ **यह विषय आपके वर्तमान स्थानीय ऑफ़लाइन नॉलेज पैक में उपलब्ध नहीं है।**\n\n' +
-      'GAM.AI वर्तमान में **⚡ ऑफ़लाइन (एयर-गैप्ड) मोड** में काम कर रहा है। ' +
-      'इंटरनेट से सटीक जानकारी खोजने और इसे अपने डिवाइस पर भविष्य के ऑफ़लाइन उपयोग के लिए स्थायी रूप से डाउनलोड करने के लिए नीचे दिए गए बटन पर टैप करें:'
+      'GAM.AI **⚡ ऑफ़लाइन मोड** में है। इंटरनेट से जानकारी खोजने के लिए Online Mode चालू करें या नीचे के बटन से डाउनलोड करें:'
     : (isNe
     ? 'ℹ️ **यो विषय हालको स्थानीय अफलाइन ज्ञान प्याकमा उपलब्ध छैन।**\n\n' +
-      'GAM.AI अहिले **⚡ अफलाइन मोड** मा चलिरहेको छ। ' +
-      'इन्टरनेटबाट ताजा जानकारी खोज्न र भविष्यमा अफलाइन प्रयोगका लागि यसलाई डिभाइसमा डाउनलोड गर्न तलको बटन थिच्नुहोस्:'
+      'GAM.AI **⚡ अफलाइन मोड** मा छ। इन्टरनेटबाट जानकारी खोज्न Online Mode चालू गर्नुहोस्:'
     : 'ℹ️ **Information Not Found in Current Local Offline Knowledge Pack**\n\n' +
-      'GAM.AI is operating in **⚡ Offline Mode (Air-Gapped)** on local device storage. ' +
-      'To research this topic using live web intelligence and automatically cache the knowledge pack locally on your machine for permanent offline access, choose an option below:');
+      'GAM.AI is operating in **⚡ Offline Mode**. To research this topic using live web intelligence and cache it locally for future offline access, choose an option below:');
 
   return {
     found: false,
@@ -1424,13 +1563,43 @@ function speakText(text, btnElem) {
     utter.lang = 'en-US';
   }
 
-  var v = findBestVoice(targetVoicePrefix);
-  if (v) {
-    utter.voice = v;
-    utter.lang = v.lang;
+  // ── Gender-based voice selection ──────────────────────────────────────────
+  var preferredGender = window._voiceGender || 'female';
+  var genderVoice = null;
+
+  if (availableVoices && availableVoices.length > 0) {
+    var femaleKeywords = ['female', 'woman', 'girl', 'zira', 'susan', 'samantha', 'victoria',
+      'karen', 'moira', 'fiona', 'allison', 'ava', 'joanna', 'salli', 'kendra', 'kimberly',
+      'ivy', 'amy', 'emma', 'olivia', 'lisa', 'heather', 'hazel', 'neerja', 'raveena'];
+    var maleKeywords = ['male', 'man', 'guy', 'alex', 'fred', 'james', 'lee', 'daniel', 'david',
+      'thomas', 'oliver', 'george', 'arthur', 'liam', 'aaron', 'joey', 'mark', 'brian'];
+
+    var keywords = (preferredGender === 'female') ? femaleKeywords : maleKeywords;
+
+    // Try to find gender-matching voice for the language
+    for (var gi = 0; gi < availableVoices.length; gi++) {
+      var vn = (availableVoices[gi].name || '').toLowerCase();
+      var vl = (availableVoices[gi].lang || '').toLowerCase();
+      var langMatch = vl.startsWith(targetVoicePrefix.toLowerCase());
+      var genderMatch = keywords.some(function(k) { return vn.indexOf(k) !== -1; });
+      if (langMatch && genderMatch) { genderVoice = availableVoices[gi]; break; }
+    }
+    // Fallback: any voice matching language
+    if (!genderVoice) {
+      genderVoice = findBestVoice(targetVoicePrefix);
+    }
+  }
+
+  if (genderVoice) {
+    utter.voice = genderVoice;
+    utter.lang = genderVoice.lang;
+  } else {
+    var v = findBestVoice(targetVoicePrefix);
+    if (v) { utter.voice = v; utter.lang = v.lang; }
   }
 
   utter.rate = 0.95; // Slightly clearer for all ages (10-70)
+  utter.pitch = (preferredGender === 'female') ? 1.1 : 0.85;
 
   if (btnElem) {
     activeSpeakingBtn = btnElem;
@@ -1443,6 +1612,26 @@ function speakText(text, btnElem) {
 
   window.speechSynthesis.speak(utter);
 }
+
+// ── Voice Gender Toggle ────────────────────────────────────────────────────
+window._voiceGender = localStorage.getItem('gamaiVoiceGender') || 'female';
+
+function toggleVoiceGender() {
+  window._voiceGender = (window._voiceGender === 'female') ? 'male' : 'female';
+  localStorage.setItem('gamaiVoiceGender', window._voiceGender);
+  var btn = document.getElementById('btn-voice-gender');
+  if (btn) {
+    btn.innerHTML = window._voiceGender === 'female'
+      ? '<span style="font-size:1rem;">♀️</span> Female Voice'
+      : '<span style="font-size:1rem;">♂️</span> Male Voice';
+  }
+  // Play a short test tone with the new gender
+  var testSample = (currentLang === 'hi') ? 'आवाज़ बदल दी गई है।' :
+                   (currentLang === 'ne') ? 'आवाज परिवर्तन गरियो।' :
+                   'Voice changed to ' + window._voiceGender + '.';
+  speakText(testSample, null);
+}
+
 
 function speakMsg(btn) {
   var wrapper = btn.closest ? btn.closest('.message-wrapper') : null;
@@ -2557,6 +2746,16 @@ function updateStatus() {
 setInterval(updateStatus, 4000);
 updateStatus();
 
+// ── Initialize voice gender button label on load ─────────────────────────
+(function initVoiceGenderBtn() {
+  var btn = document.getElementById('btn-voice-gender');
+  if (btn) {
+    btn.innerHTML = (window._voiceGender === 'male')
+      ? '<span style="font-size:1rem;">♂️</span> Male Voice'
+      : '<span style="font-size:1rem;">♀️</span> Female Voice';
+  }
+})();
+
 function activateModel(mId) {
   apiFetch('/api/model/switch', {
     method: 'POST',
@@ -2992,20 +3191,73 @@ function executeSend(userText, wasSpoken) {
       updateStatus();
     })
     .catch(function(err) {
-      var lEl = document.getElementById(loadId);
-      if (lEl) lEl.remove();
-
-      var offlineResult = processOfflineAIQuery(q);
-      renderAssistantMessage({
-        text: offlineResult.response,
-        isOffline: true,
-        modelName: activeModelName,
-        sourceTag: '💾 Local Fallback Knowledge',
-        latencyMs: '1.5',
-        isNotFound: (offlineResult.found === false),
-        query: q,
-        shouldReadAloud: shouldReadAloud
-      });
+      // Python backend not running — try Gemini API directly (requires GEMINI_API_KEY)
+      if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
+        var geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_API_KEY;
+        var sysPrompt = 'You are GAM.AI, a helpful, friendly AI assistant. Respond concisely in ' +
+          (currentLang === 'hi' ? 'Hindi (हिन्दी)' : currentLang === 'ne' ? 'Nepali (नेपाली)' : 'English') +
+          '. Keep answers brief and clear.';
+        fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: sysPrompt }] },
+            contents: [{ parts: [{ text: q }] }]
+          })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(gData) {
+          var lEl = document.getElementById(loadId);
+          if (lEl) lEl.remove();
+          var gText = '';
+          try { gText = gData.candidates[0].content.parts[0].text; } catch(e) { gText = ''; }
+          if (gText) {
+            var t1g = performance.now();
+            renderAssistantMessage({
+              text: gText,
+              isOffline: false,
+              modelName: 'Gemini 2.0 Flash',
+              sourceTag: '🌐 Gemini AI (Direct)',
+              latencyMs: (t1g - t0).toFixed(0),
+              isNotFound: false,
+              query: q,
+              shouldReadAloud: shouldReadAloud
+            });
+          } else {
+            var fallback2 = processOfflineAIQuery(q);
+            renderAssistantMessage({
+              text: fallback2.response, isOffline: true, modelName: activeModelName,
+              sourceTag: '💾 Local Fallback', latencyMs: '1.5',
+              isNotFound: (fallback2.found === false), query: q, shouldReadAloud: shouldReadAloud
+            });
+          }
+        })
+        .catch(function() {
+          var lEl2 = document.getElementById(loadId);
+          if (lEl2) lEl2.remove();
+          var fallback3 = processOfflineAIQuery(q);
+          renderAssistantMessage({
+            text: fallback3.response, isOffline: true, modelName: activeModelName,
+            sourceTag: '💾 Local Fallback', latencyMs: '1.5',
+            isNotFound: (fallback3.found === false), query: q, shouldReadAloud: shouldReadAloud
+          });
+        });
+      } else {
+        // No Gemini key — use expanded offline AI which now handles everyday conversation
+        var lEl = document.getElementById(loadId);
+        if (lEl) lEl.remove();
+        var offlineResult = processOfflineAIQuery(q);
+        renderAssistantMessage({
+          text: offlineResult.response,
+          isOffline: true,
+          modelName: activeModelName,
+          sourceTag: '💾 Local Fallback Knowledge',
+          latencyMs: '1.5',
+          isNotFound: (offlineResult.found === false),
+          query: q,
+          shouldReadAloud: shouldReadAloud
+        });
+      }
     });
   }
 }
