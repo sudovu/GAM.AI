@@ -1446,6 +1446,528 @@ function processOfflineAIQuery(q) {
     return { found: true, response: 'Hello! I\'m **GAM.AI Mobile Engine**.\n\nI can help you with:\n- 💬 General conversation & Q&A\n- 🔢 Math & unit conversions\n- 📅 Time & date\n- 🌐 Subnet calculator\n- 🔧 Router configs (Cisco, Huawei, MikroTik)\n- 📷 Camera Lens analysis\n- 🎵 Offline music & soundscapes\n- 😄 Jokes, riddles & motivation\n- 🌱 Health tips, recipes\n\n🏠 Tap 🏠 or press Back to return to Home Menu.' };
   }
 
+  // ── 19. ELECTRICAL & PoE CONNECTIONS ────────────────────────────────────────
+  if (qLower.indexOf('electrical') !== -1 || qLower.indexOf('electric') !== -1 ||
+      qLower.indexOf('wiring') !== -1 || qLower.indexOf('poe') !== -1 ||
+      qLower.indexOf('power over ethernet') !== -1 || qLower.indexOf('grounding') !== -1 ||
+      qLower.indexOf('surge') !== -1 || qLower.indexOf('lightning') !== -1 ||
+      qLower.indexOf('earthing') !== -1 || qLower.indexOf('arrestor') !== -1 ||
+      q.indexOf('बिजली') !== -1 || q.indexOf('तार') !== -1 || q.indexOf('बिद्युत') !== -1) {
+    return {
+      found: true,
+      response: '⚡ **Electrical & PoE Connections for Network Equipment**\n\n' +
+        '### 🔌 PoE Standards\n' +
+        '| Standard | Power | Usage |\n|---|---|---|\n' +
+        '| **802.3af (PoE)** | 15.4W max | IP cameras, WAPs |\n' +
+        '| **802.3at (PoE+)** | 30W max | PTZ cameras, APs |\n' +
+        '| **802.3bt (PoE++)** | 60–90W max | High-power APs, displays |\n' +
+        '| **Passive PoE (24V)** | 24V @ 0.5–1A | MikroTik, Ubiquiti outdoor |\n' +
+        '| **Passive PoE (48V)** | 48V @ 0.5A | Some Ubiquiti units |\n\n' +
+        '### 🏗️ PoE Injector Wiring (EIA-568B, CAT5e/CAT6)\n' +
+        '```\n' +
+        'Pairs used for DATA: 1,2 (orange) + 3,6 (green)\n' +
+        'Pairs used for POWER (passive): 4,5 (+) and 7,8 (−)\n' +
+        '802.3af/at uses all 4 pairs with power on data pairs via phantom power\n' +
+        'MAX cable run: 100m (328ft) — use outdoor rated UV/STP cable for runs ≥30m\n' +
+        '```\n\n' +
+        '### ⚡ Grounding & Surge Protection\n' +
+        '- **Always ground** metal tower, antenna mount, and surge protector\n' +
+        '- Use **outdoor-rated shielded STP cable** for any antenna run\n' +
+        '- Install **lightning/surge arrestor** (e.g. Ubiquiti ETH-SP-G2, MikroTik RBGESP) at the point of entry into building\n' +
+        '- Connect arrestor chassis to copper **earth ground rod** with ≥10 AWG wire\n' +
+        '- Tower itself must be **bonded to earth** using ground clamp + solid copper\n' +
+        '- **Never** run unterminated STP cable into equipment without bonded earth — it acts as an antenna for lightning\n\n' +
+        '### 🔋 Power Supply Sizing\n' +
+        '- Always use **UPS / line conditioner** for routers/switches (120V or 220V)\n' +
+        '- MikroTik PowerBox: draws ~18W max under full PoE load\n' +
+        '- Typical tower AP draw: 8–15W each\n' +
+        '- Size UPS for: (total load × 1.25 safety factor) for 30min runtime'
+    };
+  }
+
+  // ── 20. TOWER / WIRELESS TERMINAL SETUP ──────────────────────────────────
+  if (qLower.indexOf('tower') !== -1 || qLower.indexOf('wireless tower') !== -1 ||
+      qLower.indexOf('antenna') !== -1 || qLower.indexOf('backhaul') !== -1 ||
+      qLower.indexOf('alignment') !== -1 || qLower.indexOf('sector') !== -1 ||
+      qLower.indexOf('signal level') !== -1 || qLower.indexOf('rssi') !== -1 ||
+      qLower.indexOf('ccq') !== -1 || qLower.indexOf('frequency plan') !== -1 ||
+      qLower.indexOf('wisp') !== -1 || qLower.indexOf('access point setup') !== -1 ||
+      q.indexOf('टावर') !== -1 || q.indexOf('एन्टेना') !== -1 || q.indexOf('वायरलेस') !== -1) {
+    return {
+      found: true,
+      response: '📡 **Network Tower & Wireless Terminal Setup**\n\n' +
+        '### 🗼 Tower Setup Sequence\n' +
+        '1. **Plan:** Determine link distance, required throughput, and LOS (Line of Sight)\n' +
+        '2. **Mount:** Install sector/omni on top; PtP dish on side pointing toward remote\n' +
+        '3. **Cable:** Run STP CAT6 from AP → surge arrestor → switch/router inside\n' +
+        '4. **Ground:** Bond tower, mount, arrestor, and cable shield to earth rod\n' +
+        '5. **Power:** Inject PoE at indoor end; never at weatherhead\n' +
+        '6. **Configure:** IP, SSID, channel, TX power before installation if possible\n' +
+        '7. **Align:** Aim dish/antenna — watch signal level in real-time alignment tool\n\n' +
+        '### 📶 Signal Quality Targets\n' +
+        '| Metric | Excellent | Good | Marginal | Poor |\n|---|---|---|---|---|\n' +
+        '| **RSSI (dBm)** | −55 or better | −65 | −75 | −80 or worse |\n' +
+        '| **CCQ (%)** | ≥ 95% | ≥ 85% | ≥ 70% | < 70% |\n' +
+        '| **SNR (dB)** | ≥ 30 dB | ≥ 20 dB | ≥ 10 dB | < 10 dB |\n' +
+        '| **TX/RX Rate** | Full MCS | MCS 7+ | MCS 4–6 | Low MCS |\n\n' +
+        '### 📻 Frequency Planning\n' +
+        '| Band | Best Use | Channel Width | Range |\n|---|---|---|---|\n' +
+        '| **2.4 GHz** | Omni coverage, NLOS | 20 MHz | up to 15 km |\n' +
+        '| **5 GHz (5150–5850)** | Backhaul, PtP | 20/40/80 MHz | up to 50 km (dish) |\n' +
+        '| **5.8 GHz** | Ubiquiti/MikroTik outdoor | 20/40 MHz | 5–30 km |\n\n' +
+        '```\n' +
+        'Non-overlapping 2.4 GHz channels: 1, 6, 11\n' +
+        'Use DFS channels (5.25–5.35 GHz) where permitted to avoid congestion\n' +
+        'Sector APs: use separate SSID per sector, different channels\n' +
+        'Backhaul PtP: lock to fixed channel, disable auto-channel scan\n' +
+        '```\n\n' +
+        '### 🔧 Ubiquiti / MikroTik Quick Roles\n' +
+        '| Role | Device | Mode |\n|---|---|---|\n' +
+        '| PtP Tower Side | PowerBeam M5 / NanoStation M5 | **Access Point** |\n' +
+        '| PtP Client Side | PowerBeam M5 / NanoStation M5 | **Station** |\n' +
+        '| Sector (WISP AP) | LiteAP AC 5 / RocketM5 | **Access Point** |\n' +
+        '| Client CPE | NanoStation AC, LiteStation | **Station** |'
+    };
+  }
+
+  // ── 21. MIKROTIK DEVICE CONFIGS ────────────────────────────────────────────
+  if (qLower.indexOf('powerbox') !== -1 || qLower.indexOf('power box') !== -1) {
+    return {
+      found: true,
+      response: '🟠 **MikroTik PowerBox (RB750P-PBr2) — PoE Outdoor Router**\n\n' +
+        '**Specs:** 5x FE ports, PoE-out on ports 2–5 (up to 500mA/port), 650MHz CPU, RouterOS L4\n\n' +
+        '### Basic WAN + LAN Config\n' +
+        '```routeros\n' +
+        '/interface set ether1 name=WAN comment="ISP Uplink"\n' +
+        '/interface set ether2 name=ether2-PoE comment="AP/Camera"\n\n' +
+        '# DHCP Client on WAN\n' +
+        '/ip dhcp-client add interface=WAN disabled=no\n\n' +
+        '# LAN bridge\n' +
+        '/interface bridge add name=bridge-lan\n' +
+        '/interface bridge port add bridge=bridge-lan interface=ether2\n' +
+        '/interface bridge port add bridge=bridge-lan interface=ether3\n' +
+        '/interface bridge port add bridge=bridge-lan interface=ether4\n' +
+        '/interface bridge port add bridge=bridge-lan interface=ether5\n\n' +
+        '# LAN IP\n' +
+        '/ip address add address=192.168.88.1/24 interface=bridge-lan\n\n' +
+        '# DHCP Server\n' +
+        '/ip pool add name=lan-pool ranges=192.168.88.10-192.168.88.254\n' +
+        '/ip dhcp-server add name=lan-dhcp interface=bridge-lan address-pool=lan-pool disabled=no\n' +
+        '/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=8.8.8.8,8.8.4.4\n\n' +
+        '# NAT Masquerade\n' +
+        '/ip firewall nat add chain=srcnat out-interface=WAN action=masquerade\n\n' +
+        '# Firewall input protection\n' +
+        '/ip firewall filter add chain=input connection-state=established,related action=accept\n' +
+        '/ip firewall filter add chain=input in-interface=WAN action=drop\n' +
+        '```\n\n' +
+        '**PoE Output Control:**\n' +
+        '```routeros\n' +
+        '# Enable/disable PoE on port 2 (resets connected device)\n' +
+        '/interface ethernet poe set ether2 poe-out=auto-on\n' +
+        '/interface ethernet poe set ether3 poe-out=off\n' +
+        '```'
+    };
+  }
+
+  if (qLower.indexOf('edgepoint') !== -1 || qLower.indexOf('edge point') !== -1) {
+    return {
+      found: true,
+      response: '🟠 **MikroTik EdgePoint — ISP Outdoor Routers/Switches**\n\n' +
+        '| Model | Ports | PoE Out | Use |\n|---|---|---|---|\n' +
+        '| **EdgePoint R6** | 5x GE + SFP | 4x 802.3af/at | CPE & small WISP |\n' +
+        '| **EdgePoint S16** | 16x GE | 8x PoE+ | Tower switch |\n\n' +
+        '### EdgePoint R6 — Basic ISP CPE Config\n' +
+        '```routeros\n' +
+        '# WAN on ether1, LAN bridge on ether2-4, SFP as uplink option\n' +
+        '/interface bridge add name=lan-bridge vlan-filtering=no\n' +
+        '/interface bridge port add bridge=lan-bridge interface=ether2\n' +
+        '/interface bridge port add bridge=lan-bridge interface=ether3\n' +
+        '/interface bridge port add bridge=lan-bridge interface=ether4\n\n' +
+        '/ip dhcp-client add interface=ether1 disabled=no comment="WAN ISP"\n' +
+        '/ip address add address=10.0.0.1/24 interface=lan-bridge\n' +
+        '/ip pool add name=pool1 ranges=10.0.0.10-10.0.0.200\n' +
+        '/ip dhcp-server add name=dhcp1 interface=lan-bridge address-pool=pool1\n' +
+        '/ip dhcp-server network add address=10.0.0.0/24 gateway=10.0.0.1 dns-server=8.8.8.8\n' +
+        '/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade\n' +
+        '```'
+    };
+  }
+
+  if (qLower.indexOf('powerbeam') !== -1 || qLower.indexOf('power beam') !== -1) {
+    return {
+      found: true,
+      response: '📡 **Ubiquiti PowerBeam M5/AC — Point-to-Point Backhaul**\n\n' +
+        '**Specs:** 5 GHz, dish antenna 25–30 dBi, link up to 30+ km, PoE powered\n\n' +
+        '### Tower Side (Access Point)\n' +
+        '```\n' +
+        'Login: http://192.168.1.20 (default)\n' +
+        'Username: ubnt  Password: ubnt\n\n' +
+        '> WIRELESS tab:\n' +
+        '  Wireless Mode: Access Point\n' +
+        '  SSID: Backhaul-Link-01 (hide it — uncheck Broadcast)\n' +
+        '  Frequency: 5745 MHz (or lock a specific DFS channel)\n' +
+        '  Channel Width: 40 MHz\n' +
+        '  TX Power: Custom — 23 dBm (balance range vs interference)\n' +
+        '  Security: WPA2 AES, strong password\n\n' +
+        '> NETWORK tab:\n' +
+        '  Network Mode: Bridge\n' +
+        '  IP: 192.168.1.21 / 24  (static management IP)\n' +
+        '  Gateway: 192.168.1.1\n' +
+        '```\n\n' +
+        '### Client Side (Station)\n' +
+        '```\n' +
+        '> WIRELESS tab:\n' +
+        '  Wireless Mode: Station  (NOT Station WDS unless needed)\n' +
+        '  SSID: Backhaul-Link-01\n' +
+        '  Select AP: scan and lock to tower MAC\n\n' +
+        '> NETWORK tab:\n' +
+        '  Network Mode: Bridge\n' +
+        '  IP: 192.168.1.22 / 24\n' +
+        '```\n\n' +
+        '### Alignment Tips\n' +
+        '- Use **airOS Align** page (Tools → Align Antenna) during physical alignment\n' +
+        '- Target RSSI ≤ −65 dBm, aim for −55 dBm\n' +
+        '- Secure U-bolt fully after alignment — even 1° shift matters at >3 km'
+    };
+  }
+
+  if (qLower.indexOf('liteap') !== -1 || qLower.indexOf('lite ap') !== -1) {
+    return {
+      found: true,
+      response: '📡 **Ubiquiti LiteAP AC — WISP Sector Access Point**\n\n' +
+        '**Specs:** 5 GHz, 90° sector, 17 dBi, up to 200+ Mbps aggregate, airOS\n\n' +
+        '### WISP Sector AP Config\n' +
+        '```\n' +
+        '> WIRELESS tab:\n' +
+        '  Wireless Mode: Access Point\n' +
+        '  SSID: WISP-Sector-North (or your branding)\n' +
+        '  Channel: 5745 MHz, Width: 20 or 40 MHz\n' +
+        '  Output Power: 23–25 dBm (reduce if close-in CPEs)\n' +
+        '  Airmax: ENABLED (essential for MikroTik/Ubiquiti PTMP)\n' +
+        '  Airmax Priority: High for backhaul clients, Standard for CPEs\n\n' +
+        '> NETWORK tab:\n' +
+        '  Network Mode: Bridge  (pass-through to MikroTik router)\n' +
+        '  Management IP: 192.168.1.30/24  GW: 192.168.1.1\n\n' +
+        '> ADVANCED tab:\n' +
+        '  Distance: set to actual link distance (km) for timing optimization\n' +
+        '  Aggregation: enabled\n' +
+        '  RTS/CTS threshold: 64 (reduces hidden node)\n' +
+        '```\n\n' +
+        '### Multi-Sector Setup (3-sector, 120° each)\n' +
+        '```\n' +
+        'Sector 1 (North):  5745 MHz, ch width 20 MHz\n' +
+        'Sector 2 (South):  5180 MHz, ch width 20 MHz\n' +
+        'Sector 3 (East):   5500 MHz, ch width 20 MHz\n' +
+        'Use different frequencies for each sector to minimize co-channel!\n' +
+        '```'
+    };
+  }
+
+  if (qLower.indexOf('nanostation') !== -1 || qLower.indexOf('nano station') !== -1) {
+    return {
+      found: true,
+      response: '📡 **Ubiquiti NanoStation M5 / NanoStation AC — CPE / Short Backhaul**\n\n' +
+        '**Models:** NSM5 (legacy), NS5AC (Wave 2 AC), NanoStation Loco M5\n\n' +
+        '### CPE Client Config (connects to WISP tower)\n' +
+        '```\n' +
+        '> WIRELESS tab:\n' +
+        '  Wireless Mode: Station  (connects to sector AP)\n' +
+        '  SSID: [your WISP sector SSID]\n' +
+        '  Security: WPA2, enter password\n' +
+        '  Airmax: ON (if tower uses Airmax)\n\n' +
+        '> NETWORK tab:\n' +
+        '  Network Mode: Router\n' +
+        '  WAN: DHCP (gets IP from tower router)\n' +
+        '  LAN IP: 192.168.1.1/24\n' +
+        '  DHCP Server: enabled, range 192.168.1.10–192.168.1.50\n' +
+        '  NAT: enabled\n' +
+        '  Firewall: enabled\n' +
+        '```\n\n' +
+        '### Short PtP Backhaul (NanoStation M5 to M5)\n' +
+        '```\n' +
+        'AP side: Wireless Mode = Access Point, SSID = PtP-01 (hidden)\n' +
+        'ST side: Wireless Mode = Station, lock to AP MAC\n' +
+        'Both in Bridge mode — transparent Layer 2\n' +
+        'Use ether1 for PoE-in, connect to MikroTik/router on LAN side\n' +
+        '```'
+    };
+  }
+
+  // ── 22. WAN SETUP ──────────────────────────────────────────────────────────
+  if (qLower.indexOf('wan setup') !== -1 || qLower.indexOf('wan config') !== -1 ||
+      qLower.indexOf('pppoe') !== -1 || qLower.indexOf('isp config') !== -1 ||
+      qLower.indexOf('internet setup') !== -1 || qLower.indexOf('static wan') !== -1 ||
+      (qLower.indexOf('wan') !== -1 && (qLower.indexOf('mikrotik') !== -1 || qLower.indexOf('router') !== -1)) ||
+      q.indexOf('इन्टरनेट सेटअप') !== -1 || q.indexOf('इंटरनेट सेटअप') !== -1) {
+    return {
+      found: true,
+      response: '🌐 **MikroTik WAN Setup — 3 Methods**\n\n' +
+        '### Method 1: DHCP Client (most common — cable/fiber modem)\n' +
+        '```routeros\n' +
+        '/ip dhcp-client add interface=ether1 disabled=no add-default-route=yes use-peer-dns=yes\n' +
+        '# Check assigned WAN IP:\n' +
+        '/ip dhcp-client print\n' +
+        '```\n\n' +
+        '### Method 2: PPPoE (DSL or fiber with username/password)\n' +
+        '```routeros\n' +
+        '/interface pppoe-client add name=pppoe-wan interface=ether1 \\\n' +
+        '  user="yourISPusername" password="yourISPpassword" \\\n' +
+        '  add-default-route=yes use-peer-dns=yes disabled=no\n' +
+        '# Verify connection:\n' +
+        '/interface pppoe-client print\n' +
+        '# Check WAN IP:\n' +
+        '/ip address print where interface=pppoe-wan\n' +
+        '```\n\n' +
+        '### Method 3: Static IP (ISP gives fixed IP)\n' +
+        '```routeros\n' +
+        '/ip address add address=203.0.113.5/30 interface=ether1 comment="WAN Static"\n' +
+        '/ip route add dst-address=0.0.0.0/0 gateway=203.0.113.6 comment="Default GW"\n' +
+        '/ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes\n' +
+        '```\n\n' +
+        '### Dual WAN Failover (primary + backup)\n' +
+        '```routeros\n' +
+        '/ip route add dst-address=0.0.0.0/0 gateway=203.0.113.6 distance=1 check-gateway=ping\n' +
+        '/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.1   distance=2 check-gateway=ping\n' +
+        '# distance=1 is primary, distance=2 only activates when primary fails\n' +
+        '```'
+    };
+  }
+
+  // ── 23. SECONDARY ROUTER / CASCADING ──────────────────────────────────────
+  if (qLower.indexOf('secondary router') !== -1 || qLower.indexOf('cascade') !== -1 ||
+      qLower.indexOf('double nat') !== -1 || qLower.indexOf('router behind router') !== -1 ||
+      qLower.indexOf('bridge mode') !== -1 || qLower.indexOf('transparent bridge') !== -1 ||
+      q.indexOf('दोस्रो राउटर') !== -1 || q.indexOf('दूसरा राउटर') !== -1) {
+    return {
+      found: true,
+      response: '🔀 **Secondary Router / Cascaded Router Setup**\n\n' +
+        '### Option A: Double NAT (Easiest — just plug in)\n' +
+        '```\n' +
+        'ISP Modem/Router (192.168.1.1)\n' +
+        '  └─ WAN of Router 2 gets 192.168.1.x via DHCP\n' +
+        '  └─ LAN of Router 2 uses 192.168.88.0/24\n' +
+        'Devices behind Router 2 are double-NAT\'d — usually fine for browsing\n' +
+        'Problem: port forwarding must be done on BOTH routers\n' +
+        '```\n\n' +
+        '### Option B: Disable NAT on Router 2 (single NAT)\n' +
+        '```routeros\n' +
+        '# On Router 2 — delete NAT masquerade, use static route instead\n' +
+        '/ip firewall nat remove [find chain=srcnat]\n' +
+        '/ip route add dst-address=0.0.0.0/0 gateway=192.168.1.1\n' +
+        '# Add static route on Router 1 for Router 2 subnet:\n' +
+        '# Route: 192.168.88.0/24 via 192.168.1.X (Router 2 WAN IP)\n' +
+        '```\n\n' +
+        '### Option C: Bridge Mode on Router 2 (no routing at all)\n' +
+        '```routeros\n' +
+        '# Make Router 2 a pure Layer-2 switch — disable all routing\n' +
+        '/ip dhcp-client remove [find]\n' +
+        '/ip address remove [find]\n' +
+        '/ip firewall nat remove [find]\n' +
+        '/interface bridge add name=full-bridge\n' +
+        '/interface bridge port add bridge=full-bridge interface=ether1\n' +
+        '/interface bridge port add bridge=full-bridge interface=ether2\n' +
+        '/interface bridge port add bridge=full-bridge interface=ether3\n' +
+        '# Assign management IP so you can still access it:\n' +
+        '/ip address add address=192.168.1.2/24 interface=full-bridge\n' +
+        '```'
+    };
+  }
+
+  // ── 24. VLAN CONFIGURATION ─────────────────────────────────────────────────
+  if (qLower.indexOf('vlan') !== -1 || qLower.indexOf('virtual lan') !== -1 ||
+      qLower.indexOf('tagged') !== -1 || qLower.indexOf('untagged') !== -1 ||
+      qLower.indexOf('trunk port') !== -1 || qLower.indexOf('access port') !== -1 ||
+      q.indexOf('वी.एल.ए.एन') !== -1) {
+    return {
+      found: true,
+      response: '🔀 **VLAN Configuration on MikroTik (Bridge VLANs)**\n\n' +
+        '### Topology Example\n' +
+        '```\n' +
+        'VLAN 10 = Management  192.168.10.0/24\n' +
+        'VLAN 20 = Clients     192.168.20.0/24\n' +
+        'VLAN 30 = CCTV        192.168.30.0/24\n' +
+        'ether1  = Trunk (carries all VLANs to upstream)\n' +
+        'ether2  = Access (VLAN 20, untagged — client PC)\n' +
+        'ether3  = Access (VLAN 30, untagged — camera)\n' +
+        'ether4  = Tagged VLAN 10 (management)\n' +
+        '```\n\n' +
+        '### MikroTik Bridge VLAN Config\n' +
+        '```routeros\n' +
+        '# Step 1: Create bridge with VLAN filtering enabled\n' +
+        '/interface bridge add name=bridge1 vlan-filtering=yes\n\n' +
+        '# Step 2: Add ports to bridge\n' +
+        '/interface bridge port add bridge=bridge1 interface=ether1  ;# trunk\n' +
+        '/interface bridge port add bridge=bridge1 interface=ether2  ;# client port\n' +
+        '/interface bridge port add bridge=bridge1 interface=ether3  ;# camera port\n\n' +
+        '# Step 3: Define VLAN table (tagged/untagged per port)\n' +
+        '/interface bridge vlan\n' +
+        'add bridge=bridge1 vlan-ids=10 tagged=bridge1,ether1\n' +
+        'add bridge=bridge1 vlan-ids=20 tagged=ether1 untagged=ether2\n' +
+        'add bridge=bridge1 vlan-ids=30 tagged=ether1 untagged=ether3\n\n' +
+        '# Step 4: Set PVID (native VLAN) on access ports\n' +
+        '/interface bridge port set [find interface=ether2] pvid=20\n' +
+        '/interface bridge port set [find interface=ether3] pvid=30\n\n' +
+        '# Step 5: Create VLAN interfaces for routing/IP\n' +
+        '/interface vlan add name=vlan10 vlan-id=10 interface=bridge1\n' +
+        '/interface vlan add name=vlan20 vlan-id=20 interface=bridge1\n' +
+        '/interface vlan add name=vlan30 vlan-id=30 interface=bridge1\n\n' +
+        '# Step 6: Assign IPs to VLAN interfaces\n' +
+        '/ip address add address=192.168.10.1/24 interface=vlan10\n' +
+        '/ip address add address=192.168.20.1/24 interface=vlan20\n' +
+        '/ip address add address=192.168.30.1/24 interface=vlan30\n' +
+        '```'
+    };
+  }
+
+  // ── 25. IP ADDRESSING & DHCP SERVER ───────────────────────────────────────
+  if ((qLower.indexOf('ip address') !== -1 || qLower.indexOf('dhcp server') !== -1 ||
+       qLower.indexOf('ip pool') !== -1 || qLower.indexOf('assign ip') !== -1 ||
+       qLower.indexOf('ip setup') !== -1 || qLower.indexOf('dhcp setup') !== -1) &&
+      (qLower.indexOf('mikrotik') !== -1 || qLower.indexOf('router') !== -1 || qLower.indexOf('network') !== -1)) {
+    return {
+      found: true,
+      response: '🖥️ **IP Addressing & DHCP Server Setup (MikroTik)**\n\n' +
+        '### Private IP Ranges (RFC 1918)\n' +
+        '| Range | CIDR | Hosts |\n|---|---|---|\n' +
+        '| 192.168.0.0–192.168.255.255 | /16 | 65,534 |\n' +
+        '| 172.16.0.0–172.31.255.255 | /12 | 1,048,574 |\n' +
+        '| 10.0.0.0–10.255.255.255 | /8 | 16,777,214 |\n\n' +
+        '### Static IP on MikroTik Interface\n' +
+        '```routeros\n' +
+        '/ip address add address=192.168.88.1/24 interface=bridge-lan comment="LAN Gateway"\n' +
+        '/ip address add address=10.10.0.1/30 interface=ether1 comment="WAN Uplink"\n' +
+        '```\n\n' +
+        '### DHCP Server with Custom Pool\n' +
+        '```routeros\n' +
+        '# Create address pool\n' +
+        '/ip pool add name=my-pool ranges=192.168.88.10-192.168.88.200\n\n' +
+        '# Create DHCP server on interface\n' +
+        '/ip dhcp-server add name=dhcp1 interface=bridge-lan address-pool=my-pool \\\n' +
+        '  disabled=no lease-time=1d\n\n' +
+        '# Set network options (gateway + DNS)\n' +
+        '/ip dhcp-server network add address=192.168.88.0/24 \\\n' +
+        '  gateway=192.168.88.1 dns-server=8.8.8.8,1.1.1.1 \\\n' +
+        '  ntp-server=pool.ntp.org comment="LAN network"\n' +
+        '```\n\n' +
+        '### Reserve IP for Device (Static Lease)\n' +
+        '```routeros\n' +
+        '# After device connects and gets a lease, make it static:\n' +
+        '/ip dhcp-server lease make-static [find address=192.168.88.55]\n' +
+        '# Or add manually:\n' +
+        '/ip dhcp-server lease add address=192.168.88.55 mac-address=AA:BB:CC:DD:EE:FF \\\n' +
+        '  server=dhcp1 comment="Printer-Office"\n' +
+        '```\n\n' +
+        '### DNS Setup\n' +
+        '```routeros\n' +
+        '/ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes\n' +
+        '# allow-remote-requests=yes lets LAN clients use router as DNS resolver\n' +
+        '```'
+    };
+  }
+
+  // ── 26. NAT & FIREWALL ESSENTIALS ─────────────────────────────────────────
+  if (qLower.indexOf('nat') !== -1 || qLower.indexOf('masquerade') !== -1 ||
+      qLower.indexOf('port forward') !== -1 || qLower.indexOf('port forwarding') !== -1 ||
+      qLower.indexOf('dst-nat') !== -1 || qLower.indexOf('src-nat') !== -1 ||
+      (qLower.indexOf('firewall') !== -1 && qLower.indexOf('mikrotik') !== -1) ||
+      q.indexOf('नेट ट्रान्सलेसन') !== -1) {
+    return {
+      found: true,
+      response: '🔥 **NAT & Firewall Essentials (MikroTik)**\n\n' +
+        '### Source NAT — Masquerade (Internet Access for LAN)\n' +
+        '```routeros\n' +
+        '# This single rule lets ALL LAN devices share one WAN IP:\n' +
+        '/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade comment="LAN to Internet"\n' +
+        '# For PPPoE WAN:\n' +
+        '/ip firewall nat add chain=srcnat out-interface=pppoe-wan action=masquerade\n' +
+        '```\n\n' +
+        '### Port Forwarding (dst-nat) — expose a service\n' +
+        '```routeros\n' +
+        '# Forward external port 8080 → internal server 192.168.88.10:80\n' +
+        '/ip firewall nat add chain=dstnat in-interface=ether1 \\\n' +
+        '  protocol=tcp dst-port=8080 \\\n' +
+        '  action=dst-nat to-addresses=192.168.88.10 to-ports=80 \\\n' +
+        '  comment="Web server port forward"\n\n' +
+        '# RDP forward (3389 external → 192.168.88.20:3389)\n' +
+        '/ip firewall nat add chain=dstnat in-interface=ether1 \\\n' +
+        '  protocol=tcp dst-port=3389 \\\n' +
+        '  action=dst-nat to-addresses=192.168.88.20 to-ports=3389\n' +
+        '```\n\n' +
+        '### Basic Firewall Input Rules (protect router)\n' +
+        '```routeros\n' +
+        '/ip firewall filter\n' +
+        'add chain=input connection-state=established,related action=accept comment="Allow established"\n' +
+        'add chain=input connection-state=invalid action=drop comment="Drop invalid"\n' +
+        'add chain=input in-interface=bridge-lan action=accept comment="Allow LAN management"\n' +
+        'add chain=input in-interface=ether1 protocol=icmp action=accept comment="Allow ping from WAN"\n' +
+        'add chain=input in-interface=ether1 action=drop comment="Drop all else from WAN"\n' +
+        '```\n\n' +
+        '### Basic Forward Rules (protect LAN clients)\n' +
+        '```routeros\n' +
+        'add chain=forward connection-state=established,related action=accept\n' +
+        'add chain=forward connection-state=invalid action=drop\n' +
+        'add chain=forward in-interface=bridge-lan out-interface=ether1 action=accept comment="LAN to WAN"\n' +
+        '```\n\n' +
+        '### Hairpin NAT (LAN device reaches port forward via public IP)\n' +
+        '```routeros\n' +
+        '/ip firewall nat add chain=srcnat src-address=192.168.88.0/24 \\\n' +
+        '  dst-address=192.168.88.10 protocol=tcp dst-port=80 \\\n' +
+        '  action=masquerade comment="Hairpin NAT"\n' +
+        '```'
+    };
+  }
+
+  // ── 27. ESSENTIALS TO GET DEVICES ONLINE (MikroTik Quick Start) ──────────
+  if ((qLower.indexOf('connect to internet') !== -1 || qLower.indexOf('internet access') !== -1 ||
+       qLower.indexOf('no internet') !== -1 || qLower.indexOf('cant connect') !== -1 ||
+       qLower.indexOf('default route') !== -1 || qLower.indexOf('gateway') !== -1 ||
+       qLower.indexOf('quick start') !== -1 || qLower.indexOf('basic mikrotik') !== -1 ||
+       qLower.indexOf('setup mikrotik') !== -1 || qLower.indexOf('mikrotik setup') !== -1 ||
+       qLower.indexOf('hex router') !== -1 || qLower.indexOf('rb750') !== -1) &&
+      (qLower.indexOf('mikrotik') !== -1 || qLower.indexOf('router') !== -1)) {
+    return {
+      found: true,
+      response: '🚀 **MikroTik Quick Start — Get Devices Online in 5 Steps**\n\n' +
+        '> Connect laptop to ether2. Open Winbox or http://192.168.88.1\n\n' +
+        '### Step 1 — WAN (ether1 → ISP modem)\n' +
+        '```routeros\n' +
+        '/ip dhcp-client add interface=ether1 disabled=no add-default-route=yes use-peer-dns=yes\n' +
+        '```\n\n' +
+        '### Step 2 — LAN Bridge\n' +
+        '```routeros\n' +
+        '/interface bridge add name=lan\n' +
+        '/interface bridge port add bridge=lan interface=ether2\n' +
+        '/interface bridge port add bridge=lan interface=ether3\n' +
+        '/interface bridge port add bridge=lan interface=ether4\n' +
+        '/interface bridge port add bridge=lan interface=ether5\n' +
+        '/ip address add address=192.168.88.1/24 interface=lan\n' +
+        '```\n\n' +
+        '### Step 3 — DHCP Server for LAN clients\n' +
+        '```routeros\n' +
+        '/ip pool add name=pool ranges=192.168.88.10-192.168.88.254\n' +
+        '/ip dhcp-server add name=dhcp interface=lan address-pool=pool disabled=no\n' +
+        '/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=8.8.8.8,1.1.1.1\n' +
+        '```\n\n' +
+        '### Step 4 — NAT (lets all LAN devices share the WAN IP)\n' +
+        '```routeros\n' +
+        '/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade\n' +
+        '```\n\n' +
+        '### Step 5 — DNS & Default Route\n' +
+        '```routeros\n' +
+        '/ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes\n' +
+        '# Default route is auto-added by DHCP client. Check with:\n' +
+        '/ip route print where dst-address=0.0.0.0/0\n' +
+        '```\n\n' +
+        '### Verify Everything\n' +
+        '```routeros\n' +
+        '/ip address print          ;# Should show WAN IP + 192.168.88.1\n' +
+        '/ip route print             ;# Should show default route via ISP gateway\n' +
+        '/tool ping 8.8.8.8          ;# Should get replies = internet working\n' +
+        '/ip dhcp-server lease print ;# Shows connected LAN clients\n' +
+        '```'
+    };
+  }
+
   // ── 19. TOPIC NOT FOUND → Request switch to Online ────────────────────────
   var notFoundText = isHi
     ? 'ℹ️ **यह विषय आपके वर्तमान स्थानीय ऑफ़लाइन नॉलेज पैक में उपलब्ध नहीं है।**\n\n' +
@@ -1540,7 +2062,9 @@ function speakText(text, btnElem) {
     return;
   }
 
-  stopSpeaking();
+  // Android WebView: cancel stuck TTS queue, then reload voices
+  window.speechSynthesis.cancel();
+  if (!availableVoices || availableVoices.length === 0) { loadVoices(); }
 
   var cleanSpeech = text.replace(/```[\s\S]*?```/g, ' Code snippet omitted. ')
                         .replace(/\*\*/g, '')
@@ -1608,9 +2132,29 @@ function speakText(text, btnElem) {
   }
 
   utter.onend = function() { stopSpeaking(); };
-  utter.onerror = function() { stopSpeaking(); };
+  utter.onerror = function(e) {
+    // On Android WebView 'interrupted' errors are common — don't show as error
+    if (e && e.error !== 'interrupted' && e.error !== 'canceled') { stopSpeaking(); }
+  };
 
-  window.speechSynthesis.speak(utter);
+  // Android WebView: small delay after cancel() ensures speak() is accepted
+  // Also use a periodic resume() ping to prevent Android from pausing mid-speech
+  var resumeHack = null;
+  if (/Android/i.test(navigator.userAgent)) {
+    resumeHack = setInterval(function() {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.resume();
+      } else {
+        clearInterval(resumeHack);
+      }
+    }, 10000);
+    utter.onend = function() { clearInterval(resumeHack); stopSpeaking(); };
+    utter.onerror = function(e) { clearInterval(resumeHack); if (e && e.error !== 'interrupted' && e.error !== 'canceled') stopSpeaking(); };
+  }
+
+  setTimeout(function() {
+    window.speechSynthesis.speak(utter);
+  }, 50);
 }
 
 // ── Voice Gender Toggle ────────────────────────────────────────────────────
@@ -2623,7 +3167,17 @@ function renderAssistantMessage(opts) {
   scroller.scrollTop = scroller.scrollHeight;
 
   if (opts.shouldReadAloud) {
-    speakText(text, null);
+    // Android WebView requires a delay before speechSynthesis.speak()
+    // and voices must be fully loaded. Cancel any stuck utterance first.
+    setTimeout(function() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        loadVoices(); // ensure voices are populated
+        setTimeout(function() {
+          speakText(text, null);
+        }, 80);
+      }
+    }, 200);
   }
 }
 
