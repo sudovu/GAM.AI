@@ -244,20 +244,56 @@ public class GamAiBridge {
         if (text == null || text.trim().isEmpty()) return;
         if (tts != null && ttsReady) {
             try {
+                java.util.Locale targetLocale = java.util.Locale.US;
                 if (lang != null && !lang.isEmpty()) {
                     if (lang.startsWith("hi")) {
-                        tts.setLanguage(new java.util.Locale("hi", "IN"));
+                        targetLocale = new java.util.Locale("hi", "IN");
                     } else if (lang.startsWith("ne")) {
-                        int res = tts.setLanguage(new java.util.Locale("ne", "NP"));
-                        if (res == android.speech.tts.TextToSpeech.LANG_MISSING_DATA || res == android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED) {
-                            tts.setLanguage(new java.util.Locale("hi", "IN"));
-                        }
+                        targetLocale = new java.util.Locale("ne", "NP");
                     } else {
-                        tts.setLanguage(java.util.Locale.US);
+                        targetLocale = java.util.Locale.US;
                     }
                 }
+                int langResult = tts.setLanguage(targetLocale);
+                if ((langResult == android.speech.tts.TextToSpeech.LANG_MISSING_DATA ||
+                     langResult == android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED) &&
+                    targetLocale.getLanguage().equals("ne")) {
+                    targetLocale = new java.util.Locale("hi", "IN");
+                    tts.setLanguage(targetLocale);
+                }
+
+                // Choose highest quality natural voice if available (Android 7+ / API 24+)
+                try {
+                    java.util.Set<android.speech.tts.Voice> voices = tts.getVoices();
+                    if (voices != null && !voices.isEmpty()) {
+                        android.speech.tts.Voice bestVoice = null;
+                        int highestScore = -1;
+                        for (android.speech.tts.Voice v : voices) {
+                            if (v.getLocale() != null && v.getLocale().getLanguage().equalsIgnoreCase(targetLocale.getLanguage())) {
+                                int score = 0;
+                                if (v.getQuality() == android.speech.tts.Voice.QUALITY_VERY_HIGH) score += 30;
+                                else if (v.getQuality() == android.speech.tts.Voice.QUALITY_HIGH) score += 20;
+                                else if (v.getQuality() == android.speech.tts.Voice.QUALITY_NORMAL) score += 10;
+
+                                String vName = v.getName().toLowerCase();
+                                if (vName.contains("neural") || vName.contains("natural") || vName.contains("high-quality")) score += 25;
+                                if (vName.contains("google")) score += 15;
+                                if (!v.isNetworkConnectionRequired()) score += 10; // Prefer fast on-device
+
+                                if (score > highestScore) {
+                                    highestScore = score;
+                                    bestVoice = v;
+                                }
+                            }
+                        }
+                        if (bestVoice != null) {
+                            tts.setVoice(bestVoice);
+                        }
+                    }
+                } catch (Throwable ignored) {}
+
                 tts.setPitch(pitch > 0 ? pitch : 1.0f);
-                tts.setSpeechRate(rate > 0 ? rate : 1.0f);
+                tts.setSpeechRate(rate > 0 ? rate : 0.95f);
                 tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "GAM_AI_SPEECH_" + System.currentTimeMillis());
             } catch (Exception e) {
                 android.util.Log.e("GAM_AI_TTS", "speakText error", e);

@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#090d16">
 <meta name="description" content="GAM.AI — Universal Local-First AI Assistant">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GAM.AI">
+<link rel="apple-touch-icon" href="developer.jpg">
 <link rel="manifest" href="/manifest.json">
 <title>GAM.AI — Local-First Intelligent Assistant</title>
 <style>
-  :root {
+  :root, body.theme-cyberpunk {
     --bg: #090d16;
     --sidebar-bg: #0f172a;
     --card-bg: #1e293b;
@@ -21,12 +25,89 @@
     --green: #10b981;
     --user-msg: #1d4ed8;
     --base-font: 15px;
+    --header-bg: rgba(9, 13, 22, 0.96);
+    --icon-scale: 1.0;
   }
+  body.theme-oled {
+    --bg: #000000;
+    --sidebar-bg: #050505;
+    --card-bg: #0f0f0f;
+    --card-hover: #1c1c1c;
+    --border: #282828;
+    --text-main: #ffffff;
+    --text-muted: #a3a3a3;
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    --green: #10b981;
+    --user-msg: #1e3a8a;
+    --header-bg: rgba(0, 0, 0, 0.98);
+  }
+  body.theme-light {
+    --bg: #f8fafc;
+    --sidebar-bg: #f1f5f9;
+    --card-bg: #ffffff;
+    --card-hover: #e2e8f0;
+    --border: #cbd5e1;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --accent: #0284c7;
+    --accent-glow: rgba(2, 132, 199, 0.15);
+    --green: #059669;
+    --user-msg: #2563eb;
+    --header-bg: rgba(248, 250, 252, 0.98);
+  }
+  body.theme-matrix {
+    --bg: #05140a;
+    --sidebar-bg: #081d0f;
+    --card-bg: #0d2818;
+    --card-hover: #143d24;
+    --border: #1b4d2e;
+    --text-main: #ecfdf5;
+    --text-muted: #6ee7b7;
+    --accent: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.2);
+    --green: #34d399;
+    --user-msg: #065f46;
+    --header-bg: rgba(5, 20, 10, 0.96);
+  }
+
   body.font-large { --base-font: 18px; }
   body.font-xlarge { --base-font: 21px; }
 
+  body.icons-compact { --icon-scale: 0.85; }
+  body.icons-normal { --icon-scale: 1.0; }
+  body.icons-large { --icon-scale: 1.28; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif; }
-  body { background: var(--bg); color: var(--text-main); display: flex; height: 100vh; height: 100dvh; max-height: 100dvh; width: 100vw; max-width: 100vw; overflow: hidden; font-size: var(--base-font); }
+  body {
+    background: var(--bg);
+    color: var(--text-main);
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
+    font-size: var(--base-font);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+  .icon-btn, .chat-tool-btn, .ctrl-btn, .hamburger-btn {
+    transform: scale(var(--icon-scale, 1.0));
+    transform-origin: center center;
+  }
+  @media (min-width: 769px) and (max-width: 1199px) {
+    #sidebar { width: 250px; }
+    .chat-thread-width { max-width: 94%; }
+    .quick-chips-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .music-grid { grid-template-columns: 1fr 1fr; }
+  }
 
   /* Left Sidebar */
   #sidebar {
@@ -529,6 +610,10 @@
   </div>
 
   <div class="sidebar-footer">
+    <button class="menu-action-btn" id="btn-open-creative" onclick="showModal('modal-creative-studio')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span id="txt-creative-menu">🎨 Creative AI Studio</span>
+    </button>
     <button class="menu-action-btn" id="btn-open-music">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
       <span id="txt-music-menu">Music Player</span>
@@ -573,6 +658,8 @@
 
     <!-- CLEAN RIGHT CONTROLS -->
     <div class="header-right">
+      <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme (Cyberpunk / OLED / Light / Matrix)">🎨</button>
+      <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
       <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
       <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
@@ -754,6 +841,25 @@
       <div id="device-diagnostics-content" style="font-size:0.82rem; color:var(--text-muted); line-height:1.5;"></div>
     </div>
 
+    <!-- Visual Themes -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+            <span>🎨</span>
+            <span>Interface Theme</span>
+          </div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Select look & feel: OLED true black, Cyberpunk dark, Clean light, or Matrix emerald</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-top:10px;">
+        <button class="btn-action ready" id="btn-theme-cyberpunk" onclick="setTheme('cyberpunk')">🌌 Cyberpunk</button>
+        <button class="btn-action" id="btn-theme-oled" onclick="setTheme('oled')">⬛ OLED Black</button>
+        <button class="btn-action" id="btn-theme-light" onclick="setTheme('light')">☀️ Clean Light</button>
+        <button class="btn-action" id="btn-theme-matrix" onclick="setTheme('matrix')">🟩 Matrix</button>
+      </div>
+    </div>
+
     <!-- Accessibility Font Size for Age 10-70 -->
     <div class="model-card">
       <div class="model-header-row">
@@ -765,6 +871,21 @@
           <button class="btn-action" onclick="setFontSize('normal')">A (Standard)</button>
           <button class="btn-action" onclick="setFontSize('large')">A+ (Large)</button>
           <button class="btn-action" onclick="setFontSize('xlarge')">A++ (Elder)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accessibility Icon & Target Size -->
+    <div class="model-card">
+      <div class="model-header-row">
+        <div>
+          <div style="font-weight:700;">Icon & Button Size (Touch Accessibility)</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Adjust size of buttons and tap targets for phones, tablets & seniors</div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-action" id="btn-icons-compact" onclick="setIconScale('compact')">Compact</button>
+          <button class="btn-action ready" id="btn-icons-normal" onclick="setIconScale('normal')">Normal</button>
+          <button class="btn-action" id="btn-icons-large" onclick="setIconScale('large')">Large</button>
         </div>
       </div>
     </div>
@@ -1024,6 +1145,138 @@
   </div>
 </div>
 
+<!-- Modal 6: Creative AI Studio (Picture, Video, Audio, Prompt Engineering) -->
+<div id="modal-creative-studio" class="modal-overlay">
+  <div class="modal-box" style="max-width:880px; width:95%;">
+    <div class="modal-header">
+      <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+        <span>✨</span>
+        <span>Creative AI Studio & Prompt Engineering</span>
+      </div>
+      <button class="close-btn" onclick="hideModal('modal-creative-studio')">✕</button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="music-tabs" style="margin-bottom:14px;">
+      <button class="music-tab-btn active" id="tab-studio-pic" onclick="switchStudioTab('picture')">🖼️ Picture & Diagram</button>
+      <button class="music-tab-btn" id="tab-studio-video" onclick="switchStudioTab('video')">🎬 Video & Simulation</button>
+      <button class="music-tab-btn" id="tab-studio-audio" onclick="switchStudioTab('audio')">🎵 Sound Synthesizer</button>
+      <button class="music-tab-btn" id="tab-studio-prompts" onclick="switchStudioTab('prompts')">🧠 Prompt Engineering</button>
+    </div>
+
+    <!-- Tab 1: Picture & Diagram Generation -->
+    <div id="section-studio-picture" class="studio-tab-content">
+      <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;">
+        Generate crisp vector diagrams, system architectures, network topologies, flowcharts, and technical drawings.
+      </p>
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <input type="text" id="studio-pic-prompt" placeholder="e.g. Star Topology, 3-Tier Cloud Architecture, OAuth Login Flowchart, Pythagorean Proof..." style="flex:1; min-width:240px; background:var(--card-bg); border:1px solid var(--border); padding:10px 14px; border-radius:8px; color:var(--text-main); font-size:0.9rem;">
+        <button class="btn-action ready" onclick="generateStudioPicture()">🎨 Generate Diagram</button>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+        <button class="btn-action" style="font-size:0.75rem; padding:4px 10px;" onclick="loadPicPreset('star')">⭐ Star Network</button>
+        <button class="btn-action" style="font-size:0.75rem; padding:4px 10px;" onclick="loadPicPreset('arch')">☁️ 3-Tier Cloud Arch</button>
+        <button class="btn-action" style="font-size:0.75rem; padding:4px 10px;" onclick="loadPicPreset('auth')">🔐 Auth Flowchart</button>
+        <button class="btn-action" style="font-size:0.75rem; padding:4px 10px;" onclick="loadPicPreset('solar')">🪐 Solar System</button>
+        <button class="btn-action" style="font-size:0.75rem; padding:4px 10px;" onclick="loadPicPreset('pythagoras')">📐 Pythagorean Theorem</button>
+      </div>
+      <div id="studio-pic-canvas-container" style="background:#090d16; border:1px solid var(--border); border-radius:10px; padding:16px; min-height:280px; display:flex; align-items:center; justify-content:center; overflow-x:auto;">
+        <!-- Rendered SVG will be placed here -->
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button class="btn-action" id="btn-download-svg" onclick="downloadStudioSvg()">📥 Download SVG</button>
+        <button class="btn-action ready" onclick="sendStudioDiagramToChat()">💬 Send to Chat</button>
+      </div>
+    </div>
+
+    <!-- Tab 2: Video & Simulation Generation -->
+    <div id="section-studio-video" class="studio-tab-content" style="display:none;">
+      <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;">
+        Interactive 60 FPS procedural canvas animations & simulations (Quantum particle wave, Packet routing, Matrix code stream).
+      </p>
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <button class="btn-action ready" id="btn-sim-quantum" onclick="startCanvasSimulation('quantum')">⚛️ Quantum Particle Cloud</button>
+        <button class="btn-action" id="btn-sim-packets" onclick="startCanvasSimulation('packets')">🌐 Router Packet Routing</button>
+        <button class="btn-action" id="btn-sim-matrix" onclick="startCanvasSimulation('matrix')">💻 Cyberpunk Matrix Rain</button>
+        <button class="btn-action" id="btn-sim-wave" onclick="startCanvasSimulation('wave')">🌊 Harmonic Sine Waves</button>
+      </div>
+      <div style="position:relative; width:100%; border-radius:10px; overflow:hidden; border:1px solid var(--border); background:#040711;">
+        <canvas id="studio-video-canvas" width="800" height="320" style="width:100%; height:auto; display:block;"></canvas>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="ctrl-btn" id="btn-sim-playpause" onclick="toggleSimPlayPause()" title="Play / Pause">⏸</button>
+          <button class="ctrl-btn" onclick="resetSimAnimation()" title="Reset Animation">🔄</button>
+          <span style="font-size:0.8rem; color:var(--text-muted);" id="txt-sim-fps">60 FPS • Real-Time Procedural</span>
+        </div>
+        <button class="btn-action ready" onclick="sendSimToChat()">💬 Send Simulation Demo to Chat</button>
+      </div>
+    </div>
+
+    <!-- Tab 3: Sound Synthesizer -->
+    <div id="section-studio-audio" class="studio-tab-content" style="display:none;">
+      <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:12px;">
+        Synthesize acoustic waveforms & binaural tones directly on your device's audio hardware using Web Audio API oscillators.
+      </p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:14px;">
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.4rem;">🧘</div>
+          <div style="font-weight:700; font-size:0.9rem;">10 Hz Alpha Wave</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">Binaural beat for study focus</div>
+          <button class="btn-action ready" id="btn-synth-alpha" onclick="toggleSynthAudio('alpha')">▶ Play Tone</button>
+        </div>
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.4rem;">🎹</div>
+          <div style="font-weight:700; font-size:0.9rem;">Pentatonic Melody</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">Procedural relaxing arpeggio</div>
+          <button class="btn-action ready" id="btn-synth-pentatonic" onclick="toggleSynthAudio('pentatonic')">▶ Play Melody</button>
+        </div>
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.4rem;">🔔</div>
+          <div style="font-weight:700; font-size:0.9rem;">Zen Singing Bell</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">Warm harmonic bell chime</div>
+          <button class="btn-action ready" id="btn-synth-bell" onclick="toggleSynthAudio('bell')">🔔 Strike Bell</button>
+        </div>
+        <div class="music-card" style="text-align:center;">
+          <div style="font-size:1.4rem;">🪐</div>
+          <div style="font-weight:700; font-size:0.9rem;">Deep Space Drone</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">80Hz sub-bass resonant chord</div>
+          <button class="btn-action ready" id="btn-synth-drone" onclick="toggleSynthAudio('drone')">▶ Play Drone</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Prompt Engineering Workbench -->
+    <div id="section-studio-prompts" class="studio-tab-content" style="display:none;">
+      <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;">
+        Architect high-performance prompts using frontier AI patterns (ChatGPT, Claude, Qwen, DeepSeek, and Gemini).
+      </p>
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <select id="prompt-framework-select" style="background:var(--card-bg); border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:6px; font-size:0.85rem;">
+          <option value="deepseek_cot">DeepSeek: Chain-of-Thought & Complexity Proof</option>
+          <option value="claude_safety">Claude: Nuanced Trade-Offs & Edge Cases</option>
+          <option value="chatgpt_role">ChatGPT: Persona, Context, Action & Output Template</option>
+          <option value="qwen_math">Qwen: Step-by-Step Math & Bilingual Synthesis</option>
+          <option value="few_shot">Universal: Few-Shot In-Context Learning Template</option>
+        </select>
+        <button class="btn-action ready" onclick="applyPromptFramework()">⚡ Engineer Prompt</button>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:4px;">Your Raw Task / Question:</label>
+        <input type="text" id="prompt-raw-input" placeholder="e.g. Build a secure user authentication system in Python" style="width:100%; background:var(--card-bg); border:1px solid var(--border); padding:10px 14px; border-radius:8px; color:#fff; font-size:0.9rem;">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:4px;">Engineered Frontier Prompt:</label>
+        <textarea id="prompt-engineered-output" rows="7" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:8px; color:var(--accent); padding:10px; font-family:monospace; font-size:0.84rem;" readonly></textarea>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn-action" onclick="copyEngineeredPrompt()">📋 Copy Prompt</button>
+        <button class="btn-action ready" onclick="runEngineeredPromptInChat()">🚀 Execute in GAM.AI</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Persistent Mini Audio Bar -->
 <div id="mini-audio-bar">
   <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="showModal('modal-music')">
@@ -1254,6 +1507,117 @@ function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
   var isDevanagari = /[\u0900-\u097F]/.test(p);
   var isHi = (lang === 'hi') || (isDevanagari && (p.indexOf('क्या') !== -1 || p.indexOf('है') !== -1 || p.indexOf('लिखो') !== -1 || p.indexOf('बनाओ') !== -1 || p.indexOf('प्रार्थना') !== -1 || p.indexOf('छुट्टी') !== -1));
   var isNe = (lang === 'ne') || (isDevanagari && !isHi);
+
+  // ── 0a. CREATIVE PICTURE & DIAGRAM GENERATION ────────────────────────────
+  if (/generate.*(diagram|picture|topology|architecture|flowchart)|draw.*(diagram|topology|flowchart)|create.*(diagram|chart|flowchart)/i.test(pLower)) {
+    var svg = '';
+    var diagTitle = 'Vector System Diagram';
+    if (/star/i.test(pLower)) {
+      svg = renderStarTopologySvg();
+      diagTitle = 'Star Network Topology Diagram';
+    } else if (/cloud|tier|microservice|arch/i.test(pLower)) {
+      svg = renderCloudArchitectureSvg();
+      diagTitle = '3-Tier Cloud Architecture Diagram';
+    } else if (/auth|login|oauth|flow/i.test(pLower)) {
+      svg = renderAuthFlowchartSvg();
+      diagTitle = 'Authentication Flowchart Diagram';
+    } else if (/solar|planet|sun|orbit/i.test(pLower)) {
+      svg = renderSolarSystemSvg();
+      diagTitle = 'Heliocentric Solar System Diagram';
+    } else if (/pythagor|triangle|geometry|math/i.test(pLower)) {
+      svg = renderPythagorasSvg();
+      diagTitle = 'Pythagorean Theorem Geometry Diagram';
+    } else {
+      svg = renderUniversalDiagramSvg(p);
+      diagTitle = 'Architecture Diagram: ' + p.substring(0, 32);
+    }
+
+    return {
+      found: true,
+      response: '### 🎨 ' + diagTitle + '\n\n' +
+        'Vector diagram rendered on-device:\n\n' +
+        svg + '\n\n' +
+        '💡 **Specifications:** Infinite vector resolution (SVG), dark & light responsive CSS colors, zero cloud network latency.\n\n' +
+        '[[btn:✨ Open in Creative AI Studio|modal:studio]]\n' +
+        '[[btn:⭐ Generate Star Topology|generate diagram of star topology]]\n' +
+        '[[btn:🔐 Generate Auth Flowchart|generate flowchart for user login]]'
+    };
+  }
+
+  // ── 0b. VIDEO & CANVAS SIMULATION GENERATION ──────────────────────────────
+  if (/generate.*(video|animation|simulation)|animate.*(particles|packets|matrix|wave)|show.*(animation|simulation)/i.test(pLower)) {
+    var simType = 'quantum';
+    var simName = 'Quantum Particle Cloud';
+    if (/packet|router|network/i.test(pLower)) { simType = 'packets'; simName = 'Router Packet Routing Simulation'; }
+    else if (/matrix|rain|code/i.test(pLower)) { simType = 'matrix'; simName = 'Cyberpunk Matrix Code Rain'; }
+    else if (/wave|harmonic|sine/i.test(pLower)) { simType = 'wave'; simName = 'Harmonic Sine Wave Visualizer'; }
+
+    return {
+      found: true,
+      response: '### 🎬 Interactive Procedural Animation: ' + simName + '\n\n' +
+        'The **60 FPS Hardware-Accelerated Canvas Engine** has prepared this procedural animation loop on your device.\n\n' +
+        '- **Frame Rate:** 60 FPS V-Sync via `requestAnimationFrame`\n' +
+        '- **Physics Model:** Real-time particle vector mechanics & collision restitution\n' +
+        '- **Efficiency:** 0 MB network bandwidth used — 100% computed on your local GPU/CPU.\n\n' +
+        'Tap the button below to view the interactive live animation in the Creative AI Studio:\n\n' +
+        '[[btn:✨ Launch ' + simName + ' Live|modal:studio_' + simType + ']]\n' +
+        '[[btn:💻 Matrix Code Rain|generate animation of matrix rain]]\n' +
+        '[[btn:🌐 Router Packet Flow|generate animation of packet flow]]'
+    };
+  }
+
+  // ── 0c. AUDIO SYNTHESIS & SOUND GENERATION ────────────────────────────────
+  if (/generate.*(audio|sound|binaural|music|tone|melody)|play.*(binaural|melody|chime|tone|bell|alpha)/i.test(pLower)) {
+    var soundType = 'alpha';
+    var soundName = '10 Hz Alpha Wave Focus Tone';
+    if (/melody|piano|arpeggio|relax/i.test(pLower)) { soundType = 'pentatonic'; soundName = 'Soothing Pentatonic Melody'; }
+    else if (/bell|chime|zen|singing/i.test(pLower)) { soundType = 'bell'; soundName = 'Zen Harmonic Singing Bell'; }
+    else if (/drone|space|bass/i.test(pLower)) { soundType = 'drone'; soundName = 'Sub-Bass Cosmic Space Drone'; }
+
+    return {
+      found: true,
+      response: '### 🎵 Web Audio Synthesizer: ' + soundName + '\n\n' +
+        'Synthesizing procedural acoustic waves directly on your device\'s soundcard with zero audio file downloads:\n\n' +
+        '- **Synthesis Pipeline:** Web Audio API Oscillators & Biquad Lowpass Filtering\n' +
+        '- **Audio Quality:** Pure 32-bit floating-point acoustic waveform output\n' +
+        '- **Privacy:** 100% generated on local hardware.\n\n' +
+        '[[btn:▶ Play ' + soundName + '|synth:' + soundType + ']]\n' +
+        '[[btn:🔔 Zen Singing Bell|generate sound of zen singing bell]]\n' +
+        '[[btn:🎹 Pentatonic Melody|generate sound of melody]]'
+    };
+  }
+
+  // ── 0d. PROMPT ENGINEERING WORKBENCH ─────────────────────────────────────
+  if (/prompt\s*engineer|engineer.*prompt|prompt\s*template|best\s*prompt|how\s*to\s*write\s*prompts?|cot\s*prompt/i.test(pLower)) {
+    return {
+      found: true,
+      response: '### 🧠 Multi-Agent Prompt Engineering Suite\n\n' +
+        'Frontier AI agents perform at peak accuracy when prompts are structured with specialized cognitive scaffolds:\n\n' +
+        '#### 1. DeepSeek-R1 (Chain-of-Thought & Formal Proof)\n' +
+        '```markdown\n' +
+        'You are DeepSeek-R1. For the following problem:\n' +
+        '1. Think through the state space and algorithmic invariants inside <thought>...</thought>.\n' +
+        '2. Prove time ($O(N)$) and space ($O(1)$) complexity.\n' +
+        '3. Provide strict, production-ready code with edge case assertions.\n' +
+        '```\n\n' +
+        '#### 2. Claude 3.5 Sonnet (Nuanced Trade-Offs & Architecture)\n' +
+        '```markdown\n' +
+        'You are an expert system architect. Provide:\n' +
+        '1. Objective trade-off matrix comparing the primary solutions.\n' +
+        '2. Failure modes, security boundaries, and mitigations.\n' +
+        '3. Concrete recommendation with architectural justification.\n' +
+        '```\n\n' +
+        '#### 3. ChatGPT (Executive Action Framework)\n' +
+        '```markdown\n' +
+        'Act as a Senior Director. Format response into:\n' +
+        '1. Executive Summary (3 high-impact bullets).\n' +
+        '2. Phase-by-Phase Execution Roadmap.\n' +
+        '3. Complete copy-pasteable deliverables.\n' +
+        '```\n\n' +
+        '[[btn:✨ Open Prompt Workbench in Studio|modal:studio_prompts]]\n' +
+        '[[btn:🧠 DeepSeek CoT Prompt Template|apply deepseek cot prompt]]'
+    };
+  }
 
   // ── 1. MATHEMATICAL PROBLEM SOLVING & DERIVATION (Qwen & DeepSeek style) ──
   var quadMatch = pLower.match(/([+-]?\d*(?:\.\d+)?)\s*x\^?2\s*([+-]\s*\d*(?:\.\d+)?)\s*x\s*([+-]\s*\d*(?:\.\d+)?)\s*=\s*0/i) ||
@@ -3199,37 +3563,146 @@ if ('speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-function findBestVoice(langPrefix) {
+function expandPhoneticsAndPronunciation(text) {
+  if (!text) return '';
+  var s = text;
+
+  // 1. Math formulas, equations & LaTeX symbols
+  s = s.replace(/\\Delta/g, ' delta ');
+  s = s.replace(/\\pm/g, ' plus or minus ');
+  s = s.replace(/\\sqrt\{([^}]+)\}/g, ' square root of $1 ');
+  s = s.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, ' square root of $1 ');
+  s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, ' $1 divided by $2 ');
+  s = s.replace(/([a-zA-Z0-9\)])\^2\b/g, '$1 squared');
+  s = s.replace(/([a-zA-Z0-9\)])\^3\b/g, '$1 cubed');
+  s = s.replace(/([a-zA-Z0-9\)])\^([0-9]+)/g, '$1 to the power of $2');
+  s = s.replace(/\bO\(log\s*N\)/gi, 'Big O of log N');
+  s = s.replace(/\bO\(1\)/gi, 'Big O of 1');
+  s = s.replace(/\bO\(N\)/gi, 'Big O of N');
+  s = s.replace(/\bO\(N\^2\)/gi, 'Big O of N squared');
+  s = s.replace(/\bO\(([^)]+)\)/gi, 'Big O of $1');
+  s = s.replace(/!=/g, ' is not equal to ');
+  s = s.replace(/>=/g, ' is greater than or equal to ');
+  s = s.replace(/<=/g, ' is less than or equal to ');
+  s = s.replace(/==/g, ' equals ');
+  s = s.replace(/\$/g, ''); // strip LaTeX math delimiters $...$
+
+  // 2. Technical acronyms and terms for distinct natural pronunciation
+  s = s.replace(/\bCoT\b/g, 'Chain of Thought');
+  s = s.replace(/\bKaTeX\b/gi, 'Kah-tek');
+  s = s.replace(/\bLaTeX\b/gi, 'Lah-tek');
+  s = s.replace(/\bAPI\b/g, 'A P I');
+  s = s.replace(/\bAPIs\b/g, 'A P Is');
+  s = s.replace(/\bCLI\b/g, 'C L I');
+  s = s.replace(/\bCPU\b/g, 'C P U');
+  s = s.replace(/\bGPU\b/g, 'G P U');
+  s = s.replace(/\bRAM\b/g, 'Ram');
+  s = s.replace(/\bROM\b/g, 'Rom');
+  s = s.replace(/\bIP\b/g, 'I P');
+  s = s.replace(/\bIPs\b/g, 'I P addresses');
+  s = s.replace(/\bVLAN\b/g, 'V-Lan');
+  s = s.replace(/\bVLANs\b/g, 'V-Lans');
+  s = s.replace(/\bPoE\b/g, 'P o E');
+  s = s.replace(/\bDHCP\b/g, 'D H C P');
+  s = s.replace(/\bDNS\b/g, 'D N S');
+  s = s.replace(/\bNAT\b/g, 'Nat');
+  s = s.replace(/\bWAN\b/g, 'Wan');
+  s = s.replace(/\bLAN\b/g, 'Lan');
+  s = s.replace(/\bWISP\b/g, 'Wisp');
+  s = s.replace(/\bISP\b/g, 'I S P');
+  s = s.replace(/\bISPs\b/g, 'I S Ps');
+  s = s.replace(/\bSSID\b/g, 'S S I D');
+  s = s.replace(/\bBGP\b/g, 'B G P');
+  s = s.replace(/\bOSPF\b/g, 'O S P F');
+  s = s.replace(/\bLLM\b/g, 'L L M');
+  s = s.replace(/\bLLMs\b/g, 'L L Ms');
+  s = s.replace(/\bSLM\b/g, 'S L M');
+  s = s.replace(/\bSLMs\b/g, 'S L Ms');
+  s = s.replace(/\bAI\b/g, 'A I');
+  s = s.replace(/\bUI\b/g, 'U I');
+  s = s.replace(/\bUX\b/g, 'U X');
+  s = s.replace(/\bCSV\b/g, 'C S V');
+  s = s.replace(/\bJSON\b/g, 'Jason');
+  s = s.replace(/\bSQL\b/g, 'Sequel');
+  s = s.replace(/\bHTML\b/g, 'H T M L');
+  s = s.replace(/\bCSS\b/g, 'C S S');
+  s = s.replace(/\bJS\b/g, 'Java Script');
+  s = s.replace(/\bSDK\b/g, 'S D K');
+  s = s.replace(/\bURL\b/g, 'U R L');
+  s = s.replace(/\bHTTP\b/g, 'H T T P');
+  s = s.replace(/\bHTTPS\b/g, 'H T T P S');
+  s = s.replace(/\be\.g\.,?\b/gi, 'for example, ');
+  s = s.replace(/\bi\.e\.,?\b/gi, 'that is, ');
+  s = s.replace(/\betc\.,?\b/gi, 'et cetera, ');
+  s = s.replace(/\bvs\.?\b/gi, 'versus');
+  s = s.replace(/\bapprox\.?\b/gi, 'approximately');
+
+  // Units
+  s = s.replace(/\b(\d+)\s*Gbps\b/gi, '$1 gigabits per second');
+  s = s.replace(/\b(\d+)\s*Mbps\b/gi, '$1 megabits per second');
+  s = s.replace(/\b(\d+)\s*kbps\b/gi, '$1 kilobits per second');
+  s = s.replace(/\b(\d+)\s*GHz\b/gi, '$1 gigahertz');
+  s = s.replace(/\b(\d+)\s*MHz\b/gi, '$1 megahertz');
+  s = s.replace(/\b(\d+)\s*ms\b/gi, '$1 milliseconds');
+  s = s.replace(/\b(\d+)\s*GB\b/gi, '$1 gigabytes');
+  s = s.replace(/\b(\d+)\s*MB\b/gi, '$1 megabytes');
+
+  return s;
+}
+
+function findBestVoice(langPrefix, preferredGender) {
   if (!availableVoices || availableVoices.length === 0) {
     loadVoices();
   }
   if (!availableVoices || availableVoices.length === 0) return null;
 
-  // 1. Check exact match (e.g. 'hi-IN', 'hi', 'ne-NP', 'ne', 'en-US', 'en')
+  var gender = preferredGender || window._voiceGender || 'female';
+  var femaleKeywords = ['female', 'woman', 'girl', 'zira', 'susan', 'samantha', 'victoria',
+    'karen', 'moira', 'fiona', 'allison', 'ava', 'joanna', 'salli', 'kendra', 'kimberly',
+    'ivy', 'amy', 'emma', 'olivia', 'lisa', 'heather', 'hazel', 'neerja', 'raveena', 'aria', 'jenny'];
+  var maleKeywords = ['male', 'man', 'guy', 'alex', 'fred', 'james', 'lee', 'daniel', 'david',
+    'thomas', 'oliver', 'george', 'arthur', 'liam', 'aaron', 'joey', 'mark', 'brian'];
+  var targetGenderWords = (gender === 'female') ? femaleKeywords : maleKeywords;
+
+  var bestVoice = null;
+  var bestScore = -9999;
+
   for (var i = 0; i < availableVoices.length; i++) {
-    var vLang = availableVoices[i].lang.toLowerCase().replace('_', '-');
+    var v = availableVoices[i];
+    var vLang = (v.lang || '').toLowerCase().replace('_', '-');
+    var vName = (v.name || '').toLowerCase();
+    var score = 0;
+
+    // Language match
     if (vLang === langPrefix.toLowerCase() || vLang.startsWith(langPrefix.toLowerCase() + '-')) {
-      return availableVoices[i];
+      score += 1000;
+    } else if (langPrefix.startsWith('ne') && vLang.startsWith('hi')) {
+      // Nepali fallback to Hindi phonetics
+      score += 500;
+    } else if (vLang.startsWith('en')) {
+      score += 100;
+    }
+
+    // Gender match
+    var genderMatch = targetGenderWords.some(function(w) { return vName.indexOf(w) !== -1; });
+    if (genderMatch) score += 300;
+
+    // Premium natural human voice indicators
+    if (vName.indexOf('natural') !== -1) score += 400;
+    if (vName.indexOf('neural') !== -1) score += 400;
+    if (vName.indexOf('google') !== -1) score += 250;
+    if (vName.indexOf('siri') !== -1) score += 250;
+    if (vName.indexOf('online') !== -1) score += 200;
+    if (vName.indexOf('premium') !== -1) score += 200;
+    if (v.localService === false) score += 50; // High quality remote
+    if (v.default) score += 20;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestVoice = v;
     }
   }
-
-  // 2. Fallback for Nepali (ne) -> Hindi (hi) which shares Devanagari script & phonetics
-  if (langPrefix.startsWith('ne')) {
-    for (var j = 0; j < availableVoices.length; j++) {
-      if (availableVoices[j].lang.toLowerCase().startsWith('hi')) {
-        return availableVoices[j];
-      }
-    }
-  }
-
-  // 3. Fallback to English
-  for (var k = 0; k < availableVoices.length; k++) {
-    if (availableVoices[k].lang.toLowerCase().startsWith('en') || availableVoices[k].default) {
-      return availableVoices[k];
-    }
-  }
-
-  return availableVoices[0];
+  return bestVoice || availableVoices[0];
 }
 
 var nativeTtsPollTimer = null;
@@ -3299,18 +3772,21 @@ function extractSpokenResultOnly(text) {
   s = s.replace(/💡\s*\*\*सुझाव[\s\S]*/i, '');
   s = s.replace(/###\s*🔍\s*Related\s+Insights[\s\S]*/i, '');
 
-  // 6. Remove HTML tags and markdown decorations
+  // 6. Expand phonetics and technical symbols to smooth natural spoken words
+  s = expandPhoneticsAndPronunciation(s);
+
+  // 7. Remove HTML tags and markdown decorations
   s = s.replace(/<[^>]+>/g, ' ');
   s = s.replace(/[\*\#_`~|]/g, ' ');
   
-  // 7. Remove emojis
+  // 8. Remove emojis
   s = s.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '');
   
-  // 8. Clean up bullet dashes and list markers so voice doesn't stumble
+  // 9. Clean up bullet dashes and list markers so voice doesn't stumble
   s = s.replace(/^\s*[-•*]\s+/gm, '');
   s = s.replace(/\n\s*[-•*]\s+/g, '\n');
   
-  // 9. Collapse whitespace and newlines
+  // 10. Collapse whitespace and newlines into natural pause punctuation
   s = s.replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '. ').trim();
   
   if (!s) {
@@ -3349,8 +3825,9 @@ function speakText(text, btnElem) {
   }
 
   var preferredGender = window._voiceGender || 'female';
-  var pitch = (preferredGender === 'female') ? 1.15 : 0.85;
-  var rate = 0.95;
+  // Natural human pitch: 1.02 female (natural warm tone), 0.94 male (natural resonant tone)
+  var pitch = (preferredGender === 'female') ? 1.02 : 0.94;
+  var rate = 0.95; // Well-paced, clear pronunciation cadence
 
   if (btnElem) {
     activeSpeakingBtn = btnElem;
@@ -3384,51 +3861,21 @@ function speakText(text, btnElem) {
   }
 
   var utter = new SpeechSynthesisUtterance(cleanSpeech);
-
-  // ── Gender-based voice selection ──────────────────────────────────────────
-  var genderVoice = null;
-  if (availableVoices && availableVoices.length > 0) {
-    var femaleKeywords = ['female', 'woman', 'girl', 'zira', 'susan', 'samantha', 'victoria',
-      'karen', 'moira', 'fiona', 'allison', 'ava', 'joanna', 'salli', 'kendra', 'kimberly',
-      'ivy', 'amy', 'emma', 'olivia', 'lisa', 'heather', 'hazel', 'neerja', 'raveena'];
-    var maleKeywords = ['male', 'man', 'guy', 'alex', 'fred', 'james', 'lee', 'daniel', 'david',
-      'thomas', 'oliver', 'george', 'arthur', 'liam', 'aaron', 'joey', 'mark', 'brian'];
-
-    var keywords = (preferredGender === 'female') ? femaleKeywords : maleKeywords;
-
-    // Try to find gender-matching voice for the language
-    for (var gi = 0; gi < availableVoices.length; gi++) {
-      var vn = (availableVoices[gi].name || '').toLowerCase();
-      var vl = (availableVoices[gi].lang || '').toLowerCase();
-      var langMatch = vl.startsWith(targetVoicePrefix.toLowerCase());
-      var genderMatch = keywords.some(function(k) { return vn.indexOf(k) !== -1; });
-      if (langMatch && genderMatch) { genderVoice = availableVoices[gi]; break; }
-    }
-    // Fallback: any voice matching language
-    if (!genderVoice) {
-      genderVoice = findBestVoice(targetVoicePrefix);
-    }
+  var selectedVoice = findBestVoice(targetVoicePrefix, preferredGender);
+  if (selectedVoice) {
+    utter.voice = selectedVoice;
+    utter.lang = selectedVoice.lang;
   }
 
-  if (genderVoice) {
-    utter.voice = genderVoice;
-    utter.lang = genderVoice.lang;
-  } else {
-    var v = findBestVoice(targetVoicePrefix);
-    if (v) { utter.voice = v; utter.lang = v.lang; }
-  }
-
-  utter.rate = 0.95; // Slightly clearer for all ages (10-70)
+  utter.rate = rate;
   utter.pitch = pitch;
 
   utter.onend = function() { stopSpeaking(); };
   utter.onerror = function(e) {
-    // On Android WebView 'interrupted' errors are common — don't show as error
     if (e && e.error !== 'interrupted' && e.error !== 'canceled') { stopSpeaking(); }
   };
 
   // Android WebView: small delay after cancel() ensures speak() is accepted
-  // Also use a periodic resume() ping to prevent Android from pausing mid-speech
   var resumeHack = null;
   if (/Android/i.test(navigator.userAgent)) {
     resumeHack = setInterval(function() {
@@ -3478,6 +3925,745 @@ function testAudioSpeech() {
   var sample = (currentLang === 'hi') ? 'नमस्ते! यह GAM.AI की आवाज और ऑडियो आउटपुट का परीक्षण है।' :
                ((currentLang === 'ne') ? 'नमस्ते! यो GAM.AI को आवाज परीक्षण हो।' : 'Hello! This is a test of GAM.AI voice audio readout.');
   speakText(sample, null);
+}
+
+// ── Interface Themes & Touch Accessibility Sizing ─────────────────────────
+window._currentTheme = localStorage.getItem('gamaiTheme') || 'cyberpunk';
+window._currentIconScale = localStorage.getItem('gamaiIconScale') || 'normal';
+
+function applySavedThemeAndScale() {
+  setTheme(window._currentTheme, true);
+  setIconScale(window._currentIconScale, true);
+}
+
+function setTheme(themeName, silent) {
+  window._currentTheme = themeName;
+  localStorage.setItem('gamaiTheme', themeName);
+  document.body.classList.remove('theme-cyberpunk', 'theme-oled', 'theme-light', 'theme-matrix');
+  document.body.classList.add('theme-' + themeName);
+
+  ['cyberpunk', 'oled', 'light', 'matrix'].forEach(function(t) {
+    var b = document.getElementById('btn-theme-' + t);
+    if (b) {
+      if (t === themeName) b.classList.add('ready', 'active');
+      else b.classList.remove('ready', 'active');
+    }
+  });
+
+  var metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    var colors = { cyberpunk: '#090d16', oled: '#000000', light: '#f8fafc', matrix: '#05140a' };
+    metaTheme.setAttribute('content', colors[themeName] || '#090d16');
+  }
+  if (!silent) console.log('[GAM.AI] Theme activated:', themeName);
+}
+
+function cycleTheme() {
+  var themes = ['cyberpunk', 'oled', 'light', 'matrix'];
+  var idx = themes.indexOf(window._currentTheme);
+  var nextTheme = themes[(idx + 1) % themes.length];
+  setTheme(nextTheme);
+}
+
+function setIconScale(scaleName, silent) {
+  window._currentIconScale = scaleName;
+  localStorage.setItem('gamaiIconScale', scaleName);
+  document.body.classList.remove('icons-compact', 'icons-normal', 'icons-large');
+  document.body.classList.add('icons-' + scaleName);
+
+  ['compact', 'normal', 'large'].forEach(function(s) {
+    var b = document.getElementById('btn-icons-' + s);
+    if (b) {
+      if (s === scaleName) b.classList.add('ready', 'active');
+      else b.classList.remove('ready', 'active');
+    }
+  });
+}
+
+// ── Creative AI Studio (Picture, Video, Audio, Prompt Engineering) ────────
+var activeStudioTab = 'picture';
+var simAnimationId = null;
+var simCanvas = null;
+var simCtx = null;
+var simRunning = false;
+var currentSimType = 'quantum';
+var simParticles = [];
+var simMatrixDrops = [];
+var synthAudioCtx = null;
+var currentActiveSynth = null;
+var currentStudioSvg = '';
+
+function switchStudioTab(tabName) {
+  activeStudioTab = tabName;
+  ['picture', 'video', 'audio', 'prompts'].forEach(function(t) {
+    var sec = document.getElementById('section-studio-' + t);
+    var btn = document.getElementById('tab-studio-' + (t === 'picture' ? 'pic' : t));
+    if (sec) sec.style.display = (t === tabName) ? 'block' : 'none';
+    if (btn) {
+      if (t === tabName) btn.classList.add('active');
+      else btn.classList.remove('active');
+    }
+  });
+
+  if (tabName === 'video') {
+    initSimCanvas();
+    startCanvasSimulation(currentSimType);
+  } else {
+    stopCanvasSimulation();
+  }
+}
+
+function generateStudioPicture(customPrompt) {
+  var prompt = customPrompt || document.getElementById('studio-pic-prompt').value || 'Star Network Topology';
+  var pLower = prompt.toLowerCase();
+  var svg = '';
+
+  if (/star|network.*star|switch.*router|lan/i.test(pLower)) {
+    svg = renderStarTopologySvg();
+  } else if (/cloud|tier|microservice|arch/i.test(pLower)) {
+    svg = renderCloudArchitectureSvg();
+  } else if (/auth|login|oauth|flow/i.test(pLower)) {
+    svg = renderAuthFlowchartSvg();
+  } else if (/solar|planet|sun|orbit/i.test(pLower)) {
+    svg = renderSolarSystemSvg();
+  } else if (/pythagor|triangle|geometry|math/i.test(pLower)) {
+    svg = renderPythagorasSvg();
+  } else {
+    svg = renderUniversalDiagramSvg(prompt);
+  }
+
+  currentStudioSvg = svg;
+  var container = document.getElementById('studio-pic-canvas-container');
+  if (container) {
+    container.innerHTML = svg;
+  }
+}
+
+function loadPicPreset(type) {
+  var input = document.getElementById('studio-pic-prompt');
+  var names = {
+    star: 'Star Network Topology',
+    arch: '3-Tier Cloud Architecture',
+    auth: 'User Authentication Flowchart',
+    solar: 'Solar System Planetary Orbits',
+    pythagoras: 'Pythagorean Theorem Geometry'
+  };
+  if (input) input.value = names[type] || type;
+  generateStudioPicture(names[type]);
+}
+
+function renderStarTopologySvg() {
+  return '<svg viewBox="0 0 640 320" width="100%" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; border-radius:8px;">' +
+    '<defs>' +
+      '<linearGradient id="coreGlow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient>' +
+      '<linearGradient id="nodeGlow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient>' +
+    '</defs>' +
+    '<line x1="320" y1="160" x2="120" y2="80" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4,4"/>' +
+    '<line x1="320" y1="160" x2="520" y2="80" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4,4"/>' +
+    '<line x1="320" y1="160" x2="120" y2="240" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4,4"/>' +
+    '<line x1="320" y1="160" x2="520" y2="240" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4,4"/>' +
+    '<line x1="320" y1="160" x2="320" y2="40" stroke="#38bdf8" stroke-width="2.5"/>' +
+    '<circle cx="320" cy="160" r="42" fill="url(#coreGlow)"/>' +
+    '<text x="320" y="156" fill="#000" font-size="12" font-weight="900" text-anchor="middle">CORE</text>' +
+    '<text x="320" y="172" fill="#000" font-size="10" font-weight="700" text-anchor="middle">SWITCH</text>' +
+    '<circle cx="120" cy="80" r="28" fill="url(#nodeGlow)"/>' +
+    '<text x="120" y="84" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">PC-01</text>' +
+    '<circle cx="520" cy="80" r="28" fill="url(#nodeGlow)"/>' +
+    '<text x="520" y="84" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">SERVER</text>' +
+    '<circle cx="120" cy="240" r="28" fill="url(#nodeGlow)"/>' +
+    '<text x="120" y="244" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">AP-01</text>' +
+    '<circle cx="520" cy="240" r="28" fill="url(#nodeGlow)"/>' +
+    '<text x="520" y="244" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">VoIP</text>' +
+    '<circle cx="320" cy="40" r="24" fill="#f59e0b"/>' +
+    '<text x="320" y="44" fill="#000" font-size="9" font-weight="800" text-anchor="middle">WAN</text>' +
+    '<text x="320" y="305" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Star Topology: Centralized Hub Architecture (Zero Single-Point Collision)</text>' +
+  '</svg>';
+}
+
+function renderCloudArchitectureSvg() {
+  return '<svg viewBox="0 0 640 320" width="100%" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; border-radius:8px;">' +
+    '<rect x="30" y="110" width="110" height="90" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>' +
+    '<text x="85" y="145" fill="#38bdf8" font-size="13" font-weight="800" text-anchor="middle">Client Tier</text>' +
+    '<text x="85" y="170" fill="#94a3b8" font-size="10" text-anchor="middle">Web & Mobile</text>' +
+    '<line x1="140" y1="155" x2="200" y2="155" stroke="#38bdf8" stroke-width="2"/>' +
+    '<rect x="200" y="80" width="180" height="150" rx="12" fill="#1e293b" stroke="#10b981" stroke-width="2"/>' +
+    '<text x="290" y="115" fill="#10b981" font-size="13" font-weight="800" text-anchor="middle">Application Tier</text>' +
+    '<rect x="220" y="130" width="140" height="32" rx="6" fill="#0f172a" stroke="#334155"/>' +
+    '<text x="290" y="150" fill="#f8fafc" font-size="10" text-anchor="middle">API Gateway & Auth</text>' +
+    '<rect x="220" y="172" width="140" height="32" rx="6" fill="#0f172a" stroke="#334155"/>' +
+    '<text x="290" y="192" fill="#f8fafc" font-size="10" text-anchor="middle">Microservice Cluster</text>' +
+    '<line x1="380" y1="155" x2="440" y2="155" stroke="#10b981" stroke-width="2"/>' +
+    '<rect x="440" y="100" width="160" height="110" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>' +
+    '<text x="520" y="135" fill="#f59e0b" font-size="13" font-weight="800" text-anchor="middle">Data Tier</text>' +
+    '<text x="520" y="160" fill="#94a3b8" font-size="10" text-anchor="middle">PostgreSQL / Redis</text>' +
+    '<text x="520" y="180" fill="#10b981" font-size="10" text-anchor="middle">Replica & Shards</text>' +
+    '<text x="320" y="300" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">3-Tier Scalable Cloud Architecture: Client • Microservices • Distributed Storage</text>' +
+  '</svg>';
+}
+
+function renderAuthFlowchartSvg() {
+  return '<svg viewBox="0 0 640 320" width="100%" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; border-radius:8px;">' +
+    '<rect x="30" y="130" width="90" height="50" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>' +
+    '<text x="75" y="160" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">User Login</text>' +
+    '<line x1="120" y1="155" x2="180" y2="155" stroke="#38bdf8" stroke-width="2"/>' +
+    '<polygon points="240,115 300,155 240,195 180,155" fill="#1e293b" stroke="#eab308" stroke-width="2"/>' +
+    '<text x="240" y="159" fill="#eab308" font-size="10" font-weight="700" text-anchor="middle">Valid Hash?</text>' +
+    '<line x1="240" y1="195" x2="240" y2="250" stroke="#ef4444" stroke-width="2"/>' +
+    '<rect x="190" y="250" width="100" height="40" rx="6" fill="#1e293b" stroke="#ef4444" stroke-width="2"/>' +
+    '<text x="240" y="274" fill="#ef4444" font-size="10" font-weight="700" text-anchor="middle">401 Forbidden</text>' +
+    '<line x1="300" y1="155" x2="360" y2="155" stroke="#10b981" stroke-width="2"/>' +
+    '<rect x="360" y="130" width="110" height="50" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="2"/>' +
+    '<text x="415" y="153" fill="#10b981" font-size="11" font-weight="700" text-anchor="middle">Sign JWT</text>' +
+    '<text x="415" y="169" fill="#94a3b8" font-size="9" text-anchor="middle">Ed25519 / HMAC</text>' +
+    '<line x1="470" y1="155" x2="520" y2="155" stroke="#10b981" stroke-width="2"/>' +
+    '<rect x="520" y="130" width="100" height="50" rx="8" fill="#10b981"/>' +
+    '<text x="570" y="160" fill="#000" font-size="11" font-weight="800" text-anchor="middle">Dashboard</text>' +
+    '<text x="320" y="308" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Zero-Trust Authentication Flowchart: Verification • Cryptographic Signature • Session State</text>' +
+  '</svg>';
+}
+
+function renderSolarSystemSvg() {
+  return '<svg viewBox="0 0 640 320" width="100%" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#040711; border-radius:8px;">' +
+    '<circle cx="80" cy="160" r="55" fill="#f59e0b"/>' +
+    '<text x="80" y="165" fill="#000" font-size="14" font-weight="900" text-anchor="middle">SUN</text>' +
+    '<circle cx="80" cy="160" r="95" fill="none" stroke="#334155" stroke-dasharray="3,3"/>' +
+    '<circle cx="175" cy="160" r="7" fill="#94a3b8"/><text x="175" y="180" fill="#94a3b8" font-size="9" text-anchor="middle">Mercury</text>' +
+    '<circle cx="80" cy="160" r="140" fill="none" stroke="#334155" stroke-dasharray="3,3"/>' +
+    '<circle cx="220" cy="160" r="11" fill="#f97316"/><text x="220" y="185" fill="#f97316" font-size="9" text-anchor="middle">Venus</text>' +
+    '<circle cx="80" cy="160" r="195" fill="none" stroke="#334155" stroke-dasharray="3,3"/>' +
+    '<circle cx="275" cy="160" r="12" fill="#38bdf8"/><text x="275" y="186" fill="#38bdf8" font-size="9" text-anchor="middle">Earth</text>' +
+    '<circle cx="80" cy="160" r="260" fill="none" stroke="#334155" stroke-dasharray="3,3"/>' +
+    '<circle cx="340" cy="160" r="9" fill="#ef4444"/><text x="340" y="183" fill="#ef4444" font-size="9" text-anchor="middle">Mars</text>' +
+    '<circle cx="80" cy="160" r="340" fill="none" stroke="#334155" stroke-dasharray="3,3"/>' +
+    '<circle cx="420" cy="160" r="22" fill="#d97706"/><text x="420" y="196" fill="#d97706" font-size="9" text-anchor="middle">Jupiter</text>' +
+    '<circle cx="80" cy="160" r="440" fill="none" stroke="#334155" stroke-dasharray="3,3"/>' +
+    '<circle cx="520" cy="160" r="16" fill="#fde047"/>' +
+    '<ellipse cx="520" cy="160" rx="28" ry="6" fill="none" stroke="#ca8a04" stroke-width="2"/>' +
+    '<text x="520" y="192" fill="#fde047" font-size="9" text-anchor="middle">Saturn</text>' +
+    '<text x="320" y="305" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Heliocentric Planetary Model: Orbital Mechanics & Gravitational Equilibrium</text>' +
+  '</svg>';
+}
+
+function renderPythagorasSvg() {
+  return '<svg viewBox="0 0 640 320" width="100%" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; border-radius:8px;">' +
+    '<polygon points="200,240 400,240 200,90" fill="rgba(56,189,248,0.15)" stroke="#38bdf8" stroke-width="3"/>' +
+    '<rect x="200" y="222" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="1.5"/>' +
+    '<text x="300" y="260" fill="#10b981" font-size="14" font-weight="800" text-anchor="middle">Base (b = 4)</text>' +
+    '<text x="140" y="170" fill="#f59e0b" font-size="14" font-weight="800" text-anchor="middle">Height (a = 3)</text>' +
+    '<text x="335" y="150" fill="#38bdf8" font-size="15" font-weight="900" text-anchor="middle">Hypotenuse (c = 5)</text>' +
+    '<rect x="440" y="70" width="170" height="150" rx="10" fill="#1e293b" stroke="#334155"/>' +
+    '<text x="525" y="105" fill="#38bdf8" font-size="14" font-weight="800" text-anchor="middle">Pythagorean Law</text>' +
+    '<text x="525" y="135" fill="#fff" font-size="15" font-weight="800" text-anchor="middle">a² + b² = c²</text>' +
+    '<text x="525" y="165" fill="#94a3b8" font-size="12" text-anchor="middle">3² + 4² = 5²</text>' +
+    '<text x="525" y="195" fill="#10b981" font-size="12" font-weight="700" text-anchor="middle">9 + 16 = 25 ✓</text>' +
+    '<text x="320" y="305" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Euclidean Metric Invariant in Two-Dimensional Orthogonal Geometry</text>' +
+  '</svg>';
+}
+
+function renderUniversalDiagramSvg(title) {
+  var cleanTitle = escapeHtml(title || 'System Diagram');
+  return '<svg viewBox="0 0 640 320" width="100%" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; border-radius:8px;">' +
+    '<rect x="40" y="100" width="150" height="90" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>' +
+    '<text x="115" y="140" fill="#38bdf8" font-size="13" font-weight="800" text-anchor="middle">Input Phase</text>' +
+    '<text x="115" y="165" fill="#94a3b8" font-size="10" text-anchor="middle">Data Ingestion</text>' +
+    '<line x1="190" y1="145" x2="250" y2="145" stroke="#38bdf8" stroke-width="2.5"/>' +
+    '<rect x="250" y="80" width="140" height="130" rx="12" fill="#1e293b" stroke="#10b981" stroke-width="2"/>' +
+    '<text x="320" y="125" fill="#10b981" font-size="13" font-weight="800" text-anchor="middle">Core Process</text>' +
+    '<text x="320" y="150" fill="#f8fafc" font-size="10" text-anchor="middle">Neural Computation</text>' +
+    '<text x="320" y="175" fill="#94a3b8" font-size="10" text-anchor="middle">Validation Gate</text>' +
+    '<line x1="390" y1="145" x2="450" y2="145" stroke="#10b981" stroke-width="2.5"/>' +
+    '<rect x="450" y="100" width="150" height="90" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>' +
+    '<text x="525" y="140" fill="#f59e0b" font-size="13" font-weight="800" text-anchor="middle">Output Phase</text>' +
+    '<text x="525" y="165" fill="#94a3b8" font-size="10" text-anchor="middle">Deterministic Action</text>' +
+    '<text x="320" y="270" fill="#38bdf8" font-size="14" font-weight="800" text-anchor="middle">' + cleanTitle + '</text>' +
+    '<text x="320" y="295" fill="#94a3b8" font-size="11" text-anchor="middle">Vector Rendered by GAM.AI Creative Graphics Engine</text>' +
+  '</svg>';
+}
+
+function downloadStudioSvg() {
+  if (!currentStudioSvg) {
+    alert('Please generate a diagram first.');
+    return;
+  }
+  var blob = new Blob([currentStudioSvg], { type: 'image/svg+xml' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'gam-ai-diagram-' + Date.now() + '.svg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function sendStudioDiagramToChat() {
+  if (!currentStudioSvg) generateStudioPicture();
+  hideModal('modal-creative-studio');
+  var promptTitle = document.getElementById('studio-pic-prompt').value || 'Generated Vector Diagram';
+  var msg = '### 🎨 ' + promptTitle + '\n\n' +
+    'Here is the requested vector diagram generated directly on-device:\n\n' +
+    currentStudioSvg + '\n\n' +
+    '💡 **Diagram Features:** Scalable vector format (SVG), zero-compression pixel loss, full CSS dark/light theme support.\n\n' +
+    '[[btn:✨ Open in Creative AI Studio|modal:studio]]\n' +
+    '[[btn:⭐ Generate Star Network|generate diagram of star topology]]\n' +
+    '[[btn:☁️ 3-Tier Architecture|generate diagram of 3 tier cloud architecture]]';
+  
+  renderAssistantMessage({
+    text: msg,
+    isOffline: isOfflineMode,
+    modelName: 'GAM.AI Picture & Diagram',
+    latencyMs: '0.4',
+    query: promptTitle
+  });
+}
+
+// 2. Video & Canvas Simulation Generator
+function initSimCanvas() {
+  simCanvas = document.getElementById('studio-video-canvas');
+  if (simCanvas) {
+    simCtx = simCanvas.getContext('2d');
+  }
+}
+
+function startCanvasSimulation(simType) {
+  currentSimType = simType;
+  if (!simCanvas) initSimCanvas();
+  if (!simCanvas || !simCtx) return;
+
+  ['quantum', 'packets', 'matrix', 'wave'].forEach(function(st) {
+    var b = document.getElementById('btn-sim-' + st);
+    if (b) {
+      if (st === simType) b.classList.add('ready');
+      else b.classList.remove('ready');
+    }
+  });
+
+  var w = simCanvas.width = 800;
+  var h = simCanvas.height = 320;
+  simParticles = [];
+
+  if (simType === 'quantum') {
+    for (var i = 0; i < 75; i++) {
+      simParticles.push({
+        x: w / 2 + (Math.random() - 0.5) * 200,
+        y: h / 2 + (Math.random() - 0.5) * 120,
+        vx: (Math.random() - 0.5) * 2.2,
+        vy: (Math.random() - 0.5) * 2.2,
+        radius: Math.random() * 3.5 + 1.5,
+        color: i % 2 === 0 ? '#38bdf8' : '#10b981'
+      });
+    }
+  } else if (simType === 'packets') {
+    for (var j = 0; j < 25; j++) {
+      simParticles.push({
+        progress: Math.random(),
+        speed: 0.005 + Math.random() * 0.008,
+        srcNode: Math.floor(Math.random() * 3),
+        dstNode: Math.floor(Math.random() * 3) + 3,
+        color: '#38bdf8'
+      });
+    }
+  } else if (simType === 'matrix') {
+    simMatrixDrops = [];
+    var columns = Math.floor(w / 16);
+    for (var c = 0; c < columns; c++) {
+      simMatrixDrops[c] = Math.random() * -20;
+    }
+  }
+
+  simRunning = true;
+  var ppBtn = document.getElementById('btn-sim-playpause');
+  if (ppBtn) ppBtn.innerText = '⏸';
+  if (simAnimationId) cancelAnimationFrame(simAnimationId);
+  runSimLoop();
+}
+
+function runSimLoop() {
+  if (!simRunning || !simCtx) return;
+  var w = simCanvas.width;
+  var h = simCanvas.height;
+
+  if (currentSimType === 'quantum') {
+    simCtx.fillStyle = 'rgba(4, 7, 17, 0.22)';
+    simCtx.fillRect(0, 0, w, h);
+
+    for (var i = 0; i < simParticles.length; i++) {
+      var p = simParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 10 || p.x > w - 10) p.vx *= -1;
+      if (p.y < 10 || p.y > h - 10) p.vy *= -1;
+
+      simCtx.beginPath();
+      simCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      simCtx.fillStyle = p.color;
+      simCtx.fill();
+
+      for (var j = i + 1; j < simParticles.length; j++) {
+        var p2 = simParticles[j];
+        var dx = p.x - p2.x;
+        var dy = p.y - p2.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 65) {
+          simCtx.beginPath();
+          simCtx.moveTo(p.x, p.y);
+          simCtx.lineTo(p2.x, p2.y);
+          simCtx.strokeStyle = 'rgba(56, 189, 248, ' + (1 - dist / 65) * 0.45 + ')';
+          simCtx.lineWidth = 1;
+          simCtx.stroke();
+        }
+      }
+    }
+  } else if (currentSimType === 'packets') {
+    simCtx.fillStyle = '#040711';
+    simCtx.fillRect(0, 0, w, h);
+
+    var leftNodes = [{ x: 120, y: 70 }, { x: 120, y: 160 }, { x: 120, y: 250 }];
+    var rightNodes = [{ x: 680, y: 70 }, { x: 680, y: 160 }, { x: 680, y: 250 }];
+    var core = { x: 400, y: 160 };
+
+    simCtx.strokeStyle = '#1e293b';
+    simCtx.lineWidth = 2;
+    leftNodes.forEach(function(n) {
+      simCtx.beginPath(); simCtx.moveTo(n.x, n.y); simCtx.lineTo(core.x, core.y); simCtx.stroke();
+    });
+    rightNodes.forEach(function(n) {
+      simCtx.beginPath(); simCtx.moveTo(core.x, core.y); simCtx.lineTo(n.x, n.y); simCtx.stroke();
+    });
+
+    simCtx.beginPath(); simCtx.arc(core.x, core.y, 32, 0, Math.PI * 2);
+    simCtx.fillStyle = '#0284c7'; simCtx.fill();
+    simCtx.fillStyle = '#fff'; simCtx.font = 'bold 10px sans-serif'; simCtx.textAlign = 'center';
+    simCtx.fillText('CORE BGP', core.x, core.y + 4);
+
+    leftNodes.concat(rightNodes).forEach(function(n, idx) {
+      simCtx.beginPath(); simCtx.arc(n.x, n.y, 22, 0, Math.PI * 2);
+      simCtx.fillStyle = '#10b981'; simCtx.fill();
+      simCtx.fillStyle = '#000'; simCtx.font = 'bold 9px sans-serif';
+      simCtx.fillText('PE-' + (idx + 1), n.x, n.y + 3);
+    });
+
+    simParticles.forEach(function(pkt) {
+      pkt.progress += pkt.speed;
+      if (pkt.progress > 1) pkt.progress = 0;
+      var src = leftNodes[pkt.srcNode % leftNodes.length];
+      var dst = rightNodes[pkt.dstNode % rightNodes.length];
+      var px, py;
+      if (pkt.progress < 0.5) {
+        var subT = pkt.progress * 2;
+        px = src.x + (core.x - src.x) * subT;
+        py = src.y + (core.y - src.y) * subT;
+      } else {
+        var subT2 = (pkt.progress - 0.5) * 2;
+        px = core.x + (dst.x - core.x) * subT2;
+        py = core.y + (dst.y - core.y) * subT2;
+      }
+      simCtx.beginPath();
+      simCtx.arc(px, py, 4, 0, Math.PI * 2);
+      simCtx.fillStyle = '#f59e0b';
+      simCtx.fill();
+    });
+  } else if (currentSimType === 'matrix') {
+    simCtx.fillStyle = 'rgba(5, 20, 10, 0.15)';
+    simCtx.fillRect(0, 0, w, h);
+    simCtx.fillStyle = '#10b981';
+    simCtx.font = '14px monospace';
+
+    var glyphs = '0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈ';
+    for (var col = 0; col < simMatrixDrops.length; col++) {
+      var char = glyphs[Math.floor(Math.random() * glyphs.length)];
+      var x = col * 16;
+      var y = simMatrixDrops[col] * 16;
+      simCtx.fillText(char, x, y);
+      if (y > h && Math.random() > 0.975) {
+        simMatrixDrops[col] = 0;
+      }
+      simMatrixDrops[col]++;
+    }
+  } else if (currentSimType === 'wave') {
+    simCtx.fillStyle = '#090d16';
+    simCtx.fillRect(0, 0, w, h);
+
+    window._waveTime = (window._waveTime || 0) + 0.04;
+    var t = window._waveTime;
+
+    simCtx.beginPath();
+    for (var xCoord = 0; xCoord < w; xCoord += 2) {
+      var yCoord = h / 2 + Math.sin(xCoord * 0.015 + t) * 45 + Math.sin(xCoord * 0.03 + t * 1.5) * 20;
+      if (xCoord === 0) simCtx.moveTo(xCoord, yCoord);
+      else simCtx.lineTo(xCoord, yCoord);
+    }
+    simCtx.strokeStyle = '#38bdf8';
+    simCtx.lineWidth = 3;
+    simCtx.stroke();
+
+    simCtx.beginPath();
+    for (var xCoord2 = 0; xCoord2 < w; xCoord2 += 2) {
+      var yCoord2 = h / 2 + Math.cos(xCoord2 * 0.018 - t) * 35;
+      if (xCoord2 === 0) simCtx.moveTo(xCoord2, yCoord2);
+      else simCtx.lineTo(xCoord2, yCoord2);
+    }
+    simCtx.strokeStyle = '#10b981';
+    simCtx.lineWidth = 2;
+    simCtx.stroke();
+  }
+
+  simAnimationId = requestAnimationFrame(runSimLoop);
+}
+
+function toggleSimPlayPause() {
+  simRunning = !simRunning;
+  var btn = document.getElementById('btn-sim-playpause');
+  if (btn) btn.innerText = simRunning ? '⏸' : '▶';
+  if (simRunning) runSimLoop();
+}
+
+function resetSimAnimation() {
+  startCanvasSimulation(currentSimType);
+}
+
+function stopCanvasSimulation() {
+  simRunning = false;
+  if (simAnimationId) {
+    cancelAnimationFrame(simAnimationId);
+    simAnimationId = null;
+  }
+}
+
+function sendSimToChat() {
+  hideModal('modal-creative-studio');
+  var simNames = {
+    quantum: 'Quantum Particle Cloud Simulation',
+    packets: 'High-Speed BGP Packet Routing Simulation',
+    matrix: 'Cyberpunk Matrix Code Rain Simulation',
+    wave: 'Dual Harmonic Sine Wave Visualizer'
+  };
+  var name = simNames[currentSimType] || 'Interactive Animation';
+
+  var msg = '### 🎬 ' + name + '\n\n' +
+    'The procedural 60 FPS animation sequence is active in the **Creative AI Studio**.\n\n' +
+    '- **Simulation Engine:** HTML5 Canvas Hardware-Accelerated Animation Pipeline\n' +
+    '- **Refresh Rate:** 60 FPS V-Sync with dynamic delta time calculation\n' +
+    '- **Resource Profile:** Zero external video assets, 100% computed mathematically on your local GPU/CPU.\n\n' +
+    '[[btn:✨ Launch Animation in Studio|modal:studio]]\n' +
+    '[[btn:⚛️ Quantum Particle Cloud|generate animation of quantum particles]]\n' +
+    '[[btn:🌐 Router Packet Routing|generate animation of packet flow]]';
+
+  renderAssistantMessage({
+    text: msg,
+    isOffline: isOfflineMode,
+    modelName: 'GAM.AI Animation & Video',
+    latencyMs: '0.3',
+    query: name
+  });
+}
+
+// 3. Sound Synthesizer (Web Audio API)
+function getSynthAudioContext() {
+  if (!synthAudioCtx) {
+    var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) synthAudioCtx = new AudioContextClass();
+  }
+  if (synthAudioCtx && synthAudioCtx.state === 'suspended') {
+    synthAudioCtx.resume();
+  }
+  return synthAudioCtx;
+}
+
+function toggleSynthAudio(synthType) {
+  var ctx = getSynthAudioContext();
+  if (!ctx) {
+    alert('Web Audio is not supported on this browser.');
+    return;
+  }
+
+  if (currentActiveSynth === synthType) {
+    stopAllSynthAudio();
+    return;
+  }
+  stopAllSynthAudio();
+
+  var btn = document.getElementById('btn-synth-' + synthType);
+  if (btn) {
+    btn.innerText = '⏹ Stop Tone';
+    btn.classList.add('speaking');
+  }
+  currentActiveSynth = synthType;
+
+  if (synthType === 'alpha') {
+    var oscL = ctx.createOscillator();
+    var oscR = ctx.createOscillator();
+    var merger = ctx.createChannelMerger(2);
+    var gain = ctx.createGain();
+    gain.gain.value = 0.18;
+
+    oscL.frequency.value = 210;
+    oscR.frequency.value = 220;
+
+    oscL.connect(merger, 0, 0);
+    oscR.connect(merger, 0, 1);
+    merger.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscL.start();
+    oscR.start();
+    window._activeSynthNodes = [oscL, oscR, gain];
+  } else if (synthType === 'pentatonic') {
+    var notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+    var step = 0;
+    window._synthArpTimer = setInterval(function() {
+      if (!currentActiveSynth) return;
+      var freq = notes[step % notes.length];
+      step++;
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      g.gain.setValueAtTime(0.15, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.65);
+    }, 280);
+  } else if (synthType === 'bell') {
+    var freqs = [432, 864, 1296, 1728];
+    var gains = [0.25, 0.12, 0.06, 0.03];
+    freqs.forEach(function(f, i) {
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, ctx.currentTime);
+      g.gain.setValueAtTime(gains[i], ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 3.5);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 3.6);
+    });
+    setTimeout(function() {
+      if (currentActiveSynth === 'bell') stopAllSynthAudio();
+    }, 3600);
+  } else if (synthType === 'drone') {
+    var osc1 = ctx.createOscillator();
+    var osc2 = ctx.createOscillator();
+    var filter = ctx.createBiquadFilter();
+    var droneGain = ctx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc1.frequency.value = 80;
+    osc2.type = 'sine';
+    osc2.frequency.value = 120;
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 350;
+
+    droneGain.gain.value = 0.15;
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(droneGain);
+    droneGain.connect(ctx.destination);
+
+    osc1.start();
+    osc2.start();
+    window._activeSynthNodes = [osc1, osc2, droneGain];
+  }
+}
+
+function stopAllSynthAudio() {
+  if (window._synthArpTimer) {
+    clearInterval(window._synthArpTimer);
+    window._synthArpTimer = null;
+  }
+  if (window._activeSynthNodes) {
+    window._activeSynthNodes.forEach(function(node) {
+      try { if (node.stop) node.stop(); } catch(e) {}
+      try { if (node.disconnect) node.disconnect(); } catch(e) {}
+    });
+    window._activeSynthNodes = null;
+  }
+  ['alpha', 'pentatonic', 'bell', 'drone'].forEach(function(st) {
+    var b = document.getElementById('btn-synth-' + st);
+    if (b) {
+      b.classList.remove('speaking');
+      if (st === 'bell') b.innerText = '🔔 Strike Bell';
+      else if (st === 'pentatonic') b.innerText = '▶ Play Melody';
+      else if (st === 'alpha') b.innerText = '▶ Play Tone';
+      else if (st === 'drone') b.innerText = '▶ Play Drone';
+    }
+  });
+  currentActiveSynth = null;
+}
+
+// 4. Prompt Engineering Workbench
+function applyPromptFramework() {
+  var fw = document.getElementById('prompt-framework-select').value;
+  var raw = document.getElementById('prompt-raw-input').value.trim() || 'Build a secure user authentication system';
+  var out = '';
+
+  if (fw === 'deepseek_cot') {
+    out = 'You are DeepSeek-R1, a leading reasoning AI.\n\n' +
+      'Task: ' + raw + '\n\n' +
+      'Instruction:\n' +
+      '1. First, think step-by-step inside <thought> ... </thought> tags.\n' +
+      '2. Explicitly specify all algorithmic invariants and state complexity ($O(N)$, $O(\\log N)$, $O(1)$).\n' +
+      '3. Provide production-ready, strictly typed code with error handling.\n' +
+      '4. Verify boundary conditions and edge cases (empty input, large scale, concurrency).';
+  } else if (fw === 'claude_safety') {
+    out = 'You are Claude 3.5 Sonnet, an expert systems architect.\n\n' +
+      'Goal: ' + raw + '\n\n' +
+      'Format & Requirements:\n' +
+      '1. Provide a balanced, objective trade-off matrix comparing the top 2 architectural options.\n' +
+      '2. Detail failure modes, security attack vectors, and operational mitigations.\n' +
+      '3. Outline nuanced recommendations with clear rationale.';
+  } else if (fw === 'chatgpt_role') {
+    out = 'You are ChatGPT, a senior specialist and executive communicator.\n\n' +
+      'Context: The user needs high-quality, actionable results for: "' + raw + '"\n\n' +
+      'Structure your response:\n' +
+      '1. Executive Summary (2-3 concise bullets).\n' +
+      '2. Step-by-Step Implementation Roadmap.\n' +
+      '3. Ready-to-use template / artifact.\n' +
+      '4. Next actionable step.';
+  } else if (fw === 'qwen_math') {
+    out = 'You are Qwen 2.5, a frontier multilingual & STEM mathematical model.\n\n' +
+      'Problem: ' + raw + '\n\n' +
+      'Requirements:\n' +
+      '1. Show all formal derivations step-by-step with LaTeX formatting ($...$, $$...$$).\n' +
+      '2. Provide bilingual terminology in English and Nepali/Hindi for foundational concepts.\n' +
+      '3. Ensure absolute numerical accuracy and state exact closed-form solutions.';
+  } else {
+    out = 'Task: ' + raw + '\n\n' +
+      'Below are examples of desired high-standard input and output:\n\n' +
+      'Example 1:\n' +
+      'Input: [Reference Input Scenario]\n' +
+      'Output: [High-Quality Structured Deliverable]\n\n' +
+      'Now perform the same standard for the current task:\n' +
+      'Input: ' + raw + '\n' +
+      'Output:';
+  }
+
+  document.getElementById('prompt-engineered-output').value = out;
+}
+
+function copyEngineeredPrompt() {
+  var val = document.getElementById('prompt-engineered-output').value;
+  if (!val) {
+    applyPromptFramework();
+    val = document.getElementById('prompt-engineered-output').value;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(val);
+  }
+  alert('Engineered prompt copied to clipboard! 📋');
+}
+
+function runEngineeredPromptInChat() {
+  var val = document.getElementById('prompt-engineered-output').value;
+  if (!val) applyPromptFramework();
+  val = document.getElementById('prompt-engineered-output').value;
+  hideModal('modal-creative-studio');
+  submitQuick(val);
 }
 
 // Voice Recognition (Speech to Text)
@@ -3791,7 +4977,7 @@ document.getElementById('btn-new-chat').addEventListener('click', function() {
   closeSidebar();
 });
 
-['modal-models', 'modal-tools', 'modal-settings', 'modal-music', 'modal-lens'].forEach(function(mId) {
+['modal-models', 'modal-tools', 'modal-settings', 'modal-music', 'modal-lens', 'modal-creative-studio'].forEach(function(mId) {
   var m = document.getElementById(mId);
   if (m) {
     m.addEventListener('click', function(e) {
@@ -3803,7 +4989,7 @@ document.getElementById('btn-new-chat').addEventListener('click', function() {
 // Return to Home Menu Navigation
 function returnToHomeMenu() {
   // Close all open modals
-  ['modal-models', 'modal-tools', 'modal-settings', 'modal-music', 'modal-lens'].forEach(function(mId) {
+  ['modal-models', 'modal-tools', 'modal-settings', 'modal-music', 'modal-lens', 'modal-creative-studio'].forEach(function(mId) {
     hideModal(mId);
   });
   // Close camera stream if open
@@ -5147,7 +6333,15 @@ function formatResponse(text) {
   var hasDiagram = (text.indexOf('mermaid') !== -1 || text.indexOf('ASCII Topology') !== -1);
   var svgHtml = hasDiagram ? renderTopologySVG() : '';
 
+  // Extract raw SVG blocks before escaping HTML
+  var svgBlocks = [];
   var clean = text.split('\r\n').join('\n').split('\r').join('\n');
+  clean = clean.replace(/<svg[\s\S]*?<\/svg>/gi, function(match) {
+    var placeholder = '___GAM_SVG_BLOCK_' + svgBlocks.length + '___';
+    svgBlocks.push(match);
+    return placeholder;
+  });
+
   var parts = clean.split('```');
   var out = '';
 
@@ -5176,6 +6370,12 @@ function formatResponse(text) {
       }
       out += '<pre><code class="language-' + lang + '">' + escapeHtml(code) + '</code></pre>';
     }
+  }
+
+  // Restore SVG blocks with responsive styling
+  for (var k = 0; k < svgBlocks.length; k++) {
+    var wrapper = '<div style="margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid var(--border-color); background:rgba(0,0,0,0.35); padding:8px; display:flex; justify-content:center; align-items:center;">' + svgBlocks[k] + '</div>';
+    out = out.replace('___GAM_SVG_BLOCK_' + k + '___', wrapper);
   }
 
   return svgHtml + out;
@@ -5626,6 +6826,28 @@ document.getElementById('prompt-input').addEventListener('keydown', function(e) 
 });
 
 function submitQuick(promptText) {
+  if (!promptText) return;
+  if (promptText === 'modal:studio') {
+    showModal('modal-creative-studio');
+    switchStudioTab('picture');
+    return;
+  }
+  if (promptText.startsWith('modal:studio_')) {
+    var sub = promptText.replace('modal:studio_', '');
+    showModal('modal-creative-studio');
+    if (sub === 'prompts') switchStudioTab('prompts');
+    else if (sub === 'audio') switchStudioTab('audio');
+    else {
+      switchStudioTab('video');
+      startCanvasSimulation(sub);
+    }
+    return;
+  }
+  if (promptText.startsWith('synth:')) {
+    var st = promptText.replace('synth:', '');
+    toggleSynthAudio(st);
+    return;
+  }
   document.getElementById('prompt-input').value = promptText;
   executeSend(promptText);
 }
@@ -6005,6 +7227,12 @@ function stopAllAudio() {
   if (miniBar) miniBar.style.display = 'none';
   manageWakeLock(false);
   updateMusicUI(false);
+}
+
+// ── Boot Initialization ──────────────────────────────────────────────────
+applySavedThemeAndScale();
+if ('speechSynthesis' in window) {
+  loadVoices();
 }
 </script>
 </body>

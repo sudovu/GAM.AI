@@ -12,6 +12,7 @@ bench.db
 # Build outputs
 dist/
 build/
+*.spec
 *.egg-info/
 .eggs/
 

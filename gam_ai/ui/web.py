@@ -7,13 +7,23 @@ import urllib.request
 import os
 import threading
 import time
+import sys
 from typing import Optional, Any, Dict
 from gam_ai.core.chat.engine import ChatEngine
 from gam_ai.core.network.subnet import SubnetCalculator
 from gam_ai.core.network.multivendor import MultiVendorConfigGenerator
 from gam_ai.core.models.manager import MODULAR_CATALOG
 
-_HTML_PATH = os.path.join(os.path.dirname(__file__), "dashboard.html")
+def get_ui_dir() -> str:
+    """Resolve directory containing web UI assets (dashboard.html, manifest, etc.), supporting PyInstaller bundles."""
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        bundle_path = os.path.join(sys._MEIPASS, "gam_ai", "ui")
+        if os.path.exists(bundle_path):
+            return bundle_path
+        return getattr(sys, '_MEIPASS')
+    return os.path.dirname(__file__)
+
+_HTML_PATH = os.path.join(get_ui_dir(), "dashboard.html")
 
 DOWNLOAD_STATUS: Dict[str, Dict[str, Any]] = {}
 
@@ -88,7 +98,7 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
 
         elif parsed.path == "/manifest.json":
-            manifest_path = os.path.join(os.path.dirname(__file__), "manifest.json")
+            manifest_path = os.path.join(get_ui_dir(), "manifest.json")
             body = b'{"name":"GAM.AI","short_name":"GAM.AI","start_url":"/","display":"standalone"}'
             if os.path.exists(manifest_path):
                 with open(manifest_path, "rb") as f:
@@ -100,7 +110,7 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
 
         elif parsed.path == "/sw.js":
-            sw_path = os.path.join(os.path.dirname(__file__), "sw.js")
+            sw_path = os.path.join(get_ui_dir(), "sw.js")
             body = b'// GAM.AI Service Worker'
             if os.path.exists(sw_path):
                 with open(sw_path, "rb") as f:
@@ -112,7 +122,7 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
 
         elif parsed.path in ("/developer.jpg", "/developer.jpeg"):
-            dev_path = os.path.join(os.path.dirname(__file__), "developer.jpg")
+            dev_path = os.path.join(get_ui_dir(), "developer.jpg")
             if os.path.exists(dev_path):
                 with open(dev_path, "rb") as f:
                     body = f.read()

@@ -17,16 +17,20 @@ def build_exe():
         return
 
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    cli_entry = os.path.join(repo_root, "scripts", "run_cli.py")
+    app_entry = os.path.join(repo_root, "scripts", "run_app.py")
+    ui_dir = os.path.join(repo_root, "gam_ai", "ui")
     output_dist = os.path.join(repo_root, "dist")
+
+    add_data_arg = f"{ui_dir};gam_ai/ui" if os.name == 'nt' else f"{ui_dir}:gam_ai/ui"
 
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--onefile",
         "--name", "gam-ai",
         "--paths", repo_root,
+        "--add-data", add_data_arg,
         "--clean",
-        cli_entry
+        app_entry
     ]
 
     print(f"Executing: {' '.join(cmd)}")
