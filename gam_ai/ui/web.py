@@ -13,6 +13,10 @@ from gam_ai.core.chat.engine import ChatEngine
 from gam_ai.core.network.subnet import SubnetCalculator
 from gam_ai.core.network.multivendor import MultiVendorConfigGenerator
 from gam_ai.core.models.manager import MODULAR_CATALOG
+from gam_ai.core.multimodal.generator import MultimodalGenerator
+
+multimodal_generator = MultimodalGenerator()
+
 
 def get_ui_dir() -> str:
     """Resolve directory containing web UI assets (dashboard.html, manifest, etc.), supporting PyInstaller bundles."""
@@ -163,6 +167,9 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             })
             self._send_json(st)
 
+        elif parsed.path == "/api/generate/motions":
+            self._send_json(multimodal_generator.get_motion_profiles())
+
         elif parsed.path == "/api/chat/history":
             query_params = urllib.parse.parse_qs(parsed.query)
             conv_id = query_params.get("conversation_id", [None])[0]
@@ -270,6 +277,57 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
                     "3. **Recommendation:** Ready for VLAN deployment and OSPF configuration."
                 )
             self._send_json({"status": "success", "mode": mode, "response": res_text})
+
+        elif self.path == "/api/generate/image":
+            prompt = req_data.get("prompt", "")
+            aspect_ratio = req_data.get("aspect_ratio", "16:9")
+            style = req_data.get("style", "cinematic")
+            provider = req_data.get("provider", "pollinations")
+            seed = req_data.get("seed")
+            api_key = req_data.get("api_key")
+            res = multimodal_generator.generate_image_url(
+                prompt=prompt,
+                aspect_ratio=aspect_ratio,
+                style=style,
+                provider=provider,
+                seed=seed,
+                api_key=api_key
+            )
+            self._send_json(res)
+
+        elif self.path == "/api/generate/enhance-prompt":
+            prompt = req_data.get("prompt", "")
+            media_type = req_data.get("media_type", "image")
+            style = req_data.get("style", "cinematic")
+            res = multimodal_generator.enhance_prompt(prompt, media_type=media_type, style=style)
+            self._send_json(res)
+
+        elif self.path == "/api/generate/video":
+            prompt = req_data.get("prompt", "")
+            aspect_ratio = req_data.get("aspect_ratio", "16:9")
+            style = req_data.get("style", "cinematic")
+            num_scenes = int(req_data.get("num_scenes", 3))
+            res = multimodal_generator.generate_video_storyboard(
+                prompt=prompt,
+                style=style,
+                aspect_ratio=aspect_ratio,
+                num_scenes=num_scenes
+            )
+            self._send_json(res)
+
+        elif self.path == "/api/generate/image-to-video":
+            image_url = req_data.get("image_url", "")
+            motion = req_data.get("motion", "push_in")
+            duration = float(req_data.get("duration", 4.0))
+            motion_profiles = multimodal_generator.get_motion_profiles()
+            motion_cfg = motion_profiles.get(motion, motion_profiles["push_in"])
+            self._send_json({
+                "status": "success",
+                "image_url": image_url,
+                "motion": motion,
+                "duration": duration,
+                "motion_config": motion_cfg
+            })
 
         elif self.path in ("/api/model/unload", "/api/models/unload"):
             self.engine.models.unload_active_model()

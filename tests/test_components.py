@@ -172,7 +172,49 @@ class TestCoreComponents(unittest.TestCase):
         self.assertLessEqual(res["prompt_tokens"], engine.config.max_context_tokens)
         engine.close()
 
+    def test_multimodal_generator(self):
+        """Verify MultimodalGenerator prompt enhancement, image generation, storyboards, and motions."""
+        from gam_ai.core.multimodal.generator import MultimodalGenerator
+
+        mg = MultimodalGenerator()
+
+        # 1. Prompt Enhancement
+        enh = mg.enhance_prompt("cyberpunk car", media_type="video", style="cinematic")
+        self.assertEqual(enh["original"], "cyberpunk car")
+        self.assertIn("cinematic camera motion", enh["enhanced"])
+        self.assertIn("60fps photorealistic motion blur", enh["enhanced"])
+
+        # 2. Image URL Generation (Pollinations Zero-Key)
+        img_res = mg.generate_image_url("cyberpunk car", aspect_ratio="16:9", style="cinematic")
+        self.assertEqual(img_res["status"], "success")
+        self.assertEqual(img_res["provider"], "pollinations_flux")
+        self.assertIn("https://image.pollinations.ai/prompt/", img_res["image_url"])
+        self.assertEqual(img_res["width"], 1024)
+        self.assertEqual(img_res["height"], 576)
+
+        # 3. Gemini / Imagen 3 API Configuration
+        gem_res = mg.generate_image_url("cyberpunk car", provider="gemini", api_key="test_key_123")
+        self.assertEqual(gem_res["status"], "success")
+        self.assertEqual(gem_res["provider"], "gemini")
+        self.assertEqual(gem_res["model"], "imagen-3.0-generate-002")
+
+        # 4. Text-to-Video Multi-Scene Storyboard
+        sb = mg.generate_video_storyboard("spaceship entering hyperspace", num_scenes=3)
+        self.assertEqual(sb["status"], "success")
+        self.assertEqual(len(sb["scenes"]), 3)
+        self.assertEqual(sb["scenes"][0]["scene_index"], 1)
+        self.assertIn("keyframe_url", sb["scenes"][0])
+        self.assertIn("motion_config", sb["scenes"][0])
+
+        # 5. Motion Profiles
+        motions = mg.get_motion_profiles()
+        self.assertIn("push_in", motions)
+        self.assertIn("pan_right", motions)
+        self.assertIn("parallax_3d", motions)
+        self.assertIn("drone_orbit", motions)
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
