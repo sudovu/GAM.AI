@@ -125,6 +125,22 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
 
+        elif parsed.path == "/three.min.js":
+            three_path = os.path.join(get_ui_dir(), "three.min.js")
+            if os.path.exists(three_path):
+                with open(three_path, "rb") as f:
+                    body = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/javascript")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "public, max-age=31536000")
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_response(404)
+                self.end_headers()
+
         elif parsed.path in ("/developer.jpg", "/developer.jpeg"):
             dev_path = os.path.join(get_ui_dir(), "developer.jpg")
             if os.path.exists(dev_path):
@@ -138,6 +154,30 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             else:
                 self.send_response(404)
                 self.end_headers()
+
+        elif parsed.path == "/api/generate/proxy-image":
+            query_params = urllib.parse.parse_qs(parsed.query)
+            target_url = query_params.get("url", [""])[0]
+            if not target_url:
+                self.send_error(400, "Missing url parameter")
+                return
+            try:
+                req = urllib.request.Request(
+                    target_url,
+                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                )
+                with urllib.request.urlopen(req, timeout=12) as response:
+                    img_data = response.read()
+                    content_type = response.headers.get("Content-Type", "image/jpeg")
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(img_data)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.end_headers()
+                self.wfile.write(img_data)
+            except Exception as e:
+                self.send_error(502, f"Failed to fetch image: {e}")
 
         elif parsed.path == "/api/status":
             act = self.engine.models.get_active_model()
@@ -327,6 +367,57 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
                 "motion": motion,
                 "duration": duration,
                 "motion_config": motion_cfg
+            })
+
+        elif self.path == "/api/generate/3d-scene":
+            prompt = (req_data.get("prompt") or "").lower()
+            style = req_data.get("style", "cinematic")
+            motion = req_data.get("motion", "push_in")
+
+            # Determine cinematic 3D world archetype
+            if any(w in prompt for w in ("space", "galaxy", "star", "nebula", "planet", "orbit", "cosmic", "ship")):
+                preset = "space"
+                cam_choreography = "orbital_dolly"
+                particle_type = "stardust"
+                lighting = {"ambient": "#110e2e", "key": "#38bdf8", "rim": "#a855f7", "intensity": 1.4}
+                fog = {"color": "#070b19", "density": 0.0018}
+            elif any(w in prompt for w in ("cyber", "city", "street", "neon", "rain", "tokyo", "blade", "future")):
+                preset = "cyberpunk"
+                cam_choreography = "street_tracking"
+                particle_type = "rain"
+                lighting = {"ambient": "#0a192f", "key": "#00f0ff", "rim": "#ff007f", "intensity": 1.6}
+                fog = {"color": "#030712", "density": 0.0035}
+            elif any(w in prompt for w in ("waterfall", "nature", "forest", "mountain", "river", "tree", "lake", "ocean")):
+                preset = "nature"
+                cam_choreography = "crane_ascend"
+                particle_type = "mist"
+                lighting = {"ambient": "#062817", "key": "#fef08a", "rim": "#38bdf8", "intensity": 1.3}
+                fog = {"color": "#081c15", "density": 0.0022}
+            elif any(w in prompt for w in ("temple", "column", "ancient", "ruin", "monument", "castle", "hall", "gold")):
+                preset = "temple"
+                cam_choreography = "colonnade_glide"
+                particle_type = "gold_dust"
+                lighting = {"ambient": "#1f1606", "key": "#fbbf24", "rim": "#f59e0b", "intensity": 1.5}
+                fog = {"color": "#110e05", "density": 0.0025}
+            else:
+                preset = "universal"
+                cam_choreography = "depth_parallax"
+                particle_type = "atmospheric_motes"
+                lighting = {"ambient": "#0f172a", "key": "#e2e8f0", "rim": "#38bdf8", "intensity": 1.2}
+                fog = {"color": "#090d16", "density": 0.002}
+
+            self._send_json({
+                "status": "success",
+                "preset": preset,
+                "motion": motion,
+                "style": style,
+                "camera_choreography": cam_choreography,
+                "particle_type": particle_type,
+                "lighting": lighting,
+                "fog": fog,
+                "fps": 60,
+                "fov": 50,
+                "cinematic_ratio": "2.39:1"
             })
 
         elif self.path in ("/api/model/unload", "/api/models/unload"):

@@ -63,7 +63,7 @@ def sync_assets(repo_root: str) -> None:
     dst_assets = os.path.join(repo_root, "android", "app", "src", "main", "assets")
     os.makedirs(dst_assets, exist_ok=True)
 
-    files_to_sync = ["dashboard.html", "manifest.json", "sw.js", "developer.jpg"]
+    files_to_sync = ["dashboard.html", "manifest.json", "sw.js", "developer.jpg", "three.min.js"]
     synced_count = 0
     for fname in files_to_sync:
         s = os.path.join(src_ui, fname)

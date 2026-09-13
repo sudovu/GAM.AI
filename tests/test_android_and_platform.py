@@ -41,6 +41,7 @@ class TestAndroidAndPlatform(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(assets_dir, "dashboard.html")))
         self.assertTrue(os.path.exists(os.path.join(assets_dir, "manifest.json")))
         self.assertTrue(os.path.exists(os.path.join(assets_dir, "sw.js")))
+        self.assertTrue(os.path.exists(os.path.join(assets_dir, "three.min.js")))
 
     def test_github_actions_workflow_exists(self):
         workflow_path = os.path.join(repo_root, ".github", "workflows", "build-apk.yml")

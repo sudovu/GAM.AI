@@ -12,3 +12,7 @@ for _mod_name in ("cli", "web"):
             _mod = importlib.util.module_from_spec(_spec)
             sys.modules[f"gam_ai.ui.{_mod_name}"] = _mod
             _spec.loader.exec_module(_mod)
+
+def get_ui_dir():
+    return os.path.dirname(__file__)
+

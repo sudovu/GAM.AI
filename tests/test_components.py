@@ -213,6 +213,12 @@ class TestCoreComponents(unittest.TestCase):
         self.assertIn("parallax_3d", motions)
         self.assertIn("drone_orbit", motions)
 
+        # 6. Verify Three.js asset file exists and is populated
+        from gam_ai.ui import get_ui_dir
+        three_js_file = os.path.join(get_ui_dir(), "three.min.js")
+        self.assertTrue(os.path.isfile(three_js_file))
+        self.assertGreater(os.path.getsize(three_js_file), 100000)
+
 if __name__ == "__main__":
     unittest.main()
 
