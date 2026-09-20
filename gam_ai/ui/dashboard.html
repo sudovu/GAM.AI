@@ -1866,8 +1866,33 @@ function generateOfflineVendorConfig(vendor) {
     return 'router ospf 1\n router-id 1.1.1.1\n network 192.168.1.0 0.0.0.255 area 0\n passive-interface default\n no passive-interface GigabitEthernet0/0/0\n exit';
   } else if (vendor === 'huawei') {
     return 'interface GigabitEthernet0/0/1\n port link-type trunk\n port trunk allow-pass vlan 10 20 30\n undo shutdown\nquit';
-  } else if (vendor === 'olt') {
-    return 'interface gpon 0/1\n ont add 0 1 sn-auth 4857544312345678 omci ont-lineprofile-id 10 ont-srvprofile-id 10\nquit';
+  } else if (vendor === 'olt' || vendor === 'gpon') {
+    return '# --- 1. Global Profiles (DBA, Lineprofile & Serviceprofile) ---\n' +
+      'dba-profile add profile-id 10 profile-name FTTH_DBA type4 max 1024000\n' +
+      'ont-srvprofile gpon profile-id 10 profile-name FTTH_SRV\n' +
+      ' ont-port eth 4 pots 2\n' +
+      ' port vlan eth 1 translation 100 user-vlan 100\n' +
+      ' commit\nquit\n' +
+      'ont-lineprofile gpon profile-id 10 profile-name FTTH_LINE\n' +
+      ' tcont 1 dba-profile-id 10\n' +
+      ' gem add 1 eth tcont 1\n' +
+      ' gem mapping 1 1 vlan 100\n' +
+      ' commit\nquit\n\n' +
+      '# --- 2. Register & Authorize ONT on GPON Port ---\n' +
+      'interface gpon 0/1\n' +
+      ' ont add 0 1 sn-auth 4857544312345678 omci ont-lineprofile-id 10 ont-srvprofile-id 10 desc ONT_USER1\n' +
+      'quit\n\n' +
+      '# --- 3. Create Service-Port (VLAN Translation to Core) ---\n' +
+      'service-port 100 vlan 100 gpon 0/1/0 ont 1 gemport 1 multi-service user-vlan 100 tag-transform translate';
+  } else if (vendor === 'zte_olt' || vendor === 'zte') {
+    return '# --- 1. Configure DBA Profile & T-CONT ---\n' +
+      'gpon\n profile tcont 1G_DBA type 4 max 1024000\n profile traffic 1G_UP sir 102400 pir 1024000\nexit\n\n' +
+      '# --- 2. Configure ONU Line & Remote Profiles ---\n' +
+      'gpon\n onu-profile gpon line FTTH_LINE\n  tcont 1 name INTERNET profile 1G_DBA\n  gemport 1 name DATA tcont 1\n  gemport 1 map 1 vlan-exact 100\n exit\n' +
+      ' onu-profile gpon remote FTTH_REMOTE\n  service 1 gemport 1 user-vlan 100 vlan 100\n exit\n\n' +
+      '# --- 3. Register ONU on GPON interface ---\n' +
+      'interface gpon-olt_1/1/1\n onu 1 type ZTE-F660 sn ZTEGC1234567\nexit\n' +
+      'interface gpon-onu_1/1/1:1\n tcont 1 name INTERNET profile 1G_DBA\n gemport 1 name DATA tcont 1\n switchport mode hybrid vport 1\n service-port 1 vport 1 user-vlan 100 vlan 100\nexit';
   } else if (vendor === 'fortigate') {
     return 'config firewall policy\n edit 1\n set name "LAN_to_WAN"\n set srcintf "port2"\n set dstintf "port1"\n set action accept\n set schedule "always"\n set service "ALL"\n set nat enable\nnext\nend';
   } else if (vendor === 'mikrotik') {
@@ -2574,6 +2599,168 @@ function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
     };
   }
 
+  // ── 0c2. SPECIALIZED NETWORK ENGINEERING: GPON OLT, ONT & FIBER ACCESS ─────
+  if (/(olt|ont|gpon|epon|ftth|optical\s*line|lineprofile|srvprofile|service-port|t-?cont|gemport)/i.test(pLower)) {
+    var isHuaweiOlt = /(huawei|smartax|ma5600|ma5800|5608|5800)/i.test(pLower);
+    var isZteOlt = /(zte|c300|c320|c600)/i.test(pLower);
+    var isOntProfile = /(profile|lineprofile|srvprofile|lineid|srvid|serviceprofile)/i.test(pLower);
+
+    var oltTitle = isZteOlt
+      ? 'ZTE C300/C320 GPON OLT Service Provisioning'
+      : (isOntProfile ? 'Huawei & ZTE GPON ONT Line-Profile & Service-Profile Setup' : 'Huawei SmartAX MA5600T/MA5800 GPON OLT Configuration');
+    var outOlt = '### 🌐 ' + oltTitle + '\n\n';
+
+    if (isOntProfile) {
+      outOlt += 'Detailed guide for configuring and binding ONT Lineprofile, Serviceprofile, Line-ID, and GEM ports:\n\n' +
+        '#### 1. 🔑 Core Concepts & Parameter Bindings\n' +
+        '- **`profile-id` (Line-ID):** The identifier (e.g. `10`) linking an ONT to its GPON transport characteristics.\n' +
+        '- **T-CONT (Transmission Container):** Allocates upstream bandwidth managed by the DBA profile (`tcont 1 dba-profile-id 10`).\n' +
+        '- **GEM Port (GPON Encapsulation Method):** Virtual pipe carrying Ethernet packets over GPON frames (`gem add 1 eth tcont 1`).\n' +
+        '- **GEM Mapping:** Binds customer VLANs to specific GEM ports (`gem mapping 1 1 vlan 100`).\n' +
+        '- **Service-Profile (Srv-ID):** Configures physical ONT hardware ports (Ethernet, POTS, CATV) and VLAN port translations.\n\n' +
+        '#### 2. 💻 Huawei SmartAX ONT Profile Configuration CLI\n' +
+        '```text\n' +
+        '# 1. Create DBA Profile (Upstream Bandwidth)\n' +
+        'dba-profile add profile-id 10 profile-name FTTH_1G type4 max 1024000\n\n' +
+        '# 2. Create ONT Line-Profile with Line-ID 10\n' +
+        'ont-lineprofile gpon profile-id 10 profile-name FTTH_LINE\n' +
+        ' tcont 1 dba-profile-id 10\n' +
+        ' gem add 1 eth tcont 1\n' +
+        ' gem mapping 1 1 vlan 100\n' +
+        ' commit\n' +
+        'quit\n\n' +
+        '# 3. Create ONT Service-Profile with Srv-ID 10\n' +
+        'ont-srvprofile gpon profile-id 10 profile-name FTTH_SRV\n' +
+        ' ont-port eth 4 pots 2\n' +
+        ' port vlan eth 1 translation 100 user-vlan 100\n' +
+        ' commit\n' +
+        'quit\n\n' +
+        '# 4. Bind Line-ID & Srv-ID to ONT during Registration\n' +
+        'interface gpon 0/1\n' +
+        ' # Find auto-discovered ONT SN:\n' +
+        ' display ont autofind 0\n' +
+        ' # Bind ont-lineprofile-id 10 and ont-srvprofile-id 10:\n' +
+        ' ont add 0 1 sn-auth 4857544312345678 omci ont-lineprofile-id 10 ont-srvprofile-id 10 desc Customer_ONT_1\n' +
+        'quit\n\n' +
+        '# 5. Create Service-Port to Core Switch\n' +
+        'service-port 100 vlan 100 gpon 0/1/0 ont 1 gemport 1 multi-service user-vlan 100 tag-transform translate\n\n' +
+        '# 6. Verification Commands\n' +
+        'display ont lineprofile gpon profile-id 10\n' +
+        'display ont srvprofile gpon profile-id 10\n' +
+        'display ont info 0 1\n' +
+        '```\n\n' +
+        '#### 3. 💻 ZTE GPON ONU Profile CLI\n' +
+        '```text\n' +
+        'gpon\n' +
+        ' profile tcont 1G_DBA type 4 max 1024000\n' +
+        ' onu-profile gpon line FTTH_LINE\n' +
+        '  tcont 1 name INTERNET profile 1G_DBA\n' +
+        '  gemport 1 name DATA tcont 1\n' +
+        '  gemport 1 map 1 vlan-exact 100\n' +
+        ' exit\n' +
+        ' onu-profile gpon remote FTTH_REMOTE\n' +
+        '  service 1 gemport 1 user-vlan 100 vlan 100\n' +
+        ' exit\n' +
+        'exit\n\n' +
+        'interface gpon-olt_1/1/1\n' +
+        ' onu 1 type ZTE-F660 sn ZTEGC1234567\n' +
+        'exit\n' +
+        'interface gpon-onu_1/1/1:1\n' +
+        ' tcont 1 name INTERNET profile 1G_DBA\n' +
+        ' gemport 1 name DATA tcont 1\n' +
+        ' switchport mode hybrid vport 1\n' +
+        ' service-port 1 vport 1 user-vlan 100 vlan 100\n' +
+        'exit\n' +
+        '```\n\n';
+    } else if (isZteOlt) {
+      outOlt += 'Detailed, step-by-step production configuration for ZTE GPON OLT and ONU service activation:\n\n' +
+        '#### 1. 📋 Provisioning Sequence\n' +
+        '1. **DBA Profile & T-CONT:** Allocates upstream dynamic bandwidth.\n' +
+        '2. **ONU Line Profile:** Maps T-CONT and GEM ports to customer VLANs.\n' +
+        '3. **ONU Remote Profile:** Configures user ports and service mapping.\n' +
+        '4. **Register ONU:** Adds ONU by SN and binds profiles.\n\n' +
+        '#### 2. 💻 ZTE GPON CLI Commands\n' +
+        '```text\n' +
+        '# 1. Configure DBA Profile & T-CONT\n' +
+        'gpon\n' +
+        ' profile tcont 1G_DBA type 4 max 1024000\n' +
+        ' profile traffic 1G_UP sir 102400 pir 1024000\n' +
+        'exit\n\n' +
+        '# 2. Configure ONU Line & Remote Profiles\n' +
+        'gpon\n' +
+        ' onu-profile gpon line FTTH_LINE\n' +
+        '  tcont 1 name INTERNET profile 1G_DBA\n' +
+        '  gemport 1 name DATA tcont 1\n' +
+        '  gemport 1 map 1 vlan-exact 100\n' +
+        ' exit\n' +
+        ' onu-profile gpon remote FTTH_REMOTE\n' +
+        '  service 1 gemport 1 user-vlan 100 vlan 100\n' +
+        ' exit\n\n' +
+        '# 3. Register ONU on GPON interface\n' +
+        'interface gpon-olt_1/1/1\n' +
+        ' onu 1 type ZTE-F660 sn ZTEGC1234567\n' +
+        'exit\n' +
+        'interface gpon-onu_1/1/1:1\n' +
+        ' tcont 1 name INTERNET profile 1G_DBA\n' +
+        ' gemport 1 name DATA tcont 1\n' +
+        ' switchport mode hybrid vport 1\n' +
+        ' service-port 1 vport 1 user-vlan 100 vlan 100\n' +
+        'exit\n' +
+        '```\n\n';
+    } else {
+      outOlt += 'Detailed, step-by-step production configuration for Huawei SmartAX GPON OLT and ONT activation:\n\n' +
+        '#### 1. 📋 High-Level GPON Provisioning Sequence\n' +
+        '1. **DBA Profile:** Allocates upstream T-CONT dynamic bandwidth (e.g. Type 4 max 1 Gbps).\n' +
+        '2. **ONT Line-Profile:** Defines T-CONT, GEM port mapping, and user VLAN encapsulation.\n' +
+        '3. **ONT Service-Profile:** Configures hardware ports (Ethernet, POTS/VoIP, CATV) and VLAN port translations.\n' +
+        '4. **ONT Discovery & Registration:** Authorizes ONT serial number (`sn-auth`) onto target GPON port.\n' +
+        '5. **Service-Port Mapping:** Binds upstream VLAN to GEM port with `tag-transform translate` for traffic forwarding.\n\n' +
+        '#### 2. 💻 Huawei SmartAX CLI Commands\n' +
+        '```text\n' +
+        '# --- Step 1: Create Global DBA & ONT Profiles ---\n' +
+        'dba-profile add profile-id 10 profile-name FTTH_1G type4 max 1024000\n\n' +
+        'ont-srvprofile gpon profile-id 10 profile-name FTTH_SRV\n' +
+        ' ont-port eth 4 pots 2\n' +
+        ' port vlan eth 1 translation 100 user-vlan 100\n' +
+        ' commit\n' +
+        'quit\n\n' +
+        'ont-lineprofile gpon profile-id 10 profile-name FTTH_LINE\n' +
+        ' tcont 1 dba-profile-id 10\n' +
+        ' gem add 1 eth tcont 1\n' +
+        ' gem mapping 1 1 vlan 100\n' +
+        ' commit\n' +
+        'quit\n\n' +
+        '# --- Step 2: Register ONT on Target GPON Port ---\n' +
+        'interface gpon 0/1\n' +
+        ' # Find auto-discovered unconfigured ONTs:\n' +
+        ' display ont autofind 0\n' +
+        ' # Add ONT using SN (e.g. SN: 4857544312345678):\n' +
+        ' ont add 0 1 sn-auth 4857544312345678 omci ont-lineprofile-id 10 ont-srvprofile-id 10 desc Customer_ONT_1\n' +
+        'quit\n\n' +
+        '# --- Step 3: Create Service-Port (VLAN Translation) ---\n' +
+        'service-port 100 vlan 100 gpon 0/1/0 ont 1 gemport 1 multi-service user-vlan 100 tag-transform translate\n\n' +
+        '# --- Step 4: Verification & Diagnostic Commands ---\n' +
+        'display ont info 0 1\n' +
+        'display ont optical-info 0 1\n' +
+        'display service-port 100\n' +
+        '```\n\n';
+    }
+
+    outOlt += '#### 3. 🔍 Optical Signal Standards (ITU-T G.984)\n' +
+      '| Optical Parameter | Normal Target | Marginal | Fault / Red LOS |\n' +
+      '|---|---|---|---|\n' +
+      '| **ONT Rx Power (1490nm)** | **−18 to −24 dBm** | −25 to −27 dBm | **< −28 dBm** |\n' +
+      '| **OLT Rx Power (1310nm)** | **−15 to −22 dBm** | −23 to −26 dBm | **< −27 dBm** |\n\n' +
+      '[[btn:🛠️ Troubleshoot Fiber Red LOS|diag:fiber_red_los]]\n' +
+      '[[btn:🔧 Cisco OSPF Core Config|generate cisco ospf config]]\n' +
+      '[[btn:🔀 Huawei Switch Trunk Config|generate huawei switch trunk config]]';
+
+    return {
+      found: true,
+      response: outOlt
+    };
+  }
+
   // ── 0d. PROMPT ENGINEERING WORKBENCH ─────────────────────────────────────
   if (/prompt\s*engineer|engineer.*prompt|prompt\s*template|best\s*prompt|how\s*to\s*write\s*prompts?|cot\s*prompt/i.test(pLower)) {
     return {
@@ -3084,11 +3271,13 @@ function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
   }
 
   // ── 7. ADAPTIVE GENERATIVE ACTION PROMPTS (General Open Prompts) ─────────
+  var isNetworkQuery = /(olt|ont|gpon|epon|ftth|optical|vlan|switch|router|cisco|huawei|zte|mikrotik|subnet|gateway|firewall|dns|dhcp|poe|lineid|srvid|transceiver|sfp)/i.test(pLower);
+
   var isActionPrompt = /^(how\s+to|how\s+do|how\s+can|why|what\s+is\s+the\s+best|write|create|draft|generate|make|suggest|give\s+me|help\s+me|tips\s+for|guide|steps\s+to|analyze|outline|summarize|tell\s+me\s+about)/i.test(pLower) ||
                        (p.split(/\s+/).length >= 5 && /[?!.,]$/.test(p)) ||
                        p.indexOf('कसरी') !== -1 || p.indexOf('किन') !== -1 || p.indexOf('सिकाउ') !== -1 || p.indexOf('कैसे') !== -1 || p.indexOf('सिखाओ') !== -1;
 
-  if (isActionPrompt || allowUniversalFallback) {
+  if (!isNetworkQuery && (isActionPrompt || allowUniversalFallback)) {
     var words = p.replace(/[?!.,'"]/g, '').split(/\s+/).filter(function(w){ return w.length > 2; });
     var topicTitle = words.slice(0, 5).join(' ') || p.substring(0, 30);
 
@@ -3428,7 +3617,16 @@ function processOfflineAIQuery(q) {
     }
   }
 
-  // ── 16. ROUTER CONFIGS ────────────────────────────────────────────────────
+  // ── 16. GPON OLT, ONT & ROUTER CONFIGS ────────────────────────────────────
+  if (/(olt|ont|gpon|epon|ftth|optical\s*line|lineprofile|srvprofile|service-port|t-?cont|gemport)/i.test(qLower)) {
+    var omniOlt = handleOmniGenerativePrompt(q, currentLang, false);
+    if (omniOlt && omniOlt.found) return omniOlt;
+    var isZte = /(zte|c300|c320|c600)/i.test(qLower);
+    if (isZte) {
+      return { found: true, response: '🔧 **ZTE C300/C320 GPON OLT Provisioning:**\n\n```text\n' + generateOfflineVendorConfig('zte_olt') + '\n```' };
+    }
+    return { found: true, response: '🔧 **Huawei SmartAX GPON OLT Configuration:**\n\n```text\n' + generateOfflineVendorConfig('olt') + '\n```' };
+  }
   if (qLower.indexOf('cisco') !== -1 || qLower.indexOf('ospf') !== -1) {
     return { found: true, response: '🔧 **Cisco OSPF Configuration Template:**\n\n```text\n' + generateOfflineVendorConfig('cisco') + '\n```' };
   }

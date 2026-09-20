@@ -219,6 +219,28 @@ class TestCoreComponents(unittest.TestCase):
         self.assertTrue(os.path.isfile(three_js_file))
         self.assertGreater(os.path.getsize(three_js_file), 100000)
 
+    def test_gpon_olt_and_ont_profile_resolution(self):
+        """Verify dashboard.html contains dedicated GPON OLT, ONT lineprofile, and ZTE OLT templates."""
+        from gam_ai.ui import get_ui_dir
+        dash_path = os.path.join(get_ui_dir(), "dashboard.html")
+        with open(dash_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Verify ONT lineprofile, serviceprofile and DBA profile in dashboard
+        self.assertIn("ont-lineprofile gpon", content)
+        self.assertIn("ont-srvprofile gpon", content)
+        self.assertIn("dba-profile add", content)
+        self.assertIn("service-port 100 vlan 100", content)
+        self.assertIn("ZTE C300/C320 GPON OLT", content)
+        self.assertIn("onu-profile gpon line", content)
+
+        # Verify Section 16 OLT / ONT check is prioritized before switch trunks
+        olt_pos = content.find("GPON OLT, ONT & ROUTER CONFIGS")
+        trunk_pos = content.find("Huawei Switch Trunk Configuration")
+        self.assertNotEqual(olt_pos, -1)
+        self.assertNotEqual(trunk_pos, -1)
+        self.assertLess(olt_pos, trunk_pos)
+
 if __name__ == "__main__":
     unittest.main()
 
