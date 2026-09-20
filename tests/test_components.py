@@ -241,6 +241,57 @@ class TestCoreComponents(unittest.TestCase):
         self.assertNotEqual(trunk_pos, -1)
         self.assertLess(olt_pos, trunk_pos)
 
+    def test_three_mode_persona_and_seamless_handoff(self):
+        """Verify 3-mode persona structure, seamless agent handoff, and network exclusivity."""
+        from gam_ai.ui import get_ui_dir
+        dash_path = os.path.join(get_ui_dir(), "dashboard.html")
+        with open(dash_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 1. Verify "Welcome to Local AI Assistant" hero heading
+        self.assertIn('<h2 id="hero-title">Welcome to Local AI Assistant</h2>', content)
+        self.assertIn("heroTitle: 'Welcome to Local AI Assistant'", content)
+
+        # 2. Verify 3 strict modes in HTML
+        self.assertIn('id="pill-general"', content)
+        self.assertIn('id="pill-student"', content)
+        self.assertIn('id="pill-neteng"', content)
+
+        # 3. Verify seamless agent handoff functions
+        self.assertIn("switchPersonaSeamless(targetPersona, reason)", content)
+        self.assertIn("Seamless Agent Handoff", content)
+        self.assertIn("isNetworkQuery", content)
+        self.assertIn("isStudentQuery", content)
+
+        # 4. Verify Student Mode pedagogical questions
+        self.assertIn("Gravity & Our Solar System (Explained for Grade 6)", content)
+        self.assertIn("Step-by-Step Train Speed Solution", content)
+        self.assertIn("RAM vs. Storage Explained for Beginners", content)
+
+    def test_version_history_and_snapshots(self):
+        """Verify versions directory, VERSION_HISTORY.md, and snapshot integrity."""
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        versions_dir = os.path.join(repo_root, "versions")
+        self.assertTrue(os.path.isdir(versions_dir))
+
+        hist_file = os.path.join(versions_dir, "VERSION_HISTORY.md")
+        self.assertTrue(os.path.isfile(hist_file))
+
+        with open(hist_file, "r", encoding="utf-8") as f:
+            hist_content = f.read()
+        self.assertIn("v1.0.0", hist_content)
+        self.assertIn("v1.1.0", hist_content)
+        self.assertIn("v1.2.0", hist_content)
+        self.assertIn("v1.3.0", hist_content)
+
+        # Verify snapshots exist
+        for v in ["v1.0.0", "v1.1.0", "v1.2.0", "v1.3.0"]:
+            v_path = os.path.join(versions_dir, v)
+            self.assertTrue(os.path.isdir(v_path), f"Missing version folder: {v}")
+            self.assertTrue(os.path.isfile(os.path.join(v_path, "README.md")))
+            self.assertTrue(os.path.isfile(os.path.join(v_path, "CHECKSUMS.sha256")))
+            self.assertTrue(os.path.isdir(os.path.join(v_path, "code_snapshot")))
+
 if __name__ == "__main__":
     unittest.main()
 

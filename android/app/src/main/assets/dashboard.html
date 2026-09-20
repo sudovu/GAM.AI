@@ -231,26 +231,45 @@
     box-sizing: border-box; display: flex; flex-direction: column; flex: 1;
   }
 
-  .hero-welcome { text-align: center; margin: 32px auto 24px auto; max-width: 620px; width: 100%; }
-  .hero-welcome h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
-  .hero-welcome p { font-size: 0.92rem; color: var(--text-muted); line-height: 1.5; }
+  .hero-welcome { text-align: center; margin: 28px auto 20px auto; max-width: 640px; width: 100%; }
+  .hero-welcome h2 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; color: var(--text-main); }
+  .hero-welcome p { font-size: 0.90rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 6px; }
 
-  .mode-switch-bar { display: flex; justify-content: center; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
-  .mode-pill {
-    padding: 6px 14px; border-radius: 16px; background: var(--card-bg); border: 1px solid var(--border);
-    font-size: 0.82rem; font-weight: 600; cursor: pointer; color: var(--text-muted);
+  .mode-switch-bar {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 4px;
+    gap: 4px;
+    margin: 18px auto 14px auto;
+    max-width: 100%;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   }
-  .mode-pill.active { background: var(--accent-glow); color: var(--accent); border-color: rgba(56,189,248,0.5); }
+  .mode-pill {
+    padding: 7px 16px; border-radius: 20px; background: transparent; border: none;
+    font-size: 0.84rem; font-weight: 600; cursor: pointer; color: var(--text-muted);
+    transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .mode-pill:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
+  .mode-pill.active {
+    background: rgba(56, 189, 248, 0.16); color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
 
   .quick-chips-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px; }
-  @media (max-width: 580px) { .quick-chips-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 580px) { .quick-chips-grid { grid-template-columns: 1fr; gap: 8px; } }
   .chip-card {
-    background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 14px; text-align: left; cursor: pointer; transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 12px;
+    padding: 13px 15px; text-align: left; cursor: pointer; transition: all 0.2s ease;
+    display: flex; flex-direction: column; gap: 3px;
   }
-  .chip-card:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
+  .chip-card:hover {
+    border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.06);
+    transform: translateY(-1px);
+  }
   .chip-title { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
-  .chip-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+  .chip-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.35; }
 
   .message-wrapper { margin-bottom: 20px; display: flex; flex-direction: column; width: 100%; }
   .msg-row { display: flex; gap: 10px; align-items: flex-start; width: 100%; }
@@ -706,7 +725,7 @@
       <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme (Cyberpunk / OLED / Light / Matrix)">🎨</button>
       <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
       <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
-      <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation()" title="New Chat (Clear Local History)">🗑️</button>
+      <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation(true)" title="New Chat (Clear Local History)">🗑️</button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
       <div class="status-badge" id="token-meter" title="Continuous Token Safety: Never runs out of tokens" style="border-color: rgba(16,185,129,0.5); color: #10b981;">&#9679; Safe Tokens</div>
       <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
@@ -717,13 +736,13 @@
   <div id="chat-scroll-area">
     <div class="chat-thread-width">
       <div class="hero-welcome" id="hero-welcome">
-        <h2 id="hero-title">Universal Local-First AI Assistant</h2>
-        <p id="hero-subtitle">Minimal resource usage. Usable by students, professionals, and elders alike.</p>
+        <h2 id="hero-title">Welcome to Local AI Assistant</h2>
+        <p id="hero-subtitle">Fast, 100% private on-device intelligence across three specialized modes.</p>
         
         <div class="mode-switch-bar">
-          <div class="mode-pill active" onclick="switchPersona('general')">General Mode</div>
-          <div class="mode-pill" onclick="switchPersona('student')">Student Mode (Age 10-18)</div>
-          <div class="mode-pill" onclick="switchPersona('engineer')">Network Engineer Mode</div>
+          <button type="button" class="mode-pill active" id="pill-general" onclick="switchPersona('general')">💬 General Queries</button>
+          <button type="button" class="mode-pill" id="pill-student" onclick="switchPersona('student')">🎓 Students</button>
+          <button type="button" class="mode-pill" id="pill-neteng" onclick="switchPersona('neteng')">🔧 Network Mode</button>
         </div>
 
         <div class="quick-chips-grid" id="chips-container"></div>
@@ -2402,8 +2421,8 @@ function resolveFollowUpAndContext(promptText, lang) {
   return null;
 }
 
-function clearChatConversation() {
-  if (confirm('Start a new chat and clear local conversation history?')) {
+function clearChatConversation(skipConfirm) {
+  if (skipConfirm || confirm('Start a new chat and clear local conversation history?')) {
     GAM_CONTEXT.clearHistory();
     var stream = document.getElementById('messages-stream');
     if (stream) stream.innerHTML = '';
@@ -3113,6 +3132,91 @@ function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
         "    print(execute_task('ready'))\n" +
         "```\n\n" +
         "💡 **DeepSeek Engineering Recommendation:** Always include unit tests (`pytest`) and adhere to PEP-8 typing standards."
+    };
+  }
+
+  // ── 3b. STUDENT & PEDAGOGICAL LEARNING ────────────────────────────────────
+  if (/grade\s*6|solar\s+system.*gravity|gravity.*solar\s+system/i.test(pLower)) {
+    return {
+      found: true,
+      response: "### 🪐 Gravity & Our Solar System (Explained for Grade 6)\n\n" +
+        "#### 1. 🎈 What is Gravity? (The Invisible Super-Glue!)\n" +
+        "Imagine an invisible rubber band connecting everything with mass. **Gravity** is the pulling force that attracts objects toward each other!\n" +
+        "- It's what keeps your shoes on the floor instead of floating away into the sky.\n" +
+        "- The heavier an object is, the stronger its pull. Because the **Earth** is massive, it pulls you down with **9.8 m/s²** acceleration.\n\n" +
+        "#### 2. ☀️ The Solar System Family (8 Planets)\n" +
+        "The **Sun** is a giant star at the center holding **99.8% of all the mass** in our entire solar system! Here are the 8 planets in order from the Sun:\n" +
+        "1. ☿ **Mercury** — Smallest and closest to the Sun (super hot in day, freezing at night!)\n" +
+        "2. ♀ **Venus** — The hottest planet with thick greenhouse gas clouds.\n" +
+        "3. 🌍 **Earth** — Our home! Perfect temperature and liquid water for life.\n" +
+        "4. ♂ **Mars** — The Red Planet with rusty iron soil and giant volcanoes.\n" +
+        "5. ♃ **Jupiter** — The giant king of planets! More than 1,300 Earths could fit inside.\n" +
+        "6. ♄ **Saturn** — Famous for its dazzling rings made of ice and rock chunks.\n" +
+        "7. ⛢ **Uranus** — An icy giant that spins on its side like a rolling ball.\n" +
+        "8. ♆ **Neptune** — The farthest, coldest planet with supersonic winds!\n\n" +
+        "#### 3. 🎯 Why Don't Planets Fly Away into Outer Space?\n" +
+        "Think of tying a tennis ball to a string and swinging it in a circle:\n" +
+        "- The **string** is the Sun's gravity pulling the planet inward.\n" +
+        "- The **swinging speed** is the planet zooming through space.\n" +
+        "- Together, they create a smooth, permanent racetrack called an **Orbit**!\n\n" +
+        "💡 **Fun Memory Trick:** *\"**M**y **V**ery **E**ducated **M**other **J**ust **S**erved **U**s **N**oodles!\"*"
+    };
+  }
+
+  if (/train.*(?:120\s*km|speed)|speed.*(?:120\s*km|train)|train\s+travels/i.test(pLower)) {
+    return {
+      found: true,
+      response: "### 📐 Math Problem: Step-by-Step Train Speed Solution\n\n" +
+        "#### 1. 📝 Given Information\n" +
+        "- **Total Distance ($d$):** $120\\text{ km}$\n" +
+        "- **Total Time ($t$):** $2\\text{ hours}$\n\n" +
+        "#### 2. 🧠 Formula to Use\n" +
+        "$$\\text{Speed} = \\frac{\\text{Distance}}{\\text{Time}}$$\n\n" +
+        "#### 3. 🔢 Step-by-Step Calculation\n" +
+        "$$\\text{Speed} = \\frac{120\\text{ km}}{2\\text{ hours}} = \\mathbf{60\\text{ km/h}}$$\n\n" +
+        "#### 4. 🔄 Converting to Meters per Second (m/s)\n" +
+        "To convert km/h to m/s, multiply by $\\frac{5}{18}$:\n" +
+        "$$\\text{Speed in m/s} = 60 \\times \\frac{5}{18} = \\frac{300}{18} \\approx \\mathbf{16.67\\text{ m/s}}$$\n\n" +
+        "✅ **Final Answer:** The train's average speed is **$60\\text{ km/h}$** (or **$16.67\\text{ m/s}$**)."
+    };
+  }
+
+  if (/ram\s*(?:vs|and|difference).*storage|storage.*(?:vs|and|difference).*ram/i.test(pLower)) {
+    return {
+      found: true,
+      response: "### 💻 RAM vs. Storage Explained for Beginners\n\n" +
+        "#### 1. 🪑 The Desk Analogy (Simplest Way to Understand)\n" +
+        "- **RAM (Random Access Memory) = Your Study Desk:** When doing homework, you open your notebook and place your pencil on your desk. You can grab them instantly! But when you finish and go to sleep, your desk gets cleared.\n" +
+        "- **Storage (SSD / Hard Drive) = Your Bookshelf / School Bag:** Where all your books, photo albums, and games are stored permanently. You can't read 10 books at the exact same millisecond, but they never vanish when the room lights go off!\n\n" +
+        "#### 2. ⚖️ Comparison Table\n\n" +
+        "| Feature | RAM (Working Memory) | Storage (Permanent Drive) |\n" +
+        "| :--- | :--- | :--- |\n" +
+        "| **Speed** | Super blazing fast (~50,000 MB/s) | Fast (~500 - 7,000 MB/s) |\n" +
+        "| **When Powered Off** | Data is erased immediately (Volatile) | Data stays safe forever (Non-volatile) |\n" +
+        "| **Typical Size** | 8 GB, 16 GB, or 32 GB | 256 GB, 512 GB, or 1 TB (1000 GB) |\n" +
+        "| **Role** | Holds active apps currently on screen | Stores OS, photos, games, & files |\n\n" +
+        "💡 **Golden Rule:** More RAM lets you run more apps at the same time without stuttering; more storage lets you save more movies and files!"
+    };
+  }
+
+  if (/polite\s+email.*project|email.*project\s+status|update\s+email/i.test(pLower)) {
+    return {
+      found: true,
+      response: "### ✉️ Professional & Polite Project Status Update Email\n\n" +
+        "**Subject:** Quick Update & Status Check: [Project Name] — [Your Name / Team]\n\n" +
+        "---\n\n" +
+        "Hi [Recipient Name],\n\n" +
+        "I hope this email finds you well.\n\n" +
+        "I am writing to provide a brief check-in regarding **[Project Name]** and ensure our milestones remain smoothly on schedule.\n\n" +
+        "**Recent Progress:**\n" +
+        "- Completed [Milestone 1 / Task achieved]\n" +
+        "- Testing and validation currently underway for [Milestone 2]\n\n" +
+        "Could you kindly share a quick update on the status of [Specific item or review needed from them]? Please let me know if there are any blockers or questions where I can assist.\n\n" +
+        "Thank you very much for your time and continued collaboration.\n\n" +
+        "Best regards,\n\n" +
+        "**[Your Name]**  \n" +
+        "[Your Title / Role]  \n" +
+        "[Contact Information]"
     };
   }
 
@@ -6405,8 +6509,8 @@ var i18n = {
     modelStore: 'Model Store',
     networkTools: 'Network Tools',
     settings: 'Settings & Accessibility',
-    heroTitle: 'Universal Local-First AI Assistant',
-    heroSub: 'Minimal resource usage. Usable by students, professionals, and elders alike.',
+    heroTitle: 'Welcome to Local AI Assistant',
+    heroSub: 'Fast, 100% private on-device intelligence across three specialized modes.',
     placeholder: 'Type or click 🎤 to speak, 📷 Lens...',
     langToggle: '🌐 EN',
     readAloud: 'Read Aloud',
@@ -6421,8 +6525,8 @@ var i18n = {
     modelStore: 'मॉडल स्टोर',
     networkTools: 'नेटवर्क टूल्स',
     settings: 'सेटिंग्स व एक्सेसिबिलिटी',
-    heroTitle: 'सार्वभौमिक स्थानीय AI सहायक',
-    heroSub: 'अत्यंत कम रैम खपत। छात्र, नेटवर्क इंजीनियर व बुजुर्गों के लिए सहज।',
+    heroTitle: 'Welcome to Local AI Assistant',
+    heroSub: 'तीन विशेष मोड में तीव्र, 100% निजी ऑन-डिवाइस बुद्धिमत्ता।',
     placeholder: 'लिखें या 🎤 दबाकर हिंदी में बोलें, 📷 लेंस...',
     langToggle: '🇮🇳 HI',
     readAloud: 'पढ़कर सुनाएं',
@@ -6437,8 +6541,8 @@ var i18n = {
     modelStore: 'मोडेल स्टोर',
     networkTools: 'नेटवर्क औजारहरू',
     settings: 'सेटिङहरू र पहुँच',
-    heroTitle: 'नेपाली र अंग्रेजी स्थानीय AI सहायक',
-    heroSub: 'अत्यन्तै कम कम्प्युटर स्रोत खपत गर्ने, अफलाइन-सक्षम र सबैका लागि उपयोगी।',
+    heroTitle: 'Welcome to Local AI Assistant',
+    heroSub: 'तीन विशेष मोडमा तीव्र र शतप्रतिशत निजी स्थानीय बुद्धिमत्ता।',
     placeholder: 'यहाँ लेख्नुहोस् वा 🎤 थिचेर नेपालीमा बोल्नुहोस्...',
     langToggle: '🇳🇵 NE',
     readAloud: 'पढेर सुनाउनुहोस्',
@@ -6487,14 +6591,29 @@ function toggleLanguage() {
   }
 }
 
-// Persona Mode Chips
+// ── Persona Mode Switching & Seamless Agent Handoff ─────────
 function switchPersona(p) {
+  if (p === 'engineer') p = 'neteng';
   currentPersona = p;
   document.querySelectorAll('.mode-pill').forEach(function(pill) {
     pill.classList.remove('active');
   });
-  event.target.classList.add('active');
+  var activeBtn = document.getElementById('pill-' + p);
+  if (activeBtn) activeBtn.classList.add('active');
   renderChips();
+}
+
+function switchPersonaSeamless(targetPersona, reason) {
+  if (targetPersona === 'engineer') targetPersona = 'neteng';
+  if (currentPersona === targetPersona) return false;
+  currentPersona = targetPersona;
+  document.querySelectorAll('.mode-pill').forEach(function(pill) {
+    pill.classList.remove('active');
+  });
+  var activeBtn = document.getElementById('pill-' + targetPersona);
+  if (activeBtn) activeBtn.classList.add('active');
+  renderChips();
+  return true;
 }
 
 function renderChips() {
@@ -6506,54 +6625,55 @@ function renderChips() {
   if (currentPersona === 'student') {
     if (currentLang === 'hi') {
       chips = [
-        { t: 'विज्ञान व सौर मंडल', d: 'कक्षा 6 के लिए सरल शब्दों में ग्रह और गुरुत्वाकर्षण', q: 'कक्षा 6 के छात्र के लिए ग्रह और गुरुत्वाकर्षण सरल शब्दों में समझाएं' },
-        { t: 'गणित समस्या समाधान', d: 'ट्रेन की गति और दूरी का चरणबद्ध हल', q: 'हल करें: यदि एक ट्रेन 2 घंटे में 120 किमी जाती है, तो उसकी गति क्या है?' },
-        { t: 'कंप्यूटर फंडामेंटल्स', d: 'RAM और स्टोरेज में क्या अंतर है?', q: 'शुरुआती के लिए रैम (RAM) और स्टोरेज में क्या अंतर है?' },
-        { t: 'भूगोल व रोचक तथ्य', d: 'माउंट एवरेस्ट और प्रमुख नदियों के बारे में', q: 'माउंट एवरेस्ट और नदियों के बारे में मुख्य तथ्य बताएं' }
+        { t: '🔬 विज्ञान व सौर मंडल', d: 'कक्षा 6 के लिए सरल शब्दों में ग्रह और गुरुत्वाकर्षण', q: 'कक्षा 6 के छात्र के लिए ग्रह और गुरुत्वाकर्षण सरल शब्दों में समझाएं' },
+        { t: '📐 गणित समस्या समाधान', d: 'ट्रेन की गति और दूरी का चरणबद्ध हल', q: 'हल करें: यदि एक ट्रेन 2 घंटे में 120 किमी जाती है, तो उसकी गति क्या है?' },
+        { t: '💻 कंप्यूटर फंडामेंटल्स', d: 'RAM और स्टोरेज में क्या अंतर है?', q: 'शुरुआती के लिए रैम (RAM) और स्टोरेज में क्या अंतर है?' },
+        { t: '🌍 भूगोल व रोचक तथ्य', d: 'माउंट एवरेस्ट और प्रमुख नदियों के बारे में', q: 'माउंट एवरेस्ट और नदियों के बारे में मुख्य तथ्य बताएं' }
       ];
     } else if (currentLang === 'ne') {
       chips = [
-        { t: 'Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
-        { t: 'Math Problem Solver', d: 'Step-by-step arithmetic and algebra explanation', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
-        { t: 'Nepal Geography & History', d: 'Facts about Mount Everest and rivers of Nepal', q: 'Tell me key facts about Mount Everest and rivers of Nepal' },
-        { t: 'Learn Computer Basics', d: 'What is CPU, RAM, and Storage?', q: 'What is the difference between RAM and Storage for a beginner?' }
+        { t: '🔬 Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
+        { t: '📐 Math Problem Solver', d: 'Step-by-step arithmetic and algebra explanation', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
+        { t: '🌍 Nepal Geography & History', d: 'Facts about Mount Everest and rivers of Nepal', q: 'Tell me key facts about Mount Everest and rivers of Nepal' },
+        { t: '💻 Learn Computer Basics', d: 'What is CPU, RAM, and Storage?', q: 'What is the difference between RAM and Storage for a beginner?' }
       ];
     } else {
       chips = [
-        { t: 'Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
-        { t: 'Math Problem Solver', d: 'Step-by-step arithmetic and algebra explanation', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
-        { t: 'Geography & History', d: 'Facts about Mount Everest and world landmarks', q: 'Tell me key facts about Mount Everest and mountains' },
-        { t: 'Learn Computer Basics', d: 'What is CPU, RAM, and Storage?', q: 'What is the difference between RAM and Storage for a beginner?' }
+        { t: '🔬 Science & Solar System', d: 'Explain planets and gravity simply for grade 6', q: 'Explain planets and gravity simply for grade 6 student' },
+        { t: '📐 Math Problem Solver', d: 'Step-by-step arithmetic and speed formula', q: 'Explain how to solve: If a train travels 120km in 2 hours, what is its speed?' },
+        { t: '🌍 Geography & Landmarks', d: 'Key facts about Mount Everest and world peaks', q: 'Tell me key facts about Mount Everest and mountains' },
+        { t: '💻 Computer Basics', d: 'Understand RAM vs Storage with simple analogies', q: 'What is the difference between RAM and Storage for a beginner?' }
       ];
     }
-  } else if (currentPersona === 'engineer') {
+  } else if (currentPersona === 'neteng' || currentPersona === 'engineer') {
     chips = [
-      { t: 'Topology Diagram', d: 'Dual-homed OSPF core routers & Huawei OLT', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
-      { t: 'FortiGate LAN to WAN', d: 'Generate FortiOS address objects & NAT policy', q: 'FortiGate firewall policy LAN to WAN' },
-      { t: 'Subnet Calculator', d: 'Calculate IP host range, netmask & broadcast', q: 'Calculate subnet 192.168.10.0/27' },
-      { t: 'Huawei GPON OLT Service', d: 'Provisioning DBA profile, lineprofile & port', q: 'Generate Huawei GPON OLT service-port config for VLAN 100' }
+      { t: '🌐 Topology Diagram', d: 'Dual-homed OSPF core routers & Huawei OLT', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
+      { t: '🧮 Subnet Calculator', d: 'Calculate IP host range, netmask & broadcast', q: 'Calculate subnet 192.168.10.0/27' },
+      { t: '⚡ Huawei GPON OLT Service', d: 'Provisioning DBA profile, lineprofile & port', q: 'Generate Huawei GPON OLT service-port config for VLAN 100' },
+      { t: '🔌 ZTE GPON OLT Config', d: 'Configure GPON ONU profile and port on ZTE C320', q: 'ZTE GPON OLT configuration for C300 C320' }
     ];
   } else {
+    // General Queries Mode — strictly general assistant & creative tasks (no network configs)
     if (currentLang === 'hi') {
       chips = [
-        { t: 'हिंदी में बातचीत', d: 'नमस्ते, मुझे सहायता चाहिए', q: 'नमस्ते, आप कौन हैं और आप क्या-क्या कर सकते हैं?' },
-        { t: '📷 GAM.AI लेंस', d: 'कैमरे से हार्डवेयर व पोर्ट्स पहचानें', q: 'GAM.AI लेंस खोलें' },
-        { t: 'नेटवर्क टोपोलॉजी आरेख', d: 'SVG व ASCII नेटवर्क आरेख तैयार करें', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
-        { t: 'सबनेट कैलकुलेटर', d: 'CIDR व होस्ट रेंज का विश्लेषण', q: 'Calculate subnet 192.168.10.0/27' }
+        { t: '💬 सामान्य बातचीत', d: 'दैनिक ज्ञान व व्यक्तिगत सहायक', q: 'नमस्ते, आप कौन हैं और आप क्या-क्या कर सकते हैं?' },
+        { t: '✍️ रचनात्मक लेखन', d: 'ईमेल, पत्र व सारांश तैयार करें', q: 'एक औपचारिक परियोजना अपडेट ईमेल लिखें' },
+        { t: '📷 GAM.AI लेंस', d: 'कैमरे से टेक्स्ट और वस्तु पहचानें', q: 'GAM.AI लेंस खोलें' },
+        { t: '🕒 समय और दैनिक योजना', d: 'समय, दिनांक और उत्पादकता टिप्स', q: 'अभी का समय और आज की तारीख क्या है?' }
       ];
     } else if (currentLang === 'ne') {
       chips = [
-        { t: 'नेपालीमा कुराकानी', d: 'नमस्ते, मलाई सहयोग गर्नुहोस्', q: 'नमस्ते, तपाईं को हौ र के के गर्न सक्नुहुन्छ?' },
-        { t: 'Network Topology Diagram', d: 'Render graphical SVG and ASCII network layout', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
-        { t: 'FortiGate Policy & NAT', d: 'Full FortiOS configuration and verification', q: 'FortiGate firewall policy LAN to WAN' },
-        { t: 'Subnet Calculator', d: 'Analyze network ID, netmask & usable hosts', q: 'Calculate subnet 192.168.10.0/27' }
+        { t: '💬 सामान्य कुराकानी', d: 'दैनिक ज्ञान र व्यक्तिगत सहायक', q: 'नमस्ते, तपाईं को हुनुहुन्छ र के गर्न सक्नुहुन्छ?' },
+        { t: '✍️ रचनात्मक लेखन', d: 'इमेल, पत्र र सारांश तयार गर्नुहोस्', q: 'एक औपचारिक परियोजना अपडेट इमेल लेख्नुहोस्' },
+        { t: '📷 GAM.AI लेन्स', d: 'क्यामेराबाट पाठ र वस्तु पहिचान गर्नुहोस्', q: 'GAM.AI Lens' },
+        { t: '🕒 समय र दैनिक योजना', d: 'हालको समय, मिति र योजना', q: 'अहिले कति बज्यो र आजको मिति के हो?' }
       ];
     } else {
       chips = [
-        { t: 'English / Hindi / Nepali Chat', d: 'Friendly multi-lingual AI assistant', q: 'Hello, who are you and what can you help me with?' },
-        { t: '📷 GAM.AI Lens Visual Search', d: 'Scan routers, switches, LEDs, and text', q: 'GAM.AI Lens' },
-        { t: 'Network Topology Diagram', d: 'Render graphical SVG and ASCII network layout', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
-        { t: 'Subnet Calculator', d: 'Analyze network ID, netmask & usable hosts', q: 'Calculate subnet 192.168.10.0/27' }
+        { t: '💬 Everyday AI Assistant', d: 'Instant answers, friendly conversation & facts', q: 'Hello, who are you and what can you help me with?' },
+        { t: '✍️ Creative Drafting & Email', d: 'Polite emails, summaries and creative ideas', q: 'Write a concise polite email requesting project status' },
+        { t: '📷 GAM.AI Lens Visual Search', d: 'Scan real-world objects, text and hardware', q: 'GAM.AI Lens' },
+        { t: '🕒 Time & Productivity', d: 'Check current time, date and planning tips', q: 'What is the current time and date?' }
       ];
     }
   }
@@ -6612,7 +6732,7 @@ document.getElementById('btn-open-tools').addEventListener('click', function() {
 document.getElementById('btn-open-settings').addEventListener('click', function() { closeSidebar(); showModal('modal-settings'); });
 document.getElementById('btn-header-settings').addEventListener('click', function() { showModal('modal-settings'); });
 document.getElementById('btn-new-chat').addEventListener('click', function() {
-  clearChatConversation();
+  clearChatConversation(true);
   closeSidebar();
 });
 
@@ -8368,6 +8488,26 @@ function executeSend(userText, wasSpoken) {
   scroller.scrollTop = scroller.scrollHeight;
 
   var qLower = q.toLowerCase();
+
+  // ── Mode & Seamless Agent Handoff Evaluation ─────────────────────────
+  var isNetworkQuery = /(olt|ont|gpon|epon|ftth|fiber|optical|lineprofile|srvprofile|service-port|t-?cont|gemport|vlan|trunk|access\s+vlan|cisco|huawei|zte|mikrotik|fortigate|ospf|bgp|rip|dhcp|dns|subnet|cidr|netmask|ip\s+calc|ping|traceroute|switchport|router|sfp|transceiver|pon|loss of signal|los\b|optical power|attenuation|dbm|splitter|patch\s+cord|patch\s+panel|cat6|poe|crimping|t568|rack|telecom|wan|lan|nat|pppoe|static\s+ip|default\s+gateway)/i.test(qLower);
+
+  var isStudentQuery = /(grade\s+\d|class\s+\d|homework|study|pedagogy|explain\s+to\s+a\s+child|teach\s+me|school|math\s+problem|arithmetic|algebra|geometry|physics\s+problem|chemistry\s+formula|biology\s+notes|for\s+kids|student|syllabus|exam\s+prep|कक्षा|विद्यार्थी|गृहकार्य|पढाइ|पढाउनु|speed of a train|train travels)/i.test(qLower);
+
+  var handoffNotice = '';
+  if (isNetworkQuery && currentPersona !== 'neteng') {
+    var prev = (currentPersona === 'student') ? 'Students Mode' : 'General Queries Mode';
+    switchPersonaSeamless('neteng', 'Network Query');
+    handoffNotice = '> ⚡ **Seamless Agent Handoff**: *Network engineering query detected. Switched from ' + prev + ' to Network Mode (Agent: NetEng).*\n\n';
+  } else if (isStudentQuery && currentPersona !== 'student' && !isNetworkQuery) {
+    var prev = (currentPersona === 'neteng') ? 'Network Mode' : 'General Queries Mode';
+    switchPersonaSeamless('student', 'Student Inquiry');
+    handoffNotice = '> 🎓 **Seamless Agent Handoff**: *Academic/student query detected. Switched from ' + prev + ' to Students Mode (Agent: Student Tutor).*\n\n';
+  } else if (currentPersona === 'neteng' && !isNetworkQuery && !isStudentQuery && (qLower.indexOf('joke') !== -1 || qLower.indexOf('poem') !== -1 || qLower.indexOf('recipe') !== -1 || qLower.indexOf('capital of') !== -1)) {
+    switchPersonaSeamless('general', 'General Query');
+    handoffNotice = '> 💬 **Seamless Agent Handoff**: *General conversation detected. Switched from Network Mode to General Queries Mode.*\n\n';
+  }
+
   var shouldReadAloud = wasSpoken ||
     (qLower.indexOf('read') !== -1 && qLower.indexOf('loud') !== -1) ||
     q.indexOf('सुनाउनु') !== -1 || q.indexOf('बोलेर') !== -1 ||
@@ -8391,11 +8531,29 @@ function executeSend(userText, wasSpoken) {
       var lEl = document.getElementById(loadId);
       if (lEl) lEl.remove();
 
+      var finalResp = offlineResult.response;
+      if (handoffNotice) {
+        finalResp = handoffNotice + finalResp;
+      }
+
+      var dynamicModelName = activeModelName;
+      var dynamicSourceTag = '💾 On-Device Local AI';
+      if (currentPersona === 'neteng') {
+        dynamicModelName = '🔧 Network Engineer (NetEng)';
+        dynamicSourceTag = '🌐 Telecom & GPON Infrastructure Engine';
+      } else if (currentPersona === 'student') {
+        dynamicModelName = '🎓 Student Tutor';
+        dynamicSourceTag = '📚 Educational Pedagogy Engine';
+      } else {
+        dynamicModelName = '💬 General Assistant';
+        dynamicSourceTag = '⚡ General AI Engine';
+      }
+
       renderAssistantMessage({
-        text: offlineResult.response,
+        text: finalResp,
         isOffline: (currentExecutionMode === 'offline'),
-        modelName: omniImmediate ? '🤖 Omni-Generative Intelligence' : (isInteractiveDiag ? '🛠️ Diagnostic Tutor' : activeModelName),
-        sourceTag: omniImmediate ? '💡 Frontier AI Synthesis' : (isInteractiveDiag ? '👨‍🏫 Expert Engineering Engine' : '💾 On-Device Local AI'),
+        modelName: omniImmediate ? '🤖 Omni-Generative Intelligence' : (isInteractiveDiag ? '🛠️ Diagnostic Tutor' : dynamicModelName),
+        sourceTag: omniImmediate ? '💡 Frontier AI Synthesis' : (isInteractiveDiag ? '👨‍🏫 Expert Engineering Engine' : dynamicSourceTag),
         latencyMs: latencyMs,
         isNotFound: (offlineResult.found === false),
         query: q,

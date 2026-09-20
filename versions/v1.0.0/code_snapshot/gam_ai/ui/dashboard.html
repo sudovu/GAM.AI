@@ -725,7 +725,7 @@
       <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme (Cyberpunk / OLED / Light / Matrix)">🎨</button>
       <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
       <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
-      <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation(true)" title="New Chat (Clear Local History)">🗑️</button>
+      <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation()" title="New Chat (Clear Local History)">🗑️</button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
       <div class="status-badge" id="token-meter" title="Continuous Token Safety: Never runs out of tokens" style="border-color: rgba(16,185,129,0.5); color: #10b981;">&#9679; Safe Tokens</div>
       <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
@@ -2421,8 +2421,8 @@ function resolveFollowUpAndContext(promptText, lang) {
   return null;
 }
 
-function clearChatConversation(skipConfirm) {
-  if (skipConfirm || confirm('Start a new chat and clear local conversation history?')) {
+function clearChatConversation() {
+  if (confirm('Start a new chat and clear local conversation history?')) {
     GAM_CONTEXT.clearHistory();
     var stream = document.getElementById('messages-stream');
     if (stream) stream.innerHTML = '';
@@ -6732,7 +6732,7 @@ document.getElementById('btn-open-tools').addEventListener('click', function() {
 document.getElementById('btn-open-settings').addEventListener('click', function() { closeSidebar(); showModal('modal-settings'); });
 document.getElementById('btn-header-settings').addEventListener('click', function() { showModal('modal-settings'); });
 document.getElementById('btn-new-chat').addEventListener('click', function() {
-  clearChatConversation(true);
+  clearChatConversation();
   closeSidebar();
 });
 

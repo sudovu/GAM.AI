@@ -202,15 +202,6 @@ def build_apk():
                     shutil.copy2(apk_src, os.path.join(dist_dir, "gam-ai.apk"))
                     print(f"\nBUILD SUCCESSFUL! Signed Universal APK located at:\n  -> {target_apk} ({os.path.getsize(target_apk):,} bytes)")
 
-                    # Auto archive snapshot into versions/ directory
-                    try:
-                        sys.path.insert(0, os.path.dirname(__file__))
-                        from snapshot_version import create_snapshot
-                        create_snapshot("v1.3.0", "3-Mode Minimalist Redesign & Seamless Agent Handoff",
-                                        "Automated build snapshot storing latest code and APK.", target_apk)
-                    except Exception as snap_err:
-                        print(f"  * Snapshot archiving note: {snap_err}")
-
                     # Auto deploy if requested or if USB device is attached
                     should_install = "--install" in sys.argv or "-i" in sys.argv
                     if should_install:

@@ -29,6 +29,7 @@ android/app/build/
 android/local.properties
 android/.idea/
 *.apk
+!versions/**/*.apk
 *.aab
 
 # OS files
