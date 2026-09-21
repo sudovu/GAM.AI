@@ -3,7 +3,7 @@ name: Build & Package GAM.AI Multi-Platform Releases
 on:
   push:
     branches: [ main, master ]
-    paths_ignore:
+    paths-ignore:
       - 'README.md'
       - 'docs/**'
   pull_request:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@0v4
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@0v4
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -86,7 +86,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@0v4
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -112,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@0v4
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -124,10 +124,6 @@ jobs:
 
       - name: Build gam-ai-linux
         run: |
-          pyinstaller --onefile --name gam-ai-linux -x64 \
-            --add-data "gam_ai/ui:gam_ai/ui" _
-            --platforms linux-x86_64 _\
-            scripts/run_app.py || \
           pyinstaller --onefile --name gam-ai-linux-x64 \
             --add-data "gam_ai/ui:gam_ai/ui" \
             scripts/run_app.py
@@ -145,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
-        uses:"actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
