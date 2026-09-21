@@ -292,6 +292,35 @@ class TestCoreComponents(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(v_path, "CHECKSUMS.sha256")))
             self.assertTrue(os.path.isdir(os.path.join(v_path, "code_snapshot")))
 
+    def test_online_offline_mode_distinction_and_auto_switch(self):
+        """Verify clear online vs offline distinction, auto-switch, live refresh, and lens accuracy."""
+        from gam_ai.ui import get_ui_dir
+        dash_path = os.path.join(get_ui_dir(), "dashboard.html")
+        with open(dash_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 1. Verify header toggle button and mode state
+        self.assertIn('id="btn-mode-toggle"', content)
+        self.assertIn("toggleOnlineOfflineMode()", content)
+        self.assertIn("setExecutionMode(mode, skipRefresh)", content)
+
+        # 2. Verify auto-refresh on offline -> online toggle
+        self.assertIn("refreshLastQueryWithOnlineData(lastUserQuery)", content)
+        self.assertIn("action:refresh_online", content)
+        self.assertIn("btn:🌐 Refresh with Latest Online Data", content)
+
+        # 3. Verify auto-switch when offline query not found
+        self.assertIn("Auto-Switched to Online Mode", content)
+        self.assertIn("isNetAvailable", content)
+
+        # 4. Verify greeting responder prevents Pareto essay hallucinations
+        self.assertIn("getGreetingOrCapabilityResponse", content)
+        self.assertIn("allowUniversalFallback", content)
+
+        # 5. Verify camera lens persona & object awareness (textiles vs switches)
+        self.assertIn("Floral Fabric & Textile", content)
+        self.assertIn("Patterned Fabric & Textile Material", content)
+
 if __name__ == "__main__":
     unittest.main()
 

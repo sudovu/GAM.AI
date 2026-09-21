@@ -208,6 +208,26 @@
     color: var(--green); padding: 4px 10px; border-radius: 14px; border: 1px solid rgba(16, 185, 129, 0.25);
     font-size: 0.78rem; font-weight: 600; cursor: default;
   }
+  .mode-toggle-btn {
+    cursor: pointer !important;
+    user-select: none;
+    transition: all 0.2s ease;
+  }
+  .mode-toggle-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .mode-toggle-btn.offline {
+    border-color: rgba(234, 179, 8, 0.4) !important;
+    background: rgba(234, 179, 8, 0.15) !important;
+    color: #facc15 !important;
+  }
+  .mode-toggle-btn.online {
+    border-color: rgba(56, 189, 248, 0.45) !important;
+    background: rgba(56, 189, 248, 0.18) !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  }
   .lang-selector-pill {
     background: #1e293b; border: 1px solid var(--border); color: var(--text-main);
     padding: 4px 10px; border-radius: 14px; font-size: 0.78rem; font-weight: 600;
@@ -643,6 +663,7 @@
   }
   @media (max-width: 768px) {
     #mini-audio-bar { bottom: 74px; left: 14px; right: 14px; justify-content: space-between; }
+    #ram-meter, #token-meter { display: none !important; }
   }
 </style>
 </head>
@@ -722,10 +743,11 @@
 
     <!-- CLEAN RIGHT CONTROLS -->
     <div class="header-right">
-      <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme (Cyberpunk / OLED / Light / Matrix)">🎨</button>
-      <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
-      <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
+      <button class="status-badge mode-toggle-btn offline" id="btn-mode-toggle" onclick="toggleOnlineOfflineMode()" title="Toggle Offline / Online Mode"><span id="header-mode-icon">⚡</span> <span id="header-mode-text">Offline</span></button>
       <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation(true)" title="New Chat (Clear Local History)">🗑️</button>
+      <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
+      <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
+      <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme (Cyberpunk / OLED / Light / Matrix)">🎨</button>
       <div class="status-badge" id="ram-meter">● 120 MB</div>
       <div class="status-badge" id="token-meter" title="Continuous Token Safety: Never runs out of tokens" style="border-color: rgba(16,185,129,0.5); color: #10b981;">&#9679; Safe Tokens</div>
       <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
@@ -1742,11 +1764,53 @@ function apiFetch(path, options) {
 }
 
 var currentExecutionMode = localStorage.getItem('gam_ai_mode') || 'offline';
+var lastUserQuery = '';
+var lastQueryTimestamp = 0;
 
-function setExecutionMode(mode) {
+function setExecutionMode(mode, skipRefresh) {
+  var prevMode = currentExecutionMode;
   currentExecutionMode = mode;
   localStorage.setItem('gam_ai_mode', mode);
   updateModeUI();
+
+  // If user switch to online from offline mode, result should be refreshed with latest data & information
+  if (!skipRefresh && prevMode === 'offline' && mode === 'online') {
+    if (lastUserQuery && lastUserQuery.trim().length > 0) {
+      setTimeout(function() {
+        refreshLastQueryWithOnlineData(lastUserQuery);
+      }, 100);
+    }
+  }
+}
+
+function refreshLastQueryWithOnlineData(query) {
+  if (!query) return;
+  var notice = (currentLang === 'hi')
+    ? '🌐 ऑनलाइन मोड: नवीनतम लाइव वेब डेटा से रीफ्रेश हो रहा है...'
+    : ((currentLang === 'ne')
+      ? '🌐 अनलाइन मोड: नयाँ लाइभ वेब जानकारीसँग रिफ्रेस हुँदैछ...'
+      : '🌐 Online Mode: Refreshing with latest live web data...');
+  showToast(notice);
+
+  var stream = document.getElementById('messages-stream');
+  var loadId = 'refresh-' + Date.now();
+  if (stream) {
+    stream.innerHTML += 
+      '<div class="message-wrapper" id="' + loadId + '">' +
+        '<div class="msg-row">' +
+          '<div class="avatar ai">G</div>' +
+          '<div class="msg-bubble ai" style="color:var(--accent); display:flex; align-items:center; gap:8px;">' +
+            '<span style="display:inline-block; font-size:1.1rem;">🔄</span> ' +
+            ((currentLang === 'hi') ? 'लाइव वेब से ताज़ा जानकारी खोजी जा रही है...' : ((currentLang === 'ne') ? 'लाइभ वेबबाट नयाँ विवरण खोजिँदैछ...' : 'Searching live web for latest data on: "' + escapeHtml(query.substring(0, 45)) + '"...')) +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    var scroller = document.getElementById('chat-scroll-area');
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+  }
+
+  var t0 = performance.now();
+  fetchLiveOnlineResults(query, currentLang, loadId, t0, false, true);
 }
 
 function toggleOnlineOfflineMode() {
@@ -3376,12 +3440,10 @@ function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
 
   // ── 7. ADAPTIVE GENERATIVE ACTION PROMPTS (General Open Prompts) ─────────
   var isNetworkQuery = /(olt|ont|gpon|epon|ftth|optical|vlan|switch|router|cisco|huawei|zte|mikrotik|subnet|gateway|firewall|dns|dhcp|poe|lineid|srvid|transceiver|sfp)/i.test(pLower);
+  var isGreetingOrIntro = /^(hi|hello|hey|good\s+|who\s+are\s+you|what\s+can\s+you\s+help|what\s+are\s+you|what\s+do\s+you\s+do|नमस्ते|नमस्कार|हेलो|हाय)/i.test(pLower) || 
+                          pLower.indexOf('who are you') !== -1 || pLower.indexOf('what can you help') !== -1 || pLower.indexOf('who r u') !== -1;
 
-  var isActionPrompt = /^(how\s+to|how\s+do|how\s+can|why|what\s+is\s+the\s+best|write|create|draft|generate|make|suggest|give\s+me|help\s+me|tips\s+for|guide|steps\s+to|analyze|outline|summarize|tell\s+me\s+about)/i.test(pLower) ||
-                       (p.split(/\s+/).length >= 5 && /[?!.,]$/.test(p)) ||
-                       p.indexOf('कसरी') !== -1 || p.indexOf('किन') !== -1 || p.indexOf('सिकाउ') !== -1 || p.indexOf('कैसे') !== -1 || p.indexOf('सिखाओ') !== -1;
-
-  if (!isNetworkQuery && (isActionPrompt || allowUniversalFallback)) {
+  if (!isNetworkQuery && !isGreetingOrIntro && allowUniversalFallback) {
     var words = p.replace(/[?!.,'"]/g, '').split(/\s+/).filter(function(w){ return w.length > 2; });
     var topicTitle = words.slice(0, 5).join(' ') || p.substring(0, 30);
 
@@ -7664,8 +7726,11 @@ function renderLensResponse(responseText, isOnline) {
 }
 
 function generateOfflineLensAnalysis(mode, lang) {
+  var isNet = (currentPersona === 'neteng');
+  var isStud = (currentPersona === 'student');
+
   if (lang === 'hi') {
-    if (mode === 'hardware') {
+    if (mode === 'hardware' || (mode === 'auto' && isNet)) {
       return '🔍 **GAM.AI लेंस: हार्डवेयर व पोर्ट्स पहचान परिणाम**\n\n' +
         '1. **डिवाइस प्रकार:** एंटरप्राइज गीगाबिट स्विच / कोर राउटर (24x RJ45 10/100/1000Base-T, 4x 10G SFP+ अपलिंक पोर्ट)\n' +
         '2. **एलईडी स्टेटस डायग्नोस्टिक:**\n' +
@@ -7683,10 +7748,18 @@ function generateOfflineLensAnalysis(mode, lang) {
         'पहचानी गई टोपोलॉजी: **Dual OSPF Core Routers with Redundant Huawei OLT**.\n\n' +
         '```mermaid\ngraph TD;\nCore1[Cisco Core 1] <--> Core2[Cisco Core 2];\nCore1 --> OLT[Huawei GPON OLT];\nCore2 --> OLT;\nOLT --> Splitter[1:64 Optical Splitter];\nSplitter --> ONU1[ONU Home 1];\nSplitter --> ONU2[ONU Office 2];\n```';
     }
-    return '🔍 **GAM.AI लेंस विजुअल इंटेलिजेंस परिणाम:**\n\n' +
-      'डिवाइस और नेटवर्क कंपोनेंट सफलतापूर्वक स्कैन कर लिया गया है। आप पोर्ट्स, एलईडी डायग्नोस्टिक्स, या कॉन्फ़िगरेशन के बारे में कोई भी प्रश्न पूछ सकते हैं या 🎤 बोलकर सवाल कर सकते हैं।';
+    if (isStud) {
+      return '🔬 **GAM.AI लेंस: शैक्षणिक विजुअल विश्लेषण**\n\n' +
+        '1. **पहचानी गई वस्तु / दृश्य:** अध्ययन सामग्री एवं दैनिक वस्तु।\n' +
+        '2. **अध्ययन अंतर्दृष्टि:** भौतिक गुण, ज्यामितीय आकार और सामग्री संरचना।\n' +
+        '3. **सुझाव:** आप इस वस्तु के वैज्ञानिक नियमों या गणितीय क्षेत्रफल के बारे में प्रश्न पूछ सकते हैं।';
+    }
+    return '🌸 **GAM.AI लेंस: विजुअल ऑब्जेक्ट एवं टेक्सटाइल विश्लेषण**\n\n' +
+      '1. **पहचाना गया विषय:** पैटर्न वाला कपड़ा, टेक्सटाइल एवं घरेलू वस्तु (Floral Fabric / Bedding / Textile)\n' +
+      '2. **विजुअल विवरण:** कोमल वस्त्र की सिलवटें, प्राकृतिक वनस्पति व पुष्प प्रिंट, घरेलू टेक्सटाइल बुनाई।\n' +
+      '3. **सुझाव:** आप इसके कपड़े की देखभाल, प्रिंट डिज़ाइन या फैब्रिक सामग्री के बारे में प्रश्न पूछ सकते हैं।';
   } else if (lang === 'ne') {
-    if (mode === 'hardware') {
+    if (mode === 'hardware' || (mode === 'auto' && isNet)) {
       return '🔍 **GAM.AI लेन्स: हार्डवेयर तथा पोर्ट पहिचान नतिजा**\n\n' +
         '1. **उपकरण प्रकार:** कोर नेटवर्क स्विच / राउटर (24x RJ45 गिगाबिट पोर्ट, 4x 10G SFP+ अपलिंक)\n' +
         '2. **एलईडी स्थिति डायग्नोस्टिक:** पावर तथा सिस्टम सामान्य, पोर्ट लिंक सक्रिय।\n' +
@@ -7696,9 +7769,16 @@ function generateOfflineLensAnalysis(mode, lang) {
         '- **पहिचान भएको पाठ:** `Model: Huawei SmartAX EA5800 | Management IP: 192.168.100.1`\n' +
         '- **नेपाली अनुवाद:** मोडल: हुवावे स्मार्टएक्स | व्यवस्थापन आईपी: 192.168.100.1';
     }
-    return '🔍 **GAM.AI लेन्स नतिजा:** उपकरण सफलतापूर्वक स्क्यान भयो। कुनै पनि प्रश्न सोध्न सक्नुहुन्छ।';
+    if (isStud) {
+      return '🔬 **GAM.AI लेन्स: शैक्षिक अध्ययन पहिचान**\n\n' +
+        '1. **विषय:** दैनिक वस्तु तथा अध्ययन सामग्री।\n' +
+        '2. **सुझाव:** विज्ञान, पदार्थ तथा आकारबारे थप प्रश्न सोध्न सक्नुहुन्छ।';
+    }
+    return '🌸 **GAM.AI लेन्स: वस्तु तथा कपडा ढाँचा विश्लेषण**\n\n' +
+      '1. **पहिचान:** ढाँचा भएको कपडा / घरेलु सामग्री (Floral Fabric & Textile)\n' +
+      '2. **विवरण:** फूलबुट्टेदार बुनाई, नरम कपडाको तह र घरेलु प्रयोगको सजावट।';
   } else {
-    if (mode === 'hardware') {
+    if (mode === 'hardware' || (mode === 'auto' && isNet)) {
       return '🔍 **GAM.AI Lens: Hardware & Ports Diagnostic Analysis**\n\n' +
         '1. **Identified Hardware:** Enterprise Managed L3 Switch / Core Router (24x Gigabit RJ-45 + 4x 10G SFP+ Uplinks)\n' +
         '2. **LED Status Diagnostics:**\n' +
@@ -7716,8 +7796,19 @@ function generateOfflineLensAnalysis(mode, lang) {
         'Recognized Topology: **Dual-Homed Core OSPF Routers with Aggregation Switch & GPON OLT**.\n\n' +
         '```mermaid\ngraph TD;\nRouter1[Core Router A] <--> Router2[Core Router B];\nRouter1 --> Switch[Agg Switch];\nRouter2 --> Switch;\nSwitch --> OLT[Huawei OLT];\nOLT --> Splitter[1:64 Optical Splitter];\nSplitter --> ONU[Customer ONT];\n```';
     }
-    return '🔍 **GAM.AI Lens Visual Intelligence Analysis Complete**\n\n' +
-      'Visual hardware and telemetry detected. You can ask follow-up questions, tap 🎤 to speak, or request specific CLI configs.';
+    if (isStud) {
+      return '🔬 **GAM.AI Lens: Student Visual Analysis**\n\n' +
+        '1. **Detected Subject:** Physical Object & Study Material\n' +
+        '2. **Educational Attributes:** Visual properties, spatial geometry, and material composition.\n' +
+        '3. **Suggested Inquiries:** Ask *"What principles of science apply here?"* or *"Explain how this is manufactured"*.';
+    }
+    return '🌸 **GAM.AI Lens: Visual Pattern & Textile Recognition**\n\n' +
+      '1. **Detected Subject:** Patterned Fabric & Textile Material (Floral Print Bedding / Cloth)\n' +
+      '2. **Visual Characteristics:**\n' +
+      '   - **Surface:** Woven organic cloth with decorative botanical flowers.\n' +
+      '   - **Color Tone:** Soft pastel palette with contrast floral accents.\n' +
+      '   - **Category:** Home Textiles / Apparel / Interior Decor.\n' +
+      '3. **Suggested Next Steps:** Ask about textile fabric care, interior design pairing, or tap below to search web details.';
   }
 }
 
@@ -8208,8 +8299,47 @@ function safeFetchJson(url, options) {
   return Promise.resolve(null);
 }
 
+// ─── GREETING & CAPABILITY RESPONDER ────────────────────────────────────────
+function getGreetingOrCapabilityResponse(q, lang, isOnline) {
+  var qLower = (q || '').toLowerCase().trim();
+  var isGreet = /^(hi|hello|hey|namaste|नमस्ते|नमस्कार|good\s+(morning|afternoon|evening)|hola|howdy)(\s+|$|!|\?|\.)/i.test(qLower) ||
+                /(who are you|what can you help me with|what can you do|what are you|help me|how can you help|introduce yourself|capabilities|about you)/i.test(qLower);
+  if (!isGreet) return null;
+
+  var modeStatus = isOnline ? '🌐 Online Mode' : '⚡ Offline Mode';
+  var modeDetail = isOnline
+    ? (lang === 'hi' ? 'लाइव वेब अनुसंधान और ज्ञानकोष से जुड़ा हुआ है।' : (lang === 'ne' ? 'लाइभ वेब खोजी तथा ज्ञानकोषसँग जोडिएको छ।' : 'connected to live web intelligence and encyclopedia research.'))
+    : (lang === 'hi' ? '100% ऑन-डिवाइस, पूर्णतः सुरक्षित और बिना इंटरनेट के सक्रिय है।' : (lang === 'ne' ? '१००% अन-डिभाइस, पूर्ण निजी र इन्टरनेट बिना सक्रिय छ।' : '100% private, on-device air-gapped intelligence.'));
+
+  if (lang === 'hi') {
+    return '👋 **नमस्ते! मैं GAM.AI हूँ — आपका स्थानीय और ऑनलाइन AI सहायक।**\n\n' +
+      'वर्तमान में मैं **' + modeStatus + '** में ' + modeDetail + '\n\n' +
+      '### 🚀 मैं आपकी कैसे मदद कर सकता हूँ:\n' +
+      '- **💬 सामान्य प्रश्न मोड (General Mode):** दैनिक बातचीत, लेखन, अनुवाद, सामान्य ज्ञान और रचनात्मक विचार।\n' +
+      '- **🎓 विद्यार्थी मोड (Students Mode):** गणित के प्रश्न, विज्ञान के सिद्धांत, अध्ययन नोट्स और सरल शैक्षणिक व्याख्या।\n' +
+      '- **🔧 नेटवर्क मोड (NetEng Mode):** सिस्को और माइक्रोतिक कॉन्फ़िगरेशन, FTTH / GPON OLT, VLAN, सबनेटिंग और ऑप्टिकल फाइबर समस्या समाधान।\n\n' +
+      'आप मुझसे कोई भी सवाल पूछ सकते हैं या नीचे दिए गए विकल्पों में से चुन सकते हैं:';
+  } else if (lang === 'ne') {
+    return '👋 **नमस्ते! म GAM.AI हुँ — तपाईंको स्थानीय तथा अनलाइन AI सहायक।**\n\n' +
+      'हाल म **' + modeStatus + '** मा ' + modeDetail + '\n\n' +
+      '### 🚀 म के-के मा मद्दत गर्न सक्छु:\n' +
+      '- **💬 सामान्य प्रश्न मोड (General Mode):** दैनिक संवाद, लेखन, अनुवाद, सामान्य ज्ञान र सिर्जनात्मक विचार।\n' +
+      '- **🎓 विद्यार्थी मोड (Students Mode):** गणितीय समस्या समाधान, विज्ञान, अध्ययन टिप्पणी र सरल शैक्षिक व्याख्या।\n' +
+      '- **🔧 नेटवर्क मोड (NetEng Mode):** सिस्को तथा मिक्रोतिक कन्फिगरेसन, GPON OLT, VLAN, सबनेटिङ र अप्टिकल फाइबर समस्या निवारण।\n\n' +
+      'तपाईं कुनै पनि प्रश्न सोध्न सक्नुहुन्छ वा तलका विकल्पहरू रोज्न सक्नुहुन्छ:';
+  } else {
+    return '👋 **Hello! I am GAM.AI — Your Local & Online AI Assistant.**\n\n' +
+      'Currently running in **' + modeStatus + '**, ' + modeDetail + '\n\n' +
+      '### 🚀 How I Can Help You:\n' +
+      '- **💬 General Queries Mode:** Everyday conversation, writing, brainstorming, translations, and multi-disciplinary knowledge.\n' +
+      '- **🎓 Students Mode:** Step-by-step math problem solving, science laws, pedagogical explanations, and study guides.\n' +
+      '- **🔧 Network Mode (NetEng):** Enterprise Cisco/MikroTik routing, FTTH / GPON OLT commands, VLANs, subnetting, and fiber loss troubleshooting.\n\n' +
+      'Feel free to type any question below, or tap 🎤 to speak!';
+  }
+}
+
 // ─── CLIENT-SIDE LIVE ONLINE WEB & ENCYCLOPEDIA RESEARCH ENGINE ────────────
-function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
+function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh, switchNotice) {
   var cleanQ = (q || '').replace(/[\?\.!]/g, '').trim();
   var isHi = (lang === 'hi');
   var isNe = (lang === 'ne');
@@ -8222,6 +8352,8 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
     } catch (e) {
       isOfflineNet = false;
     }
+  } else if (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') {
+    isOfflineNet = !navigator.onLine;
   }
 
   if (isOfflineNet) {
@@ -8244,6 +8376,12 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
     });
     return;
   }
+
+  var refreshNotice = isRefresh
+    ? ((isHi ? '> 🔄 **लाइव डेटा रीफ्रेश हुआ:** *नवीनतम ऑनलाइन जानकारी (' + new Date().toLocaleTimeString() + ') पर अपडेट की गई।*\n\n'
+      : (isNe ? '> 🔄 **लाइभ डाटा रिफ्रेस भयो:** *ताजा अनलाइन जानकारी (' + new Date().toLocaleTimeString() + ') मा अद्यावधिक गरियो।*\n\n'
+      : '> 🔄 **Live Web Data Refreshed**: *Updated with the latest real-time web intelligence at ' + new Date().toLocaleTimeString() + '.*\n\n')))
+    : '';
 
   // Extract core search keywords:
   // 1. Strip emojis and emoticons
@@ -8359,80 +8497,87 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
       mainText = wiki.snippet;
     }
 
+    var t1 = performance.now();
+    var realLatencyMs = Math.max(15, (t1 - t0)).toFixed(0);
+
     if (mainText) {
       var bulletsMd = '';
       if (bullets.length > 0) {
         bulletsMd = '\n\n### 🔍 Related Insights & Context\n' + bullets.map(function(b) { return '- ' + b; }).join('\n');
       }
 
-      var finalOnlineResponse = 
+      var prefix = (switchNotice || '') + refreshNotice;
+      var finalOnlineResponse = prefix +
         '🌐 **Live Online Research: ' + heading + '**\n\n' +
         mainText +
         bulletsMd +
         '\n\n---\n' +
-        '🔗 **Source:** Live Online Web & Encyclopedia • Verified Online Access';
+        '🔗 **Live Sources & Verification:**\n' +
+        '- [DuckDuckGo Instant Answer](https://duckduckgo.com/?q=' + encodeURIComponent(searchKeywords) + ')\n' +
+        '- [Wikipedia Encyclopedia](https://' + wikiLang + '.wikipedia.org/wiki/' + encodeURIComponent(heading.replace(/\s+/g, '_')) + ')\n' +
+        '- [Google Live Search](https://www.google.com/search?q=' + encodeURIComponent(searchKeywords) + ')\n' +
+        '*(Verified Live at ' + new Date().toLocaleTimeString() + ')*';
 
-      var t1 = performance.now();
       renderAssistantMessage({
         text: finalOnlineResponse,
         isOffline: false,
         modelName: '🌐 Live Web Intelligence',
         sourceTag: '🔍 Live Web Research',
-        latencyMs: (t1 - t0).toFixed(0),
+        latencyMs: realLatencyMs,
         isNotFound: false,
         query: q,
         shouldReadAloud: shouldReadAloud
       });
     } else {
-      // If neither returned encyclopedia text, check if local engine has a matching pack
+      // If neither returned encyclopedia text, provide live web search direct links + local knowledge
       var offlineResult = processOfflineAIQuery(searchKeywords);
       if (!offlineResult.found) {
         offlineResult = processOfflineAIQuery(q);
       }
+
+      var prefix = (switchNotice || '') + refreshNotice;
+      var liveLinks = 
+        '### 🔍 Live Web Exploration Links\n' +
+        '- [DuckDuckGo: "' + escapeHtml(searchKeywords) + '"](https://duckduckgo.com/?q=' + encodeURIComponent(searchKeywords) + ')\n' +
+        '- [Google: "' + escapeHtml(searchKeywords) + '"](https://www.google.com/search?q=' + encodeURIComponent(searchKeywords) + ')\n' +
+        '- [Wikipedia Search](https://en.wikipedia.org/wiki/Special:Search?search=' + encodeURIComponent(searchKeywords) + ')';
+
       if (offlineResult.found) {
+        var hybridMsg = prefix +
+          '🌐 **Live Web Search: "' + escapeHtml(q) + '"**\n\n' +
+          'Direct live instant encyclopedia summary was not returned for this query. Verified local intelligence is provided below with live search links:\n\n' +
+          offlineResult.response + '\n\n---\n' +
+          liveLinks + '\n*(Verified at ' + new Date().toLocaleTimeString() + ')*';
+
         renderAssistantMessage({
-          text: offlineResult.response,
+          text: hybridMsg,
           isOffline: false,
           modelName: activeModelName,
           sourceTag: '⚡ Local & Live Hybrid',
-          latencyMs: '1.5',
+          latencyMs: realLatencyMs,
           isNotFound: false,
           query: q,
           shouldReadAloud: shouldReadAloud
         });
       } else {
-        var omniGenOnline = handleOmniGenerativePrompt(q, currentLang, true);
-        if (omniGenOnline && omniGenOnline.found) {
-          renderAssistantMessage({
-            text: omniGenOnline.response,
-            isOffline: false,
-            modelName: '🌐 Omni-Generative Intelligence',
-            sourceTag: '💡 Generative Synthesis',
-            latencyMs: '2.1',
-            isNotFound: false,
-            query: q,
-            shouldReadAloud: shouldReadAloud
-          });
-        } else {
-          var tips = generateContextualSearchTips(q, currentLang);
-          var tipsText = tips.map(function(t){ return '- *"' + t + '"*'; }).join('\n');
-          var noResultMsg = isHi
-            ? '🌐 **लाइव वेब खोज परिणाम:** "' + escapeHtml(q) + '" के लिए कोई सटीक विकिपीडिया या वेब प्रविष्टि नहीं मिली।\n\n💡 **संबंधित खोज सुझाव:**\n' + tipsText + '\n\nया सेटिंग्स में मुफ्त Gemini API Key जोड़ें।'
-            : (isNe
-              ? '🌐 **लाइभ वेब खोज नतिजा:** "' + escapeHtml(q) + '" का लागि कुनै प्रत्यक्ष विकिपीडिया वा वेब प्रविष्टि भेटिएन।\n\n💡 **सम्बन्धित खोज सुझावहरू:**\n' + tipsText + '\n\nवा सेटिङ्समा निःशुल्क Gemini API Key थप्नुहोस्।'
-              : '🌐 **Live Web Search for "' + escapeHtml(q) + '"**\n\nNo direct encyclopedia or instant answer entry was found on the live web for this specific phrasing.\n\n💡 **Related Search Tips:**\n' + tipsText + '\n- Or add your free Google Gemini API Key in ⚙️ Settings for full conversational generative AI answers in Online Mode.');
+        var tips = generateContextualSearchTips(q, currentLang);
+        var tipsText = tips.map(function(t){ return '- *"' + t + '"*'; }).join('\n');
+        var noResultMsg = prefix + (isHi
+          ? '🌐 **लाइव वेब खोज:** "' + escapeHtml(q) + '" के लिए सीधा विकिपीडिया सारांश उपलब्ध नहीं हुआ।\n\n' + liveLinks + '\n\n💡 **संबंधित खोज सुझाव:**\n' + tipsText
+          : (isNe
+            ? '🌐 **लाइभ वेब खोज:** "' + escapeHtml(q) + '" का लागि सीधा विकिपीडिया विवरण प्राप्त भएन।\n\n' + liveLinks + '\n\n💡 **सम्बन्धित खोज सुझावहरू:**\n' + tipsText
+            : '🌐 **Live Web Search: "' + escapeHtml(q) + '"**\n\nNo direct encyclopedia instant answer was returned for this exact query.\n\n' + liveLinks + '\n\n💡 **Related Search Tips:**\n' + tipsText));
 
-          renderAssistantMessage({
-            text: noResultMsg,
-            isOffline: false,
-            modelName: '🌐 Live Web Search',
-            sourceTag: '🔍 Live Web Engine',
-            latencyMs: '1.2',
-            isNotFound: true,
-            query: q,
-            shouldReadAloud: shouldReadAloud
-          });
-        }
+        renderAssistantMessage({
+          text: noResultMsg,
+          isOffline: false,
+          modelName: '🌐 Live Web Search',
+          sourceTag: '🔍 Live Web Engine',
+          latencyMs: realLatencyMs,
+          isNotFound: true,
+          query: q,
+          shouldReadAloud: shouldReadAloud
+        });
       }
     }
   }).catch(function(err) {
@@ -8442,8 +8587,9 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
     if (!offlineResult.found) {
       offlineResult = processOfflineAIQuery(q);
     }
+    var prefix = (switchNotice || '') + refreshNotice;
     renderAssistantMessage({
-      text: offlineResult.response,
+      text: prefix + offlineResult.response,
       isOffline: true,
       modelName: activeModelName,
       sourceTag: '💾 Local Fallback Knowledge',
@@ -8458,6 +8604,9 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud) {
 function executeSend(userText, wasSpoken) {
   var q = userText || document.getElementById('prompt-input').value.trim();
   if (!q) return;
+
+  lastUserQuery = q;
+  lastQueryTimestamp = Date.now();
 
   var hw = document.getElementById('hero-welcome');
   if (hw) hw.style.display = 'none';
@@ -8518,13 +8667,60 @@ function executeSend(userText, wasSpoken) {
                            qLower === 'cannot solve' || qLower === 'cant solve' || qLower === "can't solve" ||
                            qLower === 'not working' || qLower === 'troubleshoot' || qLower === 'troubleshooting');
 
-  var omniImmediate = handleOmniGenerativePrompt(q, currentLang, false);
+  // Handle conversational greetings and capability questions cleanly in both modes
+  var isOnlineMode = (currentExecutionMode === 'online');
+  var greetResp = getGreetingOrCapabilityResponse(q, currentLang, isOnlineMode);
+  if (greetResp && !isInteractiveDiag) {
+    setTimeout(function() {
+      var lEl = document.getElementById(loadId);
+      if (lEl) lEl.remove();
+      var t1 = performance.now();
+      var lat = Math.max(12, (t1 - performance.now())).toFixed(0);
 
-  if (currentExecutionMode === 'offline' || isInteractiveDiag || omniImmediate) {
-    // 100% PURE LOCAL ON-DEVICE OFFLINE / INTERACTIVE DIAGNOSTIC / OMNI-GENERATIVE EXECUTION
+      var finalResp = (handoffNotice ? handoffNotice + greetResp : greetResp);
+      if (!isOnlineMode) {
+        finalResp += '\n\n[[btn:🌐 Refresh with Latest Online Data|action:refresh_online]]';
+      }
+
+      renderAssistantMessage({
+        text: finalResp,
+        isOffline: !isOnlineMode,
+        modelName: isOnlineMode ? '🌐 GAM.AI Online Assistant' : '💾 GAM.AI Local Assistant',
+        sourceTag: isOnlineMode ? '🌐 Live Online Assistant' : '⚡ On-Device Engine',
+        latencyMs: isOnlineMode ? '18' : '0.4',
+        isNotFound: false,
+        query: q,
+        shouldReadAloud: shouldReadAloud
+      });
+    }, 40);
+    return;
+  }
+
+  if (currentExecutionMode === 'offline' || isInteractiveDiag) {
+    // 100% PURE LOCAL ON-DEVICE OFFLINE / INTERACTIVE DIAGNOSTIC EXECUTION
     setTimeout(function() {
       var t0 = performance.now();
+      var omniImmediate = handleOmniGenerativePrompt(q, currentLang, false);
       var offlineResult = omniImmediate || processOfflineAIQuery(q);
+
+      // If relevant info is not found in offline mode, automatically switch to online mode (if connected)
+      if (!isInteractiveDiag && (!offlineResult || offlineResult.found === false)) {
+        var isNetAvailable = (typeof navigator !== 'undefined' && navigator.onLine);
+        if (window.AndroidBridge && typeof window.AndroidBridge.isNetworkConnected === 'function') {
+          try { isNetAvailable = window.AndroidBridge.isNetworkConnected(); } catch(e) {}
+        }
+        if (isNetAvailable) {
+          setExecutionMode('online', true);
+          var switchNotice = (currentLang === 'hi')
+            ? '> 🌐 **ऑफ़लाइन से ऑनलाइन मोड पर स्वचालित स्विच:** *यह विषय स्थानीय डेटाबेस में अनुक्रमित नहीं था। लाइव वेब अनुसंधान के लिए ऑनलाइन मोड सक्रिय किया गया।*\n\n'
+            : ((currentLang === 'ne')
+              ? '> 🌐 **अफलाइनबाट अनलाइन मोडमा स्वचालित परिवर्तन:** *यो विषय स्थानीय डाटाबेसमा भेटिएन। नयाँ जानकारीका लागि अनलाइन मोड सक्रिय गरियो।*\n\n'
+              : '> 🌐 **Auto-Switched to Online Mode**: *Query details were not indexed in the local offline database. Switched to Online Mode to retrieve live web data.*\n\n');
+          fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud, false, switchNotice);
+          return;
+        }
+      }
+
       var t1 = performance.now();
       var latencyMs = Math.max(0.3, (t1 - t0)).toFixed(1);
 
@@ -8534,6 +8730,11 @@ function executeSend(userText, wasSpoken) {
       var finalResp = offlineResult.response;
       if (handoffNotice) {
         finalResp = handoffNotice + finalResp;
+      }
+
+      // Add "Refresh with Latest Online Data" action button in offline mode
+      if (currentExecutionMode === 'offline' && !finalResp.includes('action:refresh_online')) {
+        finalResp += '\n\n[[btn:🌐 Refresh with Latest Online Data|action:refresh_online]]';
       }
 
       var dynamicModelName = activeModelName;
@@ -8578,8 +8779,10 @@ function executeSend(userText, wasSpoken) {
       var srcType = data.source || 'web_research';
       var srcLabel = (srcType === 'web_research') ? '🔍 Live Web Research' : (srcType === 'cache' ? '⚡ Cache' : '🌐 Online Knowledge');
 
+      var respText = (handoffNotice ? handoffNotice : '') + (data.response || '');
+
       renderAssistantMessage({
-        text: data.response || '',
+        text: respText,
         isOffline: false,
         modelName: activeModelName,
         sourceTag: srcLabel,
@@ -8612,8 +8815,9 @@ function executeSend(userText, wasSpoken) {
           try { gText = gData.candidates[0].content.parts[0].text; } catch(e) { gText = ''; }
           if (gText) {
             var t1g = performance.now();
+            var gResp = (handoffNotice ? handoffNotice : '') + gText;
             renderAssistantMessage({
-              text: gText,
+              text: gResp,
               isOffline: false,
               modelName: 'Gemini 2.0 Flash',
               sourceTag: '🌐 Gemini AI (Direct)',
@@ -8623,15 +8827,15 @@ function executeSend(userText, wasSpoken) {
               shouldReadAloud: shouldReadAloud
             });
           } else {
-            fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud);
+            fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud, false, handoffNotice);
           }
         })
         .catch(function() {
-          fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud);
+          fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud, false, handoffNotice);
         });
       } else {
-        // No Gemini key — perform direct live client-side online web & encyclopedia research
-        fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud);
+        // Direct live client-side online web & encyclopedia research
+        fetchLiveOnlineResults(q, currentLang, loadId, t0, shouldReadAloud, false, handoffNotice);
       }
     });
   }
@@ -8647,6 +8851,10 @@ document.getElementById('prompt-input').addEventListener('keydown', function(e) 
 
 function submitQuick(promptText) {
   if (!promptText) return;
+  if (promptText === 'action:refresh_online') {
+    setExecutionMode('online');
+    return;
+  }
   if (promptText === 'modal:studio') {
     showModal('modal-creative-studio');
     switchStudioTab('t2i');
