@@ -241,6 +241,99 @@
   }
   .icon-btn:hover { background: var(--card-hover); border-color: #475569; }
 
+  /* Interactive Command Description Box */
+  .cmd-desc-box {
+    margin: 12px 0 8px 0;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+  .cmd-desc-box summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: #38bdf8;
+    outline: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cmd-desc-box summary:hover { color: #7dd3fc; }
+  .cmd-desc-content {
+    margin-top: 10px;
+    color: var(--text-main);
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.12);
+  }
+  .cmd-param-list { margin: 8px 0; padding-left: 18px; }
+  .cmd-param-list li { margin-bottom: 6px; }
+  .cmd-param-tag {
+    font-family: monospace;
+    background: rgba(56, 189, 248, 0.16);
+    color: #38bdf8;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+
+  /* Visual Images & Diagram Cards */
+  .ai-visual-card {
+    margin: 14px 0;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px;
+    overflow: hidden;
+  }
+  .ai-visual-img {
+    max-width: 100%;
+    max-height: 380px;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+    display: inline-block;
+  }
+  .ai-visual-caption {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* Searchable Topic Pills for Network Mode */
+  .topic-pills-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 6px 2px 10px 2px;
+    margin-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .topic-pill {
+    background: #1e293b;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #e2e8f0;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .topic-pill:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: #38bdf8;
+    color: #38bdf8;
+    transform: translateY(-1px);
+  }
+
   /* Auto-Fit Chat Scroll Feed */
   #chat-scroll-area {
     flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 0 10px 0;
@@ -3784,6 +3877,10 @@ function processOfflineAIQuery(q) {
   }
 
   // ── 16. GPON OLT, ONT & ROUTER CONFIGS ────────────────────────────────────
+  if (typeof getNetworkUtilityOrContextResponse === 'function') {
+    var netRespOffline = getNetworkUtilityOrContextResponse(q, currentLang);
+    if (netRespOffline && netRespOffline.found) return netRespOffline;
+  }
   if (/(olt|ont|gpon|epon|ftth|optical\s*line|lineprofile|srvprofile|service-port|t-?cont|gemport)/i.test(qLower)) {
     var omniOlt = handleOmniGenerativePrompt(q, currentLang, false);
     if (omniOlt && omniOlt.found) return omniOlt;
@@ -6708,11 +6805,35 @@ function renderChips() {
       ];
     }
   } else if (currentPersona === 'neteng' || currentPersona === 'engineer') {
+    var pillsBar = document.createElement('div');
+    pillsBar.className = 'topic-pills-bar';
+    pillsBar.innerHTML = 
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'OSPF multi-area configuration with Cisco and Huawei commands\')">🧭 OSPF</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'BGP peering configuration and neighbor states\')">🌐 BGP</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'Generate Huawei GPON OLT service-port config for VLAN 100\')">⚡ Huawei GPON</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'ZTE GPON OLT configuration for C300 C320\')">🔌 ZTE OLT</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'Calculate subnet 192.168.10.0/27\')">🧮 Subnet /27</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'VLAN trunk configuration Cisco Huawei 802.1Q\')">🔀 VLAN Trunk</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'GPON optical power attenuation budget and troubleshooting\')">🛠️ Fiber dBm</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'MTU and MSS troubleshooting with DF bit ping commands\')">🩺 MTU/MSS</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'Configure DHCP snooping and dynamic ARP inspection\')">🔒 DHCP Snoop</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'OSPF-5-ADJCHG: Nbr 192.168.1.2 down Dead timer expired\')">📊 Log Analyzer</button>' +
+      '<button type="button" class="topic-pill" onclick="submitQuick(\'Mikrotik queue tree PCQ configuration\')">📶 MikroTik</button>';
+    c.appendChild(pillsBar);
+
     chips = [
-      { t: '🌐 Topology Diagram', d: 'Dual-homed OSPF core routers & Huawei OLT', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' },
-      { t: '🧮 Subnet Calculator', d: 'Calculate IP host range, netmask & broadcast', q: 'Calculate subnet 192.168.10.0/27' },
+      { t: '🧭 OSPF Multi-Area Setup', d: 'Area 0 backbone, router-id, cost & dead timers', q: 'OSPF multi-area configuration with Cisco and Huawei commands' },
+      { t: '🌐 BGP Peering & Policies', d: 'eBGP / iBGP, next-hop-self & route-map', q: 'BGP peering configuration and neighbor states' },
       { t: '⚡ Huawei GPON OLT Service', d: 'Provisioning DBA profile, lineprofile & port', q: 'Generate Huawei GPON OLT service-port config for VLAN 100' },
-      { t: '🔌 ZTE GPON OLT Config', d: 'Configure GPON ONU profile and port on ZTE C320', q: 'ZTE GPON OLT configuration for C300 C320' }
+      { t: '🔌 ZTE GPON OLT Config', d: 'Configure GPON ONU profile and port on ZTE C320', q: 'ZTE GPON OLT configuration for C300 C320' },
+      { t: '🧮 Subnet Calculator', d: 'Calculate IP host range, netmask & broadcast', q: 'Calculate subnet 192.168.10.0/27' },
+      { t: '🔀 VLAN & 802.1Q Trunking', d: 'Cisco dot1q & Huawei trunk allow-pass VLANs', q: 'VLAN trunk configuration Cisco Huawei 802.1Q' },
+      { t: '🛠️ Fiber Optical Power Budget', d: 'Splitter loss (1:8 to 1:64) & healthy dBm range', q: 'GPON optical power attenuation budget and troubleshooting' },
+      { t: '🩺 MTU, MSS & Path Ping', d: 'DF-bit ping, 1500 MTU vs 1492 PPPoE & MSS adjust', q: 'MTU and MSS troubleshooting with DF bit ping commands' },
+      { t: '🔒 DHCP Snooping & Defense', d: 'Trust ports, Option 82 & Dynamic ARP Inspection', q: 'Configure DHCP snooping and dynamic ARP inspection' },
+      { t: '📊 Log & Context Analyzer', d: 'Paste error/status log for root cause & fix CLI', q: 'OSPF-5-ADJCHG: Nbr 192.168.1.2 down Dead timer expired' },
+      { t: '📶 MikroTik PCQ Bandwidth', d: 'Fair queue tree & bandwidth limit configuration', q: 'Mikrotik queue tree PCQ configuration' },
+      { t: '🌐 Topology Diagram', d: 'Dual-homed OSPF core routers & Huawei OLT', q: 'Draw a network diagram of OSPF core routers with Huawei OLT' }
     ];
   } else {
     // General Queries Mode — strictly general assistant & creative tasks (no network configs)
@@ -8185,19 +8306,116 @@ function renderTopologySVG() {
   '</svg>';
 }
 
+function renderOspfAreaSVG() {
+  return '<svg viewBox="0 0 680 180" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:640px; height:auto; font-family:-apple-system,sans-serif;">' +
+    '<defs>' +
+      '<linearGradient id="gradArea0" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#0284c7"/></linearGradient>' +
+      '<linearGradient id="gradArea1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#334155"/></linearGradient>' +
+      '<filter id="glow"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.3"/></filter>' +
+    '</defs>' +
+    '<rect x="20" y="25" width="180" height="130" rx="12" fill="url(#gradArea1)" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,4"/>' +
+    '<text x="110" y="48" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="middle">STANDARD AREA 1</text>' +
+    '<text x="110" y="65" fill="#64748b" font-size="10" text-anchor="middle">10.10.1.0/24</text>' +
+    '<rect x="240" y="15" width="200" height="150" rx="14" fill="url(#gradArea0)" stroke="#38bdf8" stroke-width="2" filter="url(#glow)"/>' +
+    '<text x="340" y="40" fill="#f8fafc" font-size="13" font-weight="800" text-anchor="middle">BACKBONE AREA 0</text>' +
+    '<text x="340" y="58" fill="#bae6fd" font-size="11" text-anchor="middle">Transit Core · 10.0.0.0/24</text>' +
+    '<rect x="480" y="25" width="180" height="130" rx="12" fill="url(#gradArea1)" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,4"/>' +
+    '<text x="570" y="48" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="middle">STANDARD AREA 2</text>' +
+    '<text x="570" y="65" fill="#64748b" font-size="10" text-anchor="middle">10.20.1.0/24</text>' +
+    '<circle cx="110" cy="105" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>' +
+    '<text x="110" y="109" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">R1</text>' +
+    '<circle cx="280" cy="105" r="26" fill="#0f172a" stroke="#facc15" stroke-width="2.5"/>' +
+    '<text x="280" y="105" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">ABR-1</text>' +
+    '<text x="280" y="118" fill="#facc15" font-size="8" font-weight="600" text-anchor="middle">Area 0/1</text>' +
+    '<circle cx="400" cy="105" r="26" fill="#0f172a" stroke="#facc15" stroke-width="2.5"/>' +
+    '<text x="400" y="105" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">ABR-2</text>' +
+    '<text x="400" y="118" fill="#facc15" font-size="8" font-weight="600" text-anchor="middle">Area 0/2</text>' +
+    '<circle cx="570" cy="105" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>' +
+    '<text x="570" y="109" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">R2</text>' +
+    '<line x1="132" y1="105" x2="254" y2="105" stroke="#38bdf8" stroke-width="2.5"/>' +
+    '<line x1="306" y1="105" x2="374" y2="105" stroke="#facc15" stroke-width="3"/>' +
+    '<line x1="426" y1="105" x2="548" y2="105" stroke="#38bdf8" stroke-width="2.5"/>' +
+  '</svg>';
+}
+
+function renderBgpTopologySVG() {
+  return '<svg viewBox="0 0 680 150" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:640px; height:auto; font-family:-apple-system,sans-serif;">' +
+    '<defs>' +
+      '<linearGradient id="gAs1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>' +
+      '<linearGradient id="gAsIsp" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#701a75"/><stop offset="100%" stop-color="#a21caf"/></linearGradient>' +
+    '</defs>' +
+    '<rect x="20" y="20" width="200" height="110" rx="12" fill="url(#gAs1)" stroke="#38bdf8" stroke-width="2"/>' +
+    '<text x="120" y="45" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">AS 65001 (Customer)</text>' +
+    '<circle cx="80" cy="85" r="18" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>' +
+    '<text x="80" y="89" fill="#fff" font-size="9" text-anchor="middle">CE-1</text>' +
+    '<circle cx="160" cy="85" r="18" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>' +
+    '<text x="160" y="89" fill="#fff" font-size="9" text-anchor="middle">CE-2</text>' +
+    '<line x1="98" y1="85" x2="142" y2="85" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3,3"/>' +
+    '<text x="120" y="105" fill="#94a3b8" font-size="8" text-anchor="middle">iBGP</text>' +
+    '<rect x="280" y="20" width="180" height="110" rx="12" fill="url(#gAsIsp)" stroke="#f472b6" stroke-width="2"/>' +
+    '<text x="370" y="45" fill="#fdf2f8" font-size="12" font-weight="800" text-anchor="middle">AS 174 (Tier-1 ISP)</text>' +
+    '<circle cx="370" cy="85" r="20" fill="#4a044e" stroke="#f472b6" stroke-width="2"/>' +
+    '<text x="370" y="89" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">PE-1</text>' +
+    '<rect x="520" y="20" width="140" height="110" rx="12" fill="url(#gAs1)" stroke="#10b981" stroke-width="2"/>' +
+    '<text x="590" y="45" fill="#6ee7b7" font-size="12" font-weight="800" text-anchor="middle">AS 16509 (AWS)</text>' +
+    '<circle cx="590" cy="85" r="20" fill="#064e3b" stroke="#10b981" stroke-width="2"/>' +
+    '<text x="590" y="89" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">Cloud-GW</text>' +
+    '<line x1="178" y1="85" x2="350" y2="85" stroke="#facc15" stroke-width="3"/>' +
+    '<text x="250" y="78" fill="#facc15" font-size="9" font-weight="700" text-anchor="middle">eBGP (TCP 179)</text>' +
+    '<line x1="390" y1="85" x2="570" y2="85" stroke="#facc15" stroke-width="3"/>' +
+    '<text x="480" y="78" fill="#facc15" font-size="9" font-weight="700" text-anchor="middle">eBGP</text>' +
+  '</svg>';
+}
+
+function renderGponTopologySVG() {
+  return '<svg viewBox="0 0 680 160" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:640px; height:auto; font-family:-apple-system,sans-serif;">' +
+    '<defs>' +
+      '<linearGradient id="gOlt" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#047857"/><stop offset="100%" stop-color="#10b981"/></linearGradient>' +
+      '<linearGradient id="gSplit" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>' +
+      '<linearGradient id="gOnt" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0369a1"/><stop offset="100%" stop-color="#0284c7"/></linearGradient>' +
+    '</defs>' +
+    '<rect x="20" y="40" width="130" height="80" rx="10" fill="url(#gOlt)" stroke="#6ee7b7" stroke-width="1.5"/>' +
+    '<text x="85" y="72" fill="#fff" font-size="13" font-weight="800" text-anchor="middle">GPON OLT</text>' +
+    '<text x="85" y="90" fill="#d1fae5" font-size="10" text-anchor="middle">TX: +3.0 dBm (1490nm)</text>' +
+    '<text x="85" y="104" fill="#a7f3d0" font-size="9" text-anchor="middle">MA5800 / C320</text>' +
+    '<line x1="150" y1="80" x2="280" y2="80" stroke="#10b981" stroke-width="3"/>' +
+    '<text x="215" y="72" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle">Feeder Fiber (~5km)</text>' +
+    '<text x="215" y="96" fill="#64748b" font-size="9" text-anchor="middle">Loss: -1.7 dB</text>' +
+    '<polygon points="280,40 370,80 280,120" fill="url(#gSplit)" stroke="#d8b4fe" stroke-width="1.5"/>' +
+    '<text x="315" y="78" fill="#fff" font-size="12" font-weight="800" text-anchor="middle">1:64</text>' +
+    '<text x="315" y="92" fill="#f3e8ff" font-size="9" text-anchor="middle">Splitter</text>' +
+    '<text x="325" y="138" fill="#c084fc" font-size="10" font-weight="600" text-anchor="middle">Loss: ~20.5 dB</text>' +
+    '<line x1="370" y1="80" x2="490" y2="60" stroke="#38bdf8" stroke-width="2"/>' +
+    '<line x1="370" y1="80" x2="490" y2="100" stroke="#38bdf8" stroke-width="2"/>' +
+    '<rect x="490" y="25" width="160" height="50" rx="8" fill="url(#gOnt)" stroke="#7dd3fc" stroke-width="1.5"/>' +
+    '<text x="570" y="47" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">ONT #1 (Customer A)</text>' +
+    '<text x="570" y="63" fill="#bae6fd" font-size="10" text-anchor="middle">RX: -19.2 dBm (Healthy ✓)</text>' +
+    '<rect x="490" y="85" width="160" height="50" rx="8" fill="url(#gOnt)" stroke="#7dd3fc" stroke-width="1.5"/>' +
+    '<text x="570" y="107" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">ONT #2 (Customer B)</text>' +
+    '<text x="570" y="123" fill="#bae6fd" font-size="10" text-anchor="middle">RX: -20.4 dBm (Healthy ✓)</text>' +
+  '</svg>';
+}
+
 function formatResponse(text) {
   if (!text) return 'Empty response.';
 
   var hasDiagram = (text.indexOf('mermaid') !== -1 || text.indexOf('ASCII Topology') !== -1);
   var svgHtml = hasDiagram ? renderTopologySVG() : '';
 
-  // Extract raw SVG blocks and 3D cinematic video cards before escaping HTML
+  // Extract raw SVG blocks, details/summary blocks, and cards before escaping HTML
   var svgBlocks = [];
   var cardBlocks = [];
+  var detailsBlocks = [];
   var clean = text.split('\r\n').join('\n').split('\r').join('\n');
+
   clean = clean.replace(/<svg[\s\S]*?<\/svg>/gi, function(match) {
     var placeholder = '___GAM_SVG_BLOCK_' + svgBlocks.length + '___';
     svgBlocks.push(match);
+    return placeholder;
+  });
+  clean = clean.replace(/<details[\s\S]*?<\/details>/gi, function(match) {
+    var placeholder = '___GAM_DETAILS_BLOCK_' + detailsBlocks.length + '___';
+    detailsBlocks.push(match);
     return placeholder;
   });
   clean = clean.replace(/<!--GAM_CINEMATIC_START-->([\s\S]*?)<!--GAM_CINEMATIC_END-->/gi, function(match, inner) {
@@ -8210,6 +8428,11 @@ function formatResponse(text) {
     cardBlocks.push(match);
     return placeholder;
   });
+  clean = clean.replace(/<div class="ai-visual-card"[\s\S]*?<\/div>\s*<\/div>/gi, function(match) {
+    var placeholder = '___GAM_CARD_BLOCK_' + cardBlocks.length + '___';
+    cardBlocks.push(match);
+    return placeholder;
+  });
 
   var parts = clean.split('```');
   var out = '';
@@ -8217,11 +8440,21 @@ function formatResponse(text) {
   for (var i = 0; i < parts.length; i++) {
     if (i % 2 === 0) {
       var s = escapeHtml(parts[i]);
+
+      // Remove any leftover external source URLs or search lists
+      s = s.replace(/\[(?:Wikipedia Encyclopedia|Google Live Search|DuckDuckGo Instant Answer|DuckDuckGo:[^\]]+|Google:[^\]]+|Wikipedia Search)\]\([^)]+\)/gi, '');
+
+      // Support markdown images ![alt](url)
+      s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+        return '<div class="chat-image-wrap" style="margin:12px 0; text-align:center;"><img src="' + src + '" alt="' + escapeHtml(alt) + '" class="ai-visual-img" /><div class="ai-visual-caption">📷 ' + escapeHtml(alt || 'Verified Visual') + '</div></div>';
+      });
+
       // Support interactive action buttons [[btn:Display Label|command]]
       s = s.replace(/\[\[btn:([^\|\]]+)\|([^\]]+)\]\]/g, function(match, label, cmd) {
         var cleanCmd = cmd.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         return '<button type="button" class="interactive-choice-btn" onclick="submitQuick(\'' + cleanCmd + '\')">' + label + '</button>';
       });
+
       var boldParts = s.split('**');
       var bFormatted = '';
       for (var j = 0; j < boldParts.length; j++) {
@@ -8245,6 +8478,9 @@ function formatResponse(text) {
   for (var k = 0; k < svgBlocks.length; k++) {
     var wrapper = '<div style="margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid var(--border-color); background:rgba(0,0,0,0.35); padding:8px; display:flex; justify-content:center; align-items:center;">' + svgBlocks[k] + '</div>';
     out = out.replace('___GAM_SVG_BLOCK_' + k + '___', wrapper);
+  }
+  for (var d = 0; d < detailsBlocks.length; d++) {
+    out = out.replace('___GAM_DETAILS_BLOCK_' + d + '___', detailsBlocks[d]);
   }
   for (var c = 0; c < cardBlocks.length; c++) {
     out = out.replace('___GAM_CARD_BLOCK_' + c + '___', cardBlocks[c]);
@@ -8299,19 +8535,710 @@ function safeFetchJson(url, options) {
   return Promise.resolve(null);
 }
 
-// ─── GREETING & CAPABILITY RESPONDER ────────────────────────────────────────
+// ─── NETWORK UTILITY & CONTEXT / REFERENCE LOG ANALYZER ────────────────────
+function getNetworkUtilityOrContextResponse(q, lang) {
+  var qLower = (q || '').toLowerCase().trim();
+  var isHi = (lang === 'hi');
+  var isNe = (lang === 'ne');
+
+  // 1. CONTEXT / REFERENCE LOG & ERROR ANALYZER
+  var isOspfLog = /(ospf-5-adjchg|ospf.*adjchg|nbr.*down|dead\s*timer\s*expired|mtu.*mismatch.*dbd)/i.test(qLower);
+  var isBgpLog = /(bgp-5-adjchange|bgp.*down|active\s*state\s*stuck|notification\s*sent.*bgp)/i.test(qLower);
+  var isOpticalLog = /(loss\s*of\s*signal|ont\s*los|optical\s*power\s*-\d+|high\s*attenuation|pon\s*los)/i.test(qLower);
+  var isDuplexLog = /(duplex\s*mismatch|%cdp-4-duplex_mismatch|half-duplex.*full-duplex)/i.test(qLower);
+  var isErrDisableLog = /(err-disable|bpduguard|loopback\s*error|storm-control\s*drop)/i.test(qLower);
+  var isIpConflictLog = /(duplicate\s*ip|ip\s*conflict|address\s*conflict)/i.test(qLower);
+
+  if (isOspfLog) {
+    return {
+      found: true,
+      topic: 'OSPF Adjacency Log Diagnosis',
+      response: '🛠️ **Network Context & Reference Analysis: OSPF Adjacency Drop**\n\n' +
+        '### 🎯 Context & Symptom Diagnosis\n' +
+        '- **Event:** OSPF Neighbor state transition failure or Dead Timer expiration.\n' +
+        '- **Severity:** High (Routing Adjacency Down — Potential Traffic Blackholing).\n\n' +
+        '### 🔍 Root Cause Identification\n' +
+        '1. **Dead/Hello Timer Mismatch:** Hello (10s) / Dead (40s) intervals must match identically across the peering link.\n' +
+        '2. **MTU Mismatch in DBD Exchange:** Interface MTU on one end is higher (e.g. 1500 vs 9000), causing Database Description (DBD) packets to get dropped in `EXSTART` or `LOADING` state.\n' +
+        '3. **Area ID or Subnet Mask Discrepancy:** OSPF requires both ends of a broadcast/point-to-point link to share the identical subnet mask and area number.\n' +
+        '4. **Multicast Packet Drop:** Network firewall or L2 switch dropping OSPF multicast frames (`224.0.0.5` / `224.0.0.6` / IP Protocol 89).\n\n' +
+        '### ⚡ Immediate Verification CLI\n' +
+        '```text\n' +
+        '# Cisco IOS/XE\n' +
+        'show ip ospf neighbor\n' +
+        'show ip ospf interface GigabitEthernet0/0/0\n' +
+        'debug ip ospf adj\n\n' +
+        '# Huawei VRP\n' +
+        'display ospf peer brief\n' +
+        'display ospf interface GigabitEthernet0/0/1\n' +
+        '```\n\n' +
+        '### 🔧 Complete Remediation CLI\n' +
+        '```text\n' +
+        '! --- Cisco IOS/XE: Enforce Consistent MTU & Standard Timers ---\n' +
+        'interface GigabitEthernet0/0/0\n' +
+        ' ip mtu 1500\n' +
+        ' ip ospf hello-interval 10\n' +
+        ' ip ospf dead-interval 40\n' +
+        ' ! Emergency MTU ignore workaround if peer is 3rd party vendor:\n' +
+        ' ip ospf mtu-ignore\n' +
+        ' no shutdown\n' +
+        ' exit\n\n' +
+        '# --- Huawei VRP: Enforce Timers & Reset Adjacency ---\n' +
+        'interface GigabitEthernet0/0/1\n' +
+        ' mtu 1500\n' +
+        ' ospf timer hello 10\n' +
+        ' ospf timer dead 40\n' +
+        ' ospf mtu-enable\n' +
+        ' quit\n' +
+        'reset ospf 1 process\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">ip mtu 1500</span>: Aligns Maximum Transmission Unit to the Ethernet standard (1500 bytes), resolving DBD packet drop loops.</li>' +
+        '<li><span class="cmd-param-tag">ip ospf hello-interval 10</span>: Sets the heartbeat interval (seconds) sent to multicast address 224.0.0.5.</li>' +
+        '<li><span class="cmd-param-tag">ip ospf dead-interval 40</span>: Failsafe timeout; if 4 consecutive Hellos are missed, neighbor is declared dead.</li>' +
+        '<li><span class="cmd-param-tag">ip ospf mtu-ignore</span>: Tells OSPF to skip MTU validation in Database Description (DBD) packets — crucial for multivendor links.</li>' +
+        '</ul></div></details>\n\n' +
+        '### ✓ Post-Check Validation\n' +
+        '- Run `show ip ospf neighbor` — Verify neighbor state transitions through `INIT` ➔ `2-WAY` ➔ `EXSTART` ➔ `LOADING` ➔ **`FULL/DR`** or **`FULL/BDR`**.\n\n' +
+        '[[btn:🧭 OSPF Multi-Area Setup|OSPF multi-area configuration with Cisco and Huawei commands]] [[btn:🧮 Subnet /27|Calculate subnet 192.168.10.0/27]]'
+    };
+  }
+
+  if (isBgpLog) {
+    return {
+      found: true,
+      topic: 'BGP Peering Log Diagnosis',
+      response: '🛠️ **Network Context & Reference Analysis: BGP Peering Down / Active State Stuck**\n\n' +
+        '### 🎯 Context & Symptom Diagnosis\n' +
+        '- **Event:** BGP Session dropped or stuck cycling between `Connect` and `Active` states.\n' +
+        '- **Severity:** Critical (Border Gateway Routing Interruption).\n\n' +
+        '### 🔍 Root Cause Identification\n' +
+        '1. **TCP Port 179 Filtered:** Firewall, ACL, or ISP transit blocking TCP port 179.\n' +
+        '2. **AS Number Mismatch:** The remote AS declared in `neighbor remote-as` does not match the actual AS running on the peer.\n' +
+        '3. **Update-Source / IP Mismatch:** eBGP/iBGP is configured between loopback IPs without specifying `update-source Loopback0`, or multi-hop TTL expired.\n' +
+        '4. **Routing Recursion:** No route to peer IP exists in the local routing table (no default gateway or direct link).\n\n' +
+        '### ⚡ Immediate Verification CLI\n' +
+        '```text\n' +
+        'show ip bgp summary\n' +
+        'show ip route <neighbor_ip>\n' +
+        'show tcp brief\n' +
+        '```\n\n' +
+        '### 🔧 Complete Remediation CLI\n' +
+        '```text\n' +
+        '! --- Cisco IOS/XE: Verify Loopback Update-Source & eBGP Multihop ---\n' +
+        'router bgp 65001\n' +
+        ' neighbor 192.168.10.2 remote-as 65002\n' +
+        ' neighbor 192.168.10.2 ebgp-multihop 2\n' +
+        ' neighbor 192.168.10.2 update-source GigabitEthernet0/0/0\n' +
+        ' neighbor 192.168.10.2 timers 30 90\n' +
+        ' exit\n\n' +
+        '! --- Allow BGP in Access-List ---\n' +
+        'ip access-list extended ALLOW_BGP\n' +
+        ' permit tcp any host 192.168.10.1 eq 179\n' +
+        ' permit tcp any eq 179 host 192.168.10.1\n' +
+        ' exit\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">ebgp-multihop 2</span>: Increases IP TTL for eBGP packets from 1 to 2, allowing peering across non-directly connected interfaces.</li>' +
+        '<li><span class="cmd-param-tag">update-source</span>: Binds the TCP 179 socket to the exact outgoing interface IP expected by the remote neighbor.</li>' +
+        '<li><span class="cmd-param-tag">timers 30 90</span>: Sets Keepalive interval to 30s and Holdtime to 90s (3x Keepalive).</li>' +
+        '</ul></div></details>\n\n' +
+        '[[btn:🌐 BGP Peering Setup|BGP peering configuration and neighbor states]] [[btn:🧭 OSPF Area Setup|OSPF multi-area configuration with Cisco and Huawei commands]]'
+    };
+  }
+
+  if (isOpticalLog) {
+    return {
+      found: true,
+      topic: 'Fiber Optical Loss / ONT LOS Diagnosis',
+      response: '🛠️ **Network Context & Reference Analysis: Fiber LOS / Optical Power Loss**\n\n' +
+        '### 🎯 Context & Symptom Diagnosis\n' +
+        '- **Event:** Loss of Signal (LOS) or Optical Received Power (RX) dropping below receiver threshold.\n' +
+        '- **Threshold:** Critical when ONT RX < -28.0 dBm (Laser loss limit).\n\n' +
+        '### 🔍 Root Cause Identification\n' +
+        '1. **Fiber Macro-bend or Micro-bend:** Tight cable bends in drop cable, patch cords, or ODF rack tray (radius must be > 30mm).\n' +
+        '2. **Dirty or Damaged APC/UPC Connector:** SC/APC (green angled 8°) mated with SC/UPC (blue flat), causing massive insertion loss (> 10 dB) and optical reflection.\n' +
+        '3. **Damaged Splitter Port:** Uneven split loss in 1:8, 1:16, 1:32 or 1:64 passive optical splitter.\n' +
+        '4. **Fiber Core Cut:** Physical break in the outdoor feeder or drop fiber cable.\n\n' +
+        '### ⚡ Immediate Verification CLI\n' +
+        '```text\n' +
+        '# Huawei OLT\n' +
+        'display ont optical-info 0 1\n' +
+        'display ont info 0 1\n\n' +
+        '# ZTE OLT\n' +
+        'show pon power attenuation gpon-onu_1/1/1:1\n' +
+        '```\n\n' +
+        '### 📊 Optical Power Reference Standards\n' +
+        '| Metric | Safe Target | Marginal / Warning | Critical / LOS |\n|---|---|---|---|\n' +
+        '| **OLT TX (1490nm)** | `+2.0` to `+5.0 dBm` (Class B+) | `+1.0 dBm` | `< 0 dBm` (Faulty SFP) |\n' +
+        '| **ONT RX (1490nm)** | **`-15.0` to `-23.0 dBm`** | **`-24.0` to `-27.0 dBm`** | **`< -28.0 dBm` (LOS)** |\n' +
+        '| **ONT TX (1310nm)** | `+0.5` to `+5.0 dBm` | `< 0 dBm` | Rogue Laser |\n\n' +
+        '[[btn:🛠️ Full Fiber Power Budget|GPON optical power attenuation budget and troubleshooting]] [[btn:⚡ Huawei GPON OLT|Generate Huawei GPON OLT service-port config for VLAN 100]]'
+    };
+  }
+
+  // 2. OSPF MULTI-AREA ROUTING
+  if (qLower === 'ospf' || /(ospf.*config|ospf.*multi-area|ospf.*area\s*0|ospf.*cisco|ospf.*huawei)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'OSPF Multi-Area Setup',
+      response: '🧭 **OSPF (Open Shortest Path First) Complete Multi-Area Configuration**\n\n' +
+        renderOspfAreaSVG() + '\n\n' +
+        '### 💡 Architectural Intuition & Mechanics\n' +
+        'OSPF is an open standard, interior link-state routing protocol (RFC 2328). Every router floods **Link-State Advertisements (LSAs)** across its assigned Area to build a complete topological map of the network (Link-State Database - LSDB). It executes **Dijkstra\'s Shortest Path First (SPF)** algorithm to compute the mathematically lowest-cost, loop-free path to every destination prefix.\n\n' +
+        '- **Area Hierarchy:** Standard multi-area design requires **Backbone Area 0** as the central transit hub. All non-backbone areas (Area 1, Area 2) must physically or logically connect directly to Area 0 to prevent inter-area routing loops.\n' +
+        '- **Router Roles:** **Internal Routers** (all interfaces in one area), **Area Border Routers (ABR)** (interfaces in Area 0 and secondary areas), and **Autonomous System Boundary Routers (ASBR)** (redistributing external BGP/Static routes).\n' +
+        '- **Administrative Distance:** `110` on Cisco IOS / `10` on Huawei VRP.\n' +
+        '- **Metric Formula:** $\\text{Cost} = \\frac{\\text{Reference Bandwidth (default 100 Mbps)}}{\\text{Interface Bandwidth}}$.\n\n' +
+        '### 🔧 Production Multi-Vendor CLI Commands\n\n' +
+        '```text\n' +
+        '! ==========================================================\n' +
+        '! Cisco IOS/XE: ABR Router (Backbone Area 0 + Standard Area 1)\n' +
+        '! ==========================================================\n' +
+        'router ospf 1\n' +
+        ' router-id 1.1.1.1\n' +
+        ' log-adjacency-changes\n' +
+        ' auto-cost reference-bandwidth 10000\n' +
+        ' passive-interface default\n' +
+        ' no passive-interface GigabitEthernet0/0/0\n' +
+        ' no passive-interface GigabitEthernet0/0/1\n' +
+        ' network 10.0.0.0 0.0.0.255 area 0\n' +
+        ' network 10.10.1.0 0.0.0.255 area 1\n' +
+        ' exit\n' +
+        '!\n' +
+        'interface GigabitEthernet0/0/0\n' +
+        ' description Backbone Core Link to R2 (Area 0)\n' +
+        ' ip address 10.0.0.1 255.255.255.0\n' +
+        ' ip ospf cost 10\n' +
+        ' ip ospf hello-interval 10\n' +
+        ' ip ospf dead-interval 40\n' +
+        ' ip ospf priority 100\n' +
+        ' no shutdown\n' +
+        ' exit\n' +
+        '!\n' +
+        'interface GigabitEthernet0/0/1\n' +
+        ' description Branch Access Link (Area 1)\n' +
+        ' ip address 10.10.1.1 255.255.255.0\n' +
+        ' ip ospf cost 10\n' +
+        ' no shutdown\n' +
+        ' exit\n\n' +
+        '# ==========================================================\n' +
+        '# Huawei VRP: OSPF Multi-Area Setup\n' +
+        '# ==========================================================\n' +
+        'ospf 1 router-id 1.1.1.1\n' +
+        ' bandwidth-reference 10000\n' +
+        ' silent-interface all\n' +
+        ' undo silent-interface GigabitEthernet0/0/1\n' +
+        ' area 0.0.0.0\n' +
+        '  network 10.0.0.0 0.0.0.255\n' +
+        ' area 0.0.0.1\n' +
+        '  network 10.10.1.0 0.0.0.255\n' +
+        ' quit\n' +
+        'interface GigabitEthernet0/0/1\n' +
+        ' ip address 10.0.0.1 255.255.255.0\n' +
+        ' ospf cost 10\n' +
+        ' ospf timer hello 10\n' +
+        ' ospf timer dead 40\n' +
+        ' ospf dr-priority 100\n' +
+        ' undo shutdown\n' +
+        'quit\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">router ospf 1</span>: Initializes OSPF routing process instance ID 1 (locally significant to this router).</li>' +
+        '<li><span class="cmd-param-tag">router-id 1.1.1.1</span>: Assigns a 32-bit unique identifier for the router inside the LSDB (Link-State Database).</li>' +
+        '<li><span class="cmd-param-tag">auto-cost reference-bandwidth 10000</span>: Adjusts reference bandwidth to 10 Gbps so 1G and 10G interfaces get distinct metric costs.</li>' +
+        '<li><span class="cmd-param-tag">passive-interface default</span>: Security hardening: stops broadcasting OSPF Hello packets out of all interfaces by default.</li>' +
+        '<li><span class="cmd-param-tag">no passive-interface Gi0/0/0</span>: Unsuppresses OSPF on designated router-to-router interconnects.</li>' +
+        '<li><span class="cmd-param-tag">network 10.0.0.0 0.0.0.255 area 0</span>: Associates any interface matching the wildcard mask into Backbone Area 0.</li>' +
+        '<li><span class="cmd-param-tag">ip ospf dead-interval 40</span>: Defines neighbor dead countdown (40s, 4x Hello interval).</li>' +
+        '<li><span class="cmd-param-tag">ip ospf priority 100</span>: Sets Designated Router (DR) election priority (0 = never DR, 255 = highest).</li>' +
+        '</ul></div></details>\n\n' +
+        '### ⚡ Verification & Troubleshooting Commands\n' +
+        '```text\n' +
+        'show ip ospf neighbor          ! Verify neighbor state is FULL/DR or FULL/BDR\n' +
+        'show ip ospf database          ! Inspect LSA Types (Router, Network, Summary)\n' +
+        'show ip route ospf             ! Display routes learned through OSPF\n' +
+        '```\n\n' +
+        '[[btn:🌐 BGP Peering Setup|BGP peering configuration and neighbor states]] [[btn:🧮 Subnet /27|Calculate subnet 192.168.10.0/27]] [[btn:⚡ GPON Provisioning|Generate Huawei GPON OLT service-port config for VLAN 100]]'
+    };
+  }
+
+  // 3. BGP PEERING & POLICIES
+  if (qLower === 'bgp' || /(bgp.*peering|bgp.*config|bgp.*neighbor|ebgp|ibgp)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'BGP Peering & Policy Routing',
+      response: '🌐 **BGP (Border Gateway Protocol) Peering & Routing Policy Utility**\n\n' +
+        renderBgpTopologySVG() + '\n\n' +
+        '### 💡 Architectural Intuition & Mechanics\n' +
+        'BGP is the routing backbone of the worldwide Internet (RFC 4271). As a **path-vector protocol**, it does not compute shortest metrics like OSPF; instead, it tracks the full chain of Autonomous Systems (**AS-Path**) that a packet must traverse, guaranteeing loop-free inter-domain routing.\n\n' +
+        '- **eBGP (External BGP):** Peers in different Autonomous Systems (default AD 20). Uses TTL=1 by default.\n' +
+        '- **iBGP (Internal BGP):** Peers within the same Autonomous System (default AD 200). Requires `next-hop-self` on ABR/border routers.\n' +
+        '- **BGP Finite State Machine (FSM):** Cycles through `Idle` ➔ `Connect` ➔ `Active` ➔ `OpenSent` ➔ `OpenConfirm` ➔ **`Established`**.\n' +
+        '- **Primary Path Attributes:** **Weight** (Cisco local only) > **Local Preference** (highest wins across AS) > **AS-Path length** (shortest wins) > **MED** (Multi-Exit Discriminator).\n\n' +
+        '### 🔧 Production Multi-Vendor CLI Commands\n\n' +
+        '```text\n' +
+        '! --- Cisco IOS/XE: Enterprise Edge Router (eBGP to ISP + iBGP to Core) ---\n' +
+        'router bgp 65001\n' +
+        ' bgp router-id 192.168.10.1\n' +
+        ' bgp log-neighbor-changes\n' +
+        ' ! eBGP Peer to Tier-1 ISP\n' +
+        ' neighbor 203.0.113.1 remote-as 174\n' +
+        ' neighbor 203.0.113.1 description PRIMARY_ISP_LINK\n' +
+        ' neighbor 203.0.113.1 soft-reconfiguration inbound\n' +
+        ' neighbor 203.0.113.1 route-map PREFER_INBOUND in\n' +
+        ' !\n' +
+        ' ! iBGP Peer to Internal Core Router\n' +
+        ' neighbor 10.0.0.2 remote-as 65001\n' +
+        ' neighbor 10.0.0.2 update-source Loopback0\n' +
+        ' neighbor 10.0.0.2 next-hop-self\n' +
+        ' !\n' +
+        ' ! Originate Enterprise Prefix\n' +
+        ' network 198.51.100.0 mask 255.255.255.0\n' +
+        ' exit\n' +
+        '!\n' +
+        '! Policy: Prefer primary ISP by raising Local Preference\n' +
+        'route-map PREFER_INBOUND permit 10\n' +
+        ' set local-preference 200\n' +
+        ' exit\n\n' +
+        '# --- Huawei VRP: BGP Configuration ---\n' +
+        'bgp 65001\n' +
+        ' router-id 192.168.10.1\n' +
+        ' peer 203.0.113.1 as-number 174\n' +
+        ' peer 10.0.0.2 as-number 65001\n' +
+        ' peer 10.0.0.2 connect-interface LoopBack0\n' +
+        ' peer 10.0.0.2 next-hop-local\n' +
+        ' ipv4-family unicast\n' +
+        '  network 198.51.100.0 255.255.255.0\n' +
+        '  peer 203.0.113.1 enable\n' +
+        '  peer 10.0.0.2 enable\n' +
+        ' quit\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">neighbor remote-as 174</span>: Defines BGP peer IP and remote Autonomous System; if AS differs from local AS, eBGP is assumed.</li>' +
+        '<li><span class="cmd-param-tag">soft-reconfiguration inbound</span>: Keeps unfiltered copy of peer routes in RAM for non-disruptive policy changes.</li>' +
+        '<li><span class="cmd-param-tag">next-hop-self</span>: Crucial for iBGP: tells internal peers to route traffic to this edge router instead of the unreachable external ISP next-hop IP.</li>' +
+        '<li><span class="cmd-param-tag">set local-preference 200</span>: Instructs all internal routers within AS 65001 to favor this link for outbound traffic (default is 100).</li>' +
+        '</ul></div></details>\n\n' +
+        '### ⚡ Verification Commands\n' +
+        '```text\n' +
+        'show ip bgp summary            ! Check State (must show prefix count, not Active/Idle)\n' +
+        'show ip bgp 0.0.0.0            ! View BGP path attributes and best-path determination\n' +
+        'clear ip bgp * soft in         ! Re-evaluate policies non-disruptively without dropping session\n' +
+        '```\n\n' +
+        '[[btn:🧭 OSPF Multi-Area Setup|OSPF multi-area configuration with Cisco and Huawei commands]] [[btn:🔀 VLAN Trunking|VLAN trunk configuration Cisco Huawei 802.1Q]]'
+    };
+  }
+
+  // 4. GPON OLT / ONT COMPLETE PROVISIONING
+  if (/(olt|ont|gpon|epon|ftth|optical.*line|lineprofile|srvprofile|service-port|t-?cont|gemport)/i.test(qLower)) {
+    var isZte = /(zte|c300|c320|c600)/i.test(qLower);
+    if (isZte) {
+      return {
+        found: true,
+        topic: 'ZTE GPON OLT C320 Provisioning',
+        response: '🔌 **ZTE ZXA10 C300/C320 GPON OLT Complete Provisioning**\n\n' +
+          renderGponTopologySVG() + '\n\n' +
+          '### 🔧 Complete CLI Workflow Commands\n' +
+          '```text\n' +
+          '# --- Step 1: Configure DBA Profile (1 Gbps Upstream) ---\n' +
+          'gpon\n' +
+          ' profile tcont 1G_DBA type 4 max 1024000\n' +
+          ' profile traffic 1G_TRAFFIC sir 102400 pir 1024000\n' +
+          'exit\n\n' +
+          '# --- Step 2: Configure ONU Line & Remote Profiles ---\n' +
+          'gpon\n' +
+          ' onu-profile gpon line FTTH_LINE\n' +
+          '  tcont 1 name INTERNET profile 1G_DBA\n' +
+          '  gemport 1 name DATA tcont 1\n' +
+          '  gemport 1 map 1 vlan-exact 100\n' +
+          ' exit\n' +
+          ' onu-profile gpon remote FTTH_REMOTE\n' +
+          '  service 1 gemport 1 user-vlan 100 vlan 100\n' +
+          ' exit\n\n' +
+          '# --- Step 3: Authorize ONU on PON Interface ---\n' +
+          'interface gpon-olt_1/1/1\n' +
+          ' onu 1 type ZTE-F660 sn ZTEGC1234567\n' +
+          'exit\n\n' +
+          '# --- Step 4: Map Service-Port to Core Uplink VLAN ---\n' +
+          'interface gpon-onu_1/1/1:1\n' +
+          ' tcont 1 name INTERNET profile 1G_DBA\n' +
+          ' gemport 1 name DATA tcont 1\n' +
+          ' switchport mode hybrid vport 1\n' +
+          ' service-port 1 vport 1 user-vlan 100 vlan 100\n' +
+          'exit\n' +
+          '```\n\n' +
+          '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+          '<div class="cmd-desc-content">' +
+          '<ul class="cmd-param-list">' +
+          '<li><span class="cmd-param-tag">profile tcont type 4 max 1024000</span>: Allocates Best-Effort Dynamic Bandwidth Allocation up to 1 Gbps.</li>' +
+          '<li><span class="cmd-param-tag">gemport 1 map 1 vlan-exact 100</span>: Encapsulates user Ethernet frames with 802.1Q tag 100 into GEM (GPON Encapsulation Method) frame 1.</li>' +
+          '<li><span class="cmd-param-tag">service-port 1 vport 1</span>: Translates virtual port frames to core uplink switch VLAN 100.</li>' +
+          '</ul></div></details>\n\n' +
+          '[[btn:⚡ Huawei GPON OLT|Generate Huawei GPON OLT service-port config for VLAN 100]] [[btn:🛠️ Fiber Optical Budget|GPON optical power attenuation budget and troubleshooting]]'
+      };
+    }
+
+    return {
+      found: true,
+      topic: 'Huawei SmartAX GPON OLT Provisioning',
+      response: '⚡ **Huawei SmartAX MA5600T/MA5800 GPON OLT Complete Provisioning**\n\n' +
+        renderGponTopologySVG() + '\n\n' +
+        '### 🔧 Complete CLI Workflow Commands\n' +
+        '```text\n' +
+        '# --- Step 1: DBA Profile (1 Gbps Max Bandwidth) ---\n' +
+        'dba-profile add profile-id 10 profile-name FTTH_1G type4 max 1024000\n\n' +
+        '# --- Step 2: ONT Service Profile (4 LAN + 2 POTS) ---\n' +
+        'ont-srvprofile gpon profile-id 10 profile-name FTTH_SRV\n' +
+        ' ont-port eth 4 pots 2\n' +
+        ' port vlan eth 1 translation 100 user-vlan 100\n' +
+        ' commit\n' +
+        'quit\n\n' +
+        '# --- Step 3: ONT Line Profile (T-CONT 1 & GEM Port 1) ---\n' +
+        'ont-lineprofile gpon profile-id 10 profile-name FTTH_LINE\n' +
+        ' tcont 1 dba-profile-id 10\n' +
+        ' gem add 1 eth tcont 1\n' +
+        ' gem mapping 1 1 vlan 100\n' +
+        ' commit\n' +
+        'quit\n\n' +
+        '# --- Step 4: Register & Authorize ONT on GPON Port ---\n' +
+        'interface gpon 0/1\n' +
+        ' ont add 0 1 sn-auth 4857544312345678 omci ont-lineprofile-id 10 ont-srvprofile-id 10 desc CUSTOMER_01\n' +
+        'quit\n\n' +
+        '# --- Step 5: Provision Service-Port (VLAN 100 Translation) ---\n' +
+        'service-port 100 vlan 100 gpon 0/1/0 ont 1 gemport 1 multi-service user-vlan 100 tag-transform translate inbound traffic-table index 6 outbound traffic-table index 6\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">dba-profile add profile-id 10 type4</span>: Creates Type 4 Dynamic Bandwidth Allocation (Best Effort, max bandwidth 1,024,000 kbps).</li>' +
+        '<li><span class="cmd-param-tag">tcont 1 dba-profile-id 10</span>: Binds Transmission Container 1 to the upstream bandwidth allocation profile.</li>' +
+        '<li><span class="cmd-param-tag">gem add 1 eth tcont 1</span>: Creates GEM (GPON Encapsulation Method) Port 1 carried within T-CONT 1.</li>' +
+        '<li><span class="cmd-param-tag">service-port tag-transform translate</span>: Swaps ONT user VLAN tag with core ISP VLAN 100 for core transmission.</li>' +
+        '</ul></div></details>\n\n' +
+        '### ⚡ Diagnostic Check Commands\n' +
+        '```text\n' +
+        'display ont info 0 1              ! Check state: must show "online"\n' +
+        'display ont optical-info 0 1      ! Check Optical RX power: Target -15 to -24 dBm\n' +
+        'display service-port 100          ! Verify operational state is "up"\n' +
+        '```\n\n' +
+        '[[btn:🔌 ZTE GPON OLT|ZTE GPON OLT configuration for C300 C320]] [[btn:🛠️ Optical Power Budget|GPON optical power attenuation budget and troubleshooting]]'
+    };
+  }
+
+  // 5. VLAN & TRUNKING
+  if (/(vlan.*trunk|trunk.*vlan|802\.1q|switchport.*mode.*trunk)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'VLAN & 802.1Q Trunking',
+      response: '🔀 **VLAN & IEEE 802.1Q Trunking Complete Configuration**\n\n' +
+        '### 💡 Architectural Intuition & Mechanics\n' +
+        'An 802.1Q trunk link multiplexes multiple virtual LANs over a single physical cable. It inserts a 4-byte 802.1Q tag into the Ethernet frame header containing the 12-bit VLAN Identifier (VID, range 1–4094). **Untagged frames** are mapped to the interface\'s **Native VLAN** (Cisco) or **PVID** (Huawei).\n\n' +
+        '### 🔧 Production Multi-Vendor CLI Commands\n\n' +
+        '```text\n' +
+        '! --- Cisco IOS/XE: 802.1Q Trunk with Pruning ---\n' +
+        'vlan 10,20,30\n' +
+        ' exit\n' +
+        'interface GigabitEthernet0/1\n' +
+        ' description Trunk Link to Distribution Switch\n' +
+        ' switchport trunk encapsulation dot1q\n' +
+        ' switchport mode trunk\n' +
+        ' switchport trunk native vlan 999\n' +
+        ' switchport trunk allowed vlan 10,20,30\n' +
+        ' switchport nonegotiate\n' +
+        ' no shutdown\n' +
+        ' exit\n\n' +
+        '# --- Huawei VRP: Trunk Configuration ---\n' +
+        'vlan batch 10 20 30\n' +
+        'interface GigabitEthernet0/0/1\n' +
+        ' description Trunk Link to Distribution Switch\n' +
+        ' port link-type trunk\n' +
+        ' port trunk pvid vlan 999\n' +
+        ' port trunk allow-pass vlan 10 20 30\n' +
+        ' undo shutdown\n' +
+        'quit\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">switchport trunk encapsulation dot1q</span>: Sets IEEE 802.1Q standard tagging instead of legacy Cisco ISL.</li>' +
+        '<li><span class="cmd-param-tag">switchport trunk native vlan 999</span>: Security best practice: changes Native VLAN from default VLAN 1 to prevent VLAN hopping attacks.</li>' +
+        '<li><span class="cmd-param-tag">switchport trunk allowed vlan 10,20,30</span>: Pruning: prevents broadcast traffic from other VLANs crossing this trunk.</li>' +
+        '<li><span class="cmd-param-tag">switchport nonegotiate</span>: Disables Dynamic Trunking Protocol (DTP) to secure the port against rogue trunk negotiation.</li>' +
+        '</ul></div></details>\n\n' +
+        '[[btn:🧭 OSPF Multi-Area Setup|OSPF multi-area configuration with Cisco and Huawei commands]] [[btn:🧮 Subnet /27|Calculate subnet 192.168.10.0/27]]'
+    };
+  }
+
+  // 6. FIBER OPTICAL POWER BUDGET
+  if (/(optical.*power|fiber.*budget|fiber.*loss|splitter.*loss|attenuation.*dbm|dbm.*range)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'Fiber Optical Power Budget',
+      response: '🛠️ **GPON Optical Power Budget & Link Attenuation Diagnostics**\n\n' +
+        renderGponTopologySVG() + '\n\n' +
+        '### 📊 Optical Attenuation Budget Standards\n' +
+        '| Optical Component | Expected Attenuation (Loss) | Notes |\n|---|---|---|\n' +
+        '| **Splitter 1:2** | `~3.5 dB` | Minimum split |\n' +
+        '| **Splitter 1:4** | `~7.2 dB` | Standard FDT split |\n' +
+        '| **Splitter 1:8** | `~10.5 dB` | Common FAT box |\n' +
+        '| **Splitter 1:16** | `~14.0 dB` | Neighborhood FAT box |\n' +
+        '| **Splitter 1:32** | `~17.5 dB` | High density distribution |\n' +
+        '| **Splitter 1:64** | `~20.5 dB` | Maximum standard GPON split |\n' +
+        '| **Fiber Cable (1310nm)** | `0.35 dB / km` | Upstream transmission |\n' +
+        '| **Fiber Cable (1490nm/1550nm)** | `0.20 dB / km` | Downstream transmission |\n' +
+        '| **Fusion Splice** | `< 0.05 dB` | Proper arc fusion |\n' +
+        '| **Mechanical Connector (SC/APC)** | `0.3 dB` | Insertion loss |\n\n' +
+        '### 🎯 Target Power Levels\n' +
+        '- **OLT SFP TX:** Class B+ (`+1.5` to `+5.0 dBm`) / Class C+ (`+3.0` to `+7.0 dBm`).\n' +
+        '- **Golden ONT RX Zone:** **`-15.0 dBm` to `-23.0 dBm`** (optimal BER & longevity).\n' +
+        '- **Acceptable:** `-8.0 dBm` to `-24.0 dBm`.\n' +
+        '- **Marginal / High Attenuation:** `-25.0 dBm` to `-27.0 dBm` (packet drop risk).\n' +
+        '- **LOS (Loss of Signal):** `< -28.0 dBm`.\n\n' +
+        '[[btn:⚡ Huawei GPON OLT|Generate Huawei GPON OLT service-port config for VLAN 100]] [[btn:🩺 MTU & MSS Diagnostics|MTU and MSS troubleshooting with DF bit ping commands]]'
+    };
+  }
+
+  // 7. MTU, MSS & PATH PING
+  if (/(mtu.*mss|mss.*mtu|df.*bit|path.*mtu|don'?t.*fragment|jumbo.*frame)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'MTU & MSS Diagnostics',
+      response: '🩺 **MTU, MSS & Path Ping Diagnostics Utility**\n\n' +
+        '### 💡 Architectural Intuition & Mechanics\n' +
+        '- **Standard Ethernet MTU:** 1500 bytes.\n' +
+        '- **Packet Overhead:** IPv4 Header = 20 bytes, ICMP Header = 8 bytes. Max ICMP payload = 1500 - 28 = **1472 bytes**.\n' +
+        '- **PPPoE Overhead:** PPPoE encapsulation adds 8 bytes header. Maximum MTU drops to **1492 bytes**. TCP MSS must be clamped to $1492 - 40 = \\mathbf{1452}$ bytes to prevent web page loading stalls.\n\n' +
+        '### 🔧 Path MTU Detection CLI (Don\'t Fragment Flag)\n' +
+        '```text\n' +
+        '# Windows (ping with -f Don\'t Fragment, -l Payload Size)\n' +
+        'ping 8.8.8.8 -f -l 1472\n\n' +
+        '# Linux / macOS (ping with -M do Don\'t Fragment, -s Payload Size)\n' +
+        'ping 8.8.8.8 -M do -s 1472\n\n' +
+        '# Cisco IOS Router\n' +
+        'ping 8.8.8.8 size 1500 df-bit\n\n' +
+        '# MikroTik RouterOS\n' +
+        '/ping 8.8.8.8 size=1500 do-not-fragment\n' +
+        '```\n\n' +
+        '### 🔧 TCP MSS Clamping Fix CLI\n' +
+        '```text\n' +
+        '! --- Cisco IOS: Adjust TCP MSS for PPPoE/VPN ---\n' +
+        'interface Dialer1\n' +
+        ' mtu 1492\n' +
+        ' ip tcp adjust-mss 1452\n' +
+        ' exit\n\n' +
+        '# --- MikroTik: Clamp MSS to PMTU in Mangle ---\n' +
+        '/ip firewall mangle add chain=forward protocol=tcp tcp-flags=syn action=change-mss new-mss=clamp-to-pmtu\n' +
+        '```\n\n' +
+        '[[btn:🧭 OSPF Multi-Area Setup|OSPF multi-area configuration with Cisco and Huawei commands]] [[btn:🔒 DHCP Snooping|Configure DHCP snooping and dynamic ARP inspection]]'
+    };
+  }
+
+  // 8. DHCP SNOOPING & ROGUE DEFENSE
+  if (/(dhcp.*snoop|rogue.*dhcp|arp.*inspection|ip.*source.*guard)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'DHCP Snooping & Rogue Defense',
+      response: '🔒 **DHCP Snooping & Dynamic ARP Inspection (DAI) Switch Hardening**\n\n' +
+        '### 💡 Architectural Intuition & Mechanics\n' +
+        'DHCP Snooping is a Layer 2 security mechanism that intercepts DHCP messages to stop rogue DHCP servers from handing out invalid default gateways or rogue DNS servers. Switch ports are categorized into **Trusted** (uplink to authorized DHCP server) and **Untrusted** (user access ports).\n\n' +
+        '### 🔧 Complete Cisco IOS CLI Hardening\n' +
+        '```text\n' +
+        '! --- Step 1: Globally Enable DHCP Snooping ---\n' +
+        'ip dhcp snooping\n' +
+        'ip dhcp snooping vlan 10,20,30\n' +
+        'no ip dhcp snooping information option\n' +
+        '!\n' +
+        '! --- Step 2: Trust Uplink Port (to Core Router / DHCP Server) ---\n' +
+        'interface GigabitEthernet0/1\n' +
+        ' description Uplink to Core DHCP Server\n' +
+        ' ip dhcp snooping trust\n' +
+        ' exit\n' +
+        '!\n' +
+        '! --- Step 3: Rate-Limit Untrusted User Ports (Anti-Starvation) ---\n' +
+        'interface range GigabitEthernet0/2 - 24\n' +
+        ' ip dhcp snooping limit rate 15\n' +
+        ' exit\n' +
+        '!\n' +
+        '! --- Step 4: Dynamic ARP Inspection (DAI) Against ARP Spoofing ---\n' +
+        'ip arp inspection vlan 10,20,30\n' +
+        'interface GigabitEthernet0/1\n' +
+        ' ip arp inspection trust\n' +
+        ' exit\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">ip dhcp snooping trust</span>: Marks uplink port as trusted: permits DHCP Offer & Ack packets from entering the switch.</li>' +
+        '<li><span class="cmd-param-tag">limit rate 15</span>: Prevents DHCP starvation attacks by dropping more than 15 DHCP requests per second per port.</li>' +
+        '<li><span class="cmd-param-tag">ip arp inspection</span>: Validates ARP replies against the DHCP snooping binding database to block Man-in-the-Middle attacks.</li>' +
+        '</ul></div></details>\n\n' +
+        '[[btn:🔀 VLAN Trunking|VLAN trunk configuration Cisco Huawei 802.1Q]] [[btn:🧮 Subnet /27|Calculate subnet 192.168.10.0/27]]'
+    };
+  }
+
+  // 9. MIKROTIK PCQ BANDWIDTH SHAPING
+  if (/(mikrotik.*queue|pcq|bandwidth.*shaper|queue.*tree)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'MikroTik PCQ Bandwidth Shaper',
+      response: '📶 **MikroTik RouterOS PCQ (Per Connection Queue) Fair Bandwidth Shaper**\n\n' +
+        '```routeros\n' +
+        '# --- 1. Create PCQ Queue Types (Rate Limit 50M Down / 20M Up per User) ---\n' +
+        '/queue type add name=pcq-download kind=pcq pcq-rate=50M pcq-classifier=dst-address\n' +
+        '/queue type add name=pcq-upload kind=pcq pcq-rate=20M pcq-classifier=src-address\n\n' +
+        '# --- 2. Mark Packets in Firewall Mangle ---\n' +
+        '/ip firewall mangle add chain=forward in-interface=bridge-lan action=mark-packet new-packet-mark=client-upload passthrough=no\n' +
+        '/ip firewall mangle add chain=forward out-interface=bridge-lan action=mark-packet new-packet-mark=client-download passthrough=no\n\n' +
+        '# --- 3. Attach to Queue Tree (Parent: WAN and LAN) ---\n' +
+        '/queue tree add name=TOTAL-DOWNLOAD parent=bridge-lan packet-mark=client-download queue=pcq-download max-limit=1G\n' +
+        '/queue tree add name=TOTAL-UPLOAD parent=ether1-WAN packet-mark=client-upload queue=pcq-upload max-limit=500M\n' +
+        '```\n\n' +
+        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
+        '<div class="cmd-desc-content">' +
+        '<ul class="cmd-param-list">' +
+        '<li><span class="cmd-param-tag">pcq-classifier=dst-address</span>: Dynamically groups downstream packets by client IP so every user gets an equal share of bandwidth.</li>' +
+        '<li><span class="cmd-param-tag">max-limit=1G</span>: Total pipeline bandwidth allocation. PCQ guarantees no single user can hog the connection.</li>' +
+        '</ul></div></details>\n\n' +
+        '[[btn:🧭 OSPF Multi-Area Setup|OSPF multi-area configuration with Cisco and Huawei commands]] [[btn:⚡ GPON Provisioning|Generate Huawei GPON OLT service-port config for VLAN 100]]'
+    };
+  }
+
+  // 10. PORT MIRRORING / SPAN
+  if (/(port.*mirror|span.*session|monitor.*session|observe-port)/i.test(qLower)) {
+    return {
+      found: true,
+      topic: 'Port Mirroring & SPAN',
+      response: '🔍 **Port Mirroring & Switched Port Analyzer (SPAN) Configuration**\n\n' +
+        '### 🔧 Multi-Vendor Traffic Capture CLI\n' +
+        '```text\n' +
+        '! --- Cisco IOS/XE: Mirror Gi0/1 (Both TX/RX) to Wireshark Probe on Gi0/2 ---\n' +
+        'monitor session 1 source interface GigabitEthernet0/1 both\n' +
+        'monitor session 1 destination interface GigabitEthernet0/2\n' +
+        '!\n\n' +
+        '# --- Huawei VRP: Mirror Gi0/0/1 to Probe Port Gi0/0/2 ---\n' +
+        'observe-port 1 interface GigabitEthernet0/0/2\n' +
+        'interface GigabitEthernet0/0/1\n' +
+        ' port-mirroring to observe-port 1 both\n' +
+        'quit\n' +
+        '```\n\n' +
+        '[[btn:🧭 OSPF Multi-Area Setup|OSPF multi-area configuration with Cisco and Huawei commands]] [[btn:🔒 DHCP Snooping|Configure DHCP snooping and dynamic ARP inspection]]'
+    };
+  }
+
+  return null;
+}
+
+// ─── GREETING, CASUAL CONVERSATION & CAPABILITY RESPONDER ───────────────────
 function getGreetingOrCapabilityResponse(q, lang, isOnline) {
   var qLower = (q || '').toLowerCase().trim();
-  var isGreet = /^(hi|hello|hey|namaste|नमस्ते|नमस्कार|good\s+(morning|afternoon|evening)|hola|howdy)(\s+|$|!|\?|\.)/i.test(qLower) ||
-                /(who are you|what can you help me with|what can you do|what are you|help me|how can you help|introduce yourself|capabilities|about you)/i.test(qLower);
-  if (!isGreet) return null;
+  var isHi = (lang === 'hi');
+  var isNe = (lang === 'ne');
+
+  // 1. GREETINGS & INTRODUCTIONS
+  var isGreet = /^(hi|hello|hey|namaste|नमस्ते|नमस्कार|good\s+(morning|afternoon|evening)|hola|howdy)(\s+|$|!|\?|\.)/i.test(qLower);
+  var isIdentity = /(who are you|what can you help me with|what can you do|what are you|help me|how can you help|introduce yourself|capabilities|about you|who made you|who created you|your developer|तुम कौन हो|आप कौन हैं|तपाईं को हुनुहुन्छ)/i.test(qLower);
+
+  // 2. SOCIAL CHECK-INS ("how are you", "how's it going", "what's up")
+  var isHowAreYou = /^(how\s+are\s+you|how\s+r\s+u|how\s+are\s+you\s+doing|how\s+is\s+it\s+going|how's\s+it\s+going|how\s+is\s+your\s+day|how's\s+your\s+day|how\s+are\s+you\s+feeling|are\s+you\s+ok|whats\s+up|what's\s+up|sup)(\s+|$|!|\?|\.)/i.test(qLower) ||
+                    qLower.indexOf('how are you') !== -1 || qLower.indexOf('how r u') !== -1 ||
+                    q.indexOf('कैसे हो') !== -1 || q.indexOf('कैसे हैं') !== -1 || q.indexOf('हालचाल') !== -1 ||
+                    q.indexOf('कस्तो छ') !== -1 || q.indexOf('कस्तो हुनुहुन्छ') !== -1;
+
+  // 3. GRATITUDE & PRAISE ("thank you", "thanks", "good job", "awesome")
+  var isThanks = /^(thanks|thank\s+you|thx|ty|thank\s+u|thanks\s+a\s+lot|thank\s+you\s+so\s+much|great\s+job|awesome|good\s+job|perfect|nice)(\s+|$|!|\?|\.)/i.test(qLower) ||
+                 q.indexOf('धन्यवाद') !== -1 || q.indexOf('शुक्रिया') !== -1 || q.indexOf('धेरै धन्यवाद') !== -1;
+
+  // 4. CASUAL ENTERTAINMENT (jokes, riddles, facts, boredom)
+  var isJoke = /(tell\s+me\s+a\s+joke|make\s+me\s+laugh|say\s+a\s+joke|joke|जोक|चुटकुला|चुटकिला)/i.test(qLower);
+  var isCoolFact = /(tell\s+me\s+something\s+cool|tell\s+me\s+an\s+interesting\s+fact|cool\s+fact|interesting\s+fact|did\s+you\s+know|रोचक\s+तथ्य)/i.test(qLower);
+  var isBored = /^(i'm\s+bored|im\s+bored|bored|feeling\s+bored|बोर\s+हो\s+रहा)/i.test(qLower);
+  var isQuote = /(give\s+me\s+a\s+quote|motivational\s+quote|inspire\s+me|सुविचार|प्रेरणा)/i.test(qLower);
+
+  // 5. EVERYDAY ADVICE & PRODUCTIVITY
+  var isFoodAdvice = /(what\s+should\s+i\s+eat|what\s+to\s+eat|what\s+should\s+i\s+cook|dinner\s+ideas|lunch\s+ideas|breakfast\s+ideas|खाना\s+के\s+खाऊ)/i.test(qLower);
+  var isProductivity = /(how\s+to\s+stay\s+focused|how\s+to\s+study|study\s+tips|productivity\s+tips|how\s+to\s+concentrate|पढाइमा\s+ध्यान)/i.test(qLower);
+  var isWakeUp = /(how\s+to\s+wake\s+up\s+early|wake\s+up\s+early|बिहान\s+चाँडै)/i.test(qLower);
+
+  // 6. TIME & DATE
+  var isTimeDate = /^(what\s+time\s+is\s+it|what\s+is\s+the\s+time|current\s+time|time\s+now|what\s+is\s+today'?s\s+date|today'?s\s+date|what\s+date\s+is\s+today|समय\s+कति|अहिले\s+कति\s+बज्य)/i.test(qLower);
+
+  // 7. PARTINGS & GOODBYES
+  var isGoodbye = /^(good\s+night|goodnight|bye|goodbye|see\s+you\s+later|see\s+ya|take\s+care|शुभ\s+रात्री|अलविदा)/i.test(qLower);
+
+  if (isHowAreYou) {
+    if (isHi) return 'मैं बिल्कुल ठीक हूँ, पूछने के लिए धन्यवाद! 😄 सभी प्रणालियाँ सुचारु रूप से चल रही हैं। आपका दिन कैसा बीत रहा है, और मैं आज आपकी क्या मदद कर सकता हूँ?';
+    if (isNe) return 'म एकदम राम्रो छु, सोध्नुभएकोमा धन्यवाद! 😄 सबै प्रणालीहरू सक्रिय छन्। तपाईंको दिन कस्तो बित्दैछ? म के सहयोग गर्न सक्छु?';
+    return 'I\'m doing great, thanks for asking! 😄 All on-device systems are running smoothly. How is your day going, and what can I assist you with today?';
+  }
+
+  if (isThanks) {
+    if (isHi) return 'आपका बहुत-बहुत स्वागत है! 😊 कभी भी बेझिझक पूछें, आपकी सहायता करके मुझे बहुत खुशी होती है।';
+    if (isNe) return 'सहर्ष स्वागत छ! 😊 जहिले पनि सोध्नुहोस्, सहयोग गर्न पाउँदा खुसी लाग्यो।';
+    return 'You\'re very welcome! 😊 Always happy to help. Let me know whenever you need anything else or want to explore more!';
+  }
+
+  if (isJoke) {
+    if (isHi) return '😄 **एक मज़ेदार चुटकुला:**\n\nप्रोग्रामर हमेशा डार्क मोड क्यों पसंद करते हैं?\n\n*क्योंकि रोशनी से कीड़े (Bugs) आकर्षित होते हैं!* 🐛💻';
+    if (isNe) return '😄 **एउटा रमाइलो जोक:**\n\nकम्प्युटर इन्जिनियर किन सधैं चिया र कफी मन पराउँछन्?\n\n*किनकि कफीलाई कोडमा बदल्न सजिलो हुन्छ!* ☕💻';
+    return '😄 **Here\'s a quick one for you:**\n\nWhy do programmers prefer dark mode?\n\n*Because light attracts bugs!* 🐛💻\n\n[[btn:😄 Tell Another Joke|tell me a joke]] [[btn:💡 Cool Tech Fact|tell me an interesting fact]]';
+  }
+
+  if (isCoolFact) {
+    return '🌌 **Did You Know?**\n\nOver **99% of global internet traffic** travels through undersea fiber-optic cables resting on the ocean floor, not through satellites! These submarine cables are as thin as a garden hose, yet carry tens of terabits per second across oceans using optical total internal reflection.\n\n[[btn:🧭 How OSPF Routes Internet Traffic|OSPF multi-area configuration with Cisco and Huawei commands]] [[btn:🔭 James Webb Space Telescope|Tell me about James Webb Space Telescope]]';
+  }
+
+  if (isBored) {
+    return 'Feeling bored? Let\'s dive into something fascinating! Here are 3 quick ideas:\n\n1. **🧠 Deductive Riddle:** Ask me for a riddle to test your lateral thinking.\n2. **🔭 Deep Space:** Explore how the James Webb Telescope captures light from 13.5 billion years ago.\n3. **🌐 Network Magic:** Discover how a packet navigates through core routers and splitters to your phone.\n\n[[btn:🧠 Give Me a Riddle|give me a riddle]] [[btn:🔭 James Webb Telescope|Tell me about James Webb Space Telescope]] [[btn:😄 Tell a Joke|tell me a joke]]';
+  }
+
+  if (isQuote) {
+    return '✨ **Thought of the Day:**\n\n> *"The only way to do great work is to love what you do. If you haven\'t found it yet, keep looking. Don\'t settle."* — Steve Jobs\n\nKeep pushing forward; consistency turns daily practice into extraordinary mastery!';
+  }
+
+  if (isFoodAdvice) {
+    return '🍳 **Healthy & Delicious Meal Ideas:**\n\n- **Quick & Energizing (15 min):** Stir-fried vegetables with eggs or paneer/tofu and seasoned rice.\n- **Wholesome & Comforting:** Warm lentil soup (Dal) with whole wheat flatbread (Roti) and a fresh salad.\n- **Light & Refreshing:** Yogurt bowl topped with sliced banana, honey, and roasted almonds/walnuts.\n\nLet me know if you want step-by-step cooking instructions!';
+  }
+
+  if (isProductivity) {
+    return '⚡ **4 Actionable Rules to Maximize Focus & Study:**\n\n1. **The 25/5 Pomodoro Rule:** 25 minutes of unbroken focus on one single task, followed by a strict 5-minute offline break (no social media).\n2. **Friction Reduction:** Place your phone in another room or out of reach before opening your books or IDE.\n3. **Active Recall over Passive Reading:** Close your notes and explain the concept aloud in your own words as if teaching a beginner.\n4. **Hydration:** Drink a glass of water every 60 minutes — mild dehydration reduces cognitive throughput by up to 15%.';
+  }
+
+  if (isWakeUp) {
+    return '🌅 **How to Wake Up Early Without Feeling Exhausted:**\n\n1. **Consistent Sleep Anchor:** Go to sleep at the exact same hour every night — sleep latency depends on circadian rhythm, not willpower.\n2. **No Screens 60 mins Before Bed:** Blue light suppresses melatonin production; read a physical book instead.\n3. **Put Alarm Across the Room:** Force yourself to physically stand up to turn it off.\n4. **Immediate Sunlight Exposure:** Step outside or look at natural morning light for 5–10 minutes right after waking to halt melatonin.';
+  }
+
+  if (isTimeDate) {
+    var nd = new Date();
+    var timeStr = nd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    var dateStr = nd.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (isHi) return '🕐 अभी का समय है: **' + timeStr + '**\n📅 आज की तारीख: **' + dateStr + '**';
+    if (isNe) return '🕐 हालको समय: **' + timeStr + '**\n📅 आजको मिति: **' + dateStr + '**';
+    return '🕐 Current Time: **' + timeStr + '**\n📅 Date: **' + dateStr + '**';
+  }
+
+  if (isGoodbye) {
+    if (isHi) return 'शुभ रात्री! 🌙 अच्छी नींद लें। जब भी जरूरत हो, मैं यहीं उपस्थित रहूँगा। अलविदा!';
+    if (isNe) return 'शुभ रात्री! 🌙 राम्रोसँग आराम गर्नुहोस्। फेरि भेटौंला!';
+    return 'Good night! Rest well and recharge. I\'ll be right here whenever you need me next! 🌙';
+  }
+
+  if (!isGreet && !isIdentity) return null;
 
   var modeStatus = isOnline ? '🌐 Online Mode' : '⚡ Offline Mode';
   var modeDetail = isOnline
-    ? (lang === 'hi' ? 'लाइव वेब अनुसंधान और ज्ञानकोष से जुड़ा हुआ है।' : (lang === 'ne' ? 'लाइभ वेब खोजी तथा ज्ञानकोषसँग जोडिएको छ।' : 'connected to live web intelligence and encyclopedia research.'))
-    : (lang === 'hi' ? '100% ऑन-डिवाइस, पूर्णतः सुरक्षित और बिना इंटरनेट के सक्रिय है।' : (lang === 'ne' ? '१००% अन-डिभाइस, पूर्ण निजी र इन्टरनेट बिना सक्रिय छ।' : '100% private, on-device air-gapped intelligence.'));
+    ? (isHi ? 'लाइव वेब अनुसंधान और ज्ञानकोष से जुड़ा हुआ है।' : (isNe ? 'लाइभ वेब खोजी तथा ज्ञानकोषसँग जोडिएको छ।' : 'connected to live web intelligence and encyclopedia research.'))
+    : (isHi ? '100% ऑन-डिवाइस, पूर्णतः सुरक्षित और बिना इंटरनेट के सक्रिय है।' : (isNe ? '१००% अन-डिभाइस, पूर्ण निजी र इन्टरनेट बिना सक्रिय छ।' : '100% private, on-device air-gapped intelligence.'));
 
-  if (lang === 'hi') {
+  if (isHi) {
     return '👋 **नमस्ते! मैं GAM.AI हूँ — आपका स्थानीय और ऑनलाइन AI सहायक।**\n\n' +
       'वर्तमान में मैं **' + modeStatus + '** में ' + modeDetail + '\n\n' +
       '### 🚀 मैं आपकी कैसे मदद कर सकता हूँ:\n' +
@@ -8319,7 +9246,7 @@ function getGreetingOrCapabilityResponse(q, lang, isOnline) {
       '- **🎓 विद्यार्थी मोड (Students Mode):** गणित के प्रश्न, विज्ञान के सिद्धांत, अध्ययन नोट्स और सरल शैक्षणिक व्याख्या।\n' +
       '- **🔧 नेटवर्क मोड (NetEng Mode):** सिस्को और माइक्रोतिक कॉन्फ़िगरेशन, FTTH / GPON OLT, VLAN, सबनेटिंग और ऑप्टिकल फाइबर समस्या समाधान।\n\n' +
       'आप मुझसे कोई भी सवाल पूछ सकते हैं या नीचे दिए गए विकल्पों में से चुन सकते हैं:';
-  } else if (lang === 'ne') {
+  } else if (isNe) {
     return '👋 **नमस्ते! म GAM.AI हुँ — तपाईंको स्थानीय तथा अनलाइन AI सहायक।**\n\n' +
       'हाल म **' + modeStatus + '** मा ' + modeDetail + '\n\n' +
       '### 🚀 म के-के मा मद्दत गर्न सक्छु:\n' +
@@ -8336,6 +9263,55 @@ function getGreetingOrCapabilityResponse(q, lang, isOnline) {
       '- **🔧 Network Mode (NetEng):** Enterprise Cisco/MikroTik routing, FTTH / GPON OLT commands, VLANs, subnetting, and fiber loss troubleshooting.\n\n' +
       'Feel free to type any question below, or tap 🎤 to speak!';
   }
+}
+
+// ─── SMART AUTHENTIC RESPONSE SYNTHESIS (NO SOURCE DUMPING) ────────────────
+function synthesizeSmartResponse(heading, mainText, bullets, q, lang, imgUrl, isNetworkQuery, currentPersona) {
+  var isHi = (lang === 'hi');
+  var isNe = (lang === 'ne');
+
+  // Check if specialized network utility or context response exists
+  var netResp = getNetworkUtilityOrContextResponse(q, lang) || getNetworkUtilityOrContextResponse(heading, lang);
+  if (netResp && netResp.found) {
+    var respText = netResp.response;
+    if (imgUrl && !respText.includes(imgUrl)) {
+      respText = '![' + heading + '](' + imgUrl + ')\n\n' + respText;
+    }
+    return respText;
+  }
+
+  // Clean raw Wikipedia text:
+  // Remove phonetic pronunciation, citation brackets, dates of birth clutter
+  var cleaned = (mainText || '')
+    .replace(/\s*\(\/[^)]+\/\)/g, '')
+    .replace(/\s*\([A-Z0-9\s,–-]+;\s*[a-z0-9\s,–-]+\)/gi, '')
+    .replace(/\[\d+\]/g, '')
+    .replace(/\[note\s*\d+\]/gi, '')
+    .trim();
+
+  // Split into sentences and keep the most informative sentences
+  var sentences = cleaned.split(/(?<=[.?!])\s+/);
+  var coreSummary = sentences.slice(0, 4).join(' ');
+  var extraInsights = sentences.slice(4, 7).join(' ');
+
+  var imgMd = imgUrl ? ('![' + heading + '](' + imgUrl + ')\n\n') : '';
+
+  var bulletsBlock = '';
+  if (bullets && bullets.length > 0) {
+    bulletsBlock = '\n\n### 💡 Key Dimensions & Core Facts\n' +
+      bullets.slice(0, 3).map(function(b) {
+        var cleanB = b.replace(/\[\d+\]/g, '').trim();
+        return '- ' + cleanB;
+      }).join('\n');
+  }
+
+  var responseText = '🌐 **' + heading + '**\n\n' +
+    imgMd +
+    coreSummary + '\n\n' +
+    (extraInsights ? (extraInsights + '\n\n') : '') +
+    bulletsBlock;
+
+  return responseText;
 }
 
 // ─── CLIENT-SIDE LIVE ONLINE WEB & ENCYCLOPEDIA RESEARCH ENGINE ────────────
@@ -8384,12 +9360,9 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
     : '';
 
   // Extract core search keywords:
-  // 1. Strip emojis and emoticons
   var withoutEmojis = (q || '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '');
-  // 2. Strip punctuation, quotes and special symbols
   var cleanQ = withoutEmojis.replace(/[?!.,"“”‘’`~@#$%^&*()_+={}\[\]|\\:;<>]/g, ' ').replace(/\s+/g, ' ').trim();
 
-  // 3. Extract core search keywords (strip conversational prompt prefixes)
   var searchKeywords = cleanQ
     .replace(/^(Please\s+elaborate\s+and\s+explain\s+this\s+in\s+simpler\s+terms\s+with\s+easy\s+steps:?)\s*/i, '')
     .replace(/^(Please\s+explain|Explain|What\s+is|What\s+are|What\s+was|Who\s+sent|Who\s+launched|Who\s+made|Who\s+built|Who\s+created|Who\s+is|Who\s+was|Where\s+is|When\s+was|Tell\s+me\s+about|How\s+to\s+configure|How\s+to\s+set\s+up|How\s+to\s+use|How\s+to|How\s+do)\s+/i, '')
@@ -8405,7 +9378,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
   // 1. DuckDuckGo Instant Answer API
   var ddgUrl = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(searchKeywords) + '&format=json&no_html=1&skip_disambig=1';
 
-  // 2. Wikipedia Search API
+  // 2. Wikipedia Search API with PageImages Thumbnail Support
   var wikiLang = isHi ? 'hi' : (isNe ? 'ne' : 'en');
   var wikiSearchUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(searchKeywords) + '&format=json&origin=*';
 
@@ -8416,34 +9389,38 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
       if (data && data.query && data.query.search && data.query.search.length > 0) {
         var topItem = data.query.search[0];
         var topTitle = topItem.title;
-        var extractUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(topTitle) + '&format=json&origin=*';
+        var extractUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&piprop=thumbnail&pithumbsize=600&exintro=1&explaintext=1&titles=' + encodeURIComponent(topTitle) + '&format=json&origin=*';
         return safeFetchJson(extractUrl)
           .then(function(d2) {
             var pages = (d2 && d2.query && d2.query.pages) ? d2.query.pages : {};
             var pageKey = Object.keys(pages)[0];
             var extract = (pageKey && pages[pageKey] && pages[pageKey].extract) ? pages[pageKey].extract : '';
+            var img = (pageKey && pages[pageKey] && pages[pageKey].thumbnail && pages[pageKey].thumbnail.source) ? pages[pageKey].thumbnail.source : '';
             return {
               title: topTitle,
               extract: extract,
+              imgUrl: img,
               snippet: (topItem.snippet || '').replace(/<[^>]+>/g, ''),
               otherHits: data.query.search.slice(1, 4)
             };
           });
       }
-      // If native language had 0 hits and wasn't English, try English Wikipedia
+      // If native language had 0 hits and wasn't English, try English Wikipedia with Thumbnail Support
       if (wikiLang !== 'en') {
         var enWikiUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(searchKeywords) + '&format=json&origin=*';
         return safeFetchJson(enWikiUrl)
           .then(function(de) {
             if (de && de.query && de.query.search && de.query.search.length > 0) {
               var topEn = de.query.search[0];
-              var enExtUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(topEn.title) + '&format=json&origin=*';
+              var enExtUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&piprop=thumbnail&pithumbsize=600&exintro=1&explaintext=1&titles=' + encodeURIComponent(topEn.title) + '&format=json&origin=*';
               return safeFetchJson(enExtUrl).then(function(de2) {
                 var pgs = (de2 && de2.query && de2.query.pages) ? de2.query.pages : {};
                 var pk = Object.keys(pgs)[0];
+                var imgEn = (pk && pgs[pk] && pgs[pk].thumbnail && pgs[pk].thumbnail.source) ? pgs[pk].thumbnail.source : '';
                 return {
                   title: topEn.title,
                   extract: (pk && pgs[pk] && pgs[pk].extract) ? pgs[pk].extract : '',
+                  imgUrl: imgEn,
                   snippet: (topEn.snippet || '').replace(/<[^>]+>/g, ''),
                   otherHits: de.query.search.slice(1, 4)
                 };
@@ -8466,6 +9443,13 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
     var heading = '';
     var mainText = '';
     var bullets = [];
+    var imgUrl = '';
+
+    if (wiki && wiki.imgUrl) {
+      imgUrl = wiki.imgUrl;
+    } else if (ddg && ddg.Image) {
+      imgUrl = ddg.Image;
+    }
 
     if (ddg && (ddg.AbstractText || ddg.Answer || ddg.Definition)) {
       heading = ddg.Heading || ddg.Entity || searchKeywords;
@@ -8500,26 +9484,34 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
     var t1 = performance.now();
     var realLatencyMs = Math.max(15, (t1 - t0)).toFixed(0);
 
-    if (mainText) {
-      var bulletsMd = '';
-      if (bullets.length > 0) {
-        bulletsMd = '\n\n### 🔍 Related Insights & Context\n' + bullets.map(function(b) { return '- ' + b; }).join('\n');
-      }
+    // If query is related to network, check specialized network response
+    var netResp = getNetworkUtilityOrContextResponse(q, currentLang) || getNetworkUtilityOrContextResponse(searchKeywords, currentLang);
 
+    if (netResp && netResp.found) {
       var prefix = (switchNotice || '') + refreshNotice;
-      var finalOnlineResponse = prefix +
-        '🌐 **Live Online Research: ' + heading + '**\n\n' +
-        mainText +
-        bulletsMd +
-        '\n\n---\n' +
-        '🔗 **Live Sources & Verification:**\n' +
-        '- [DuckDuckGo Instant Answer](https://duckduckgo.com/?q=' + encodeURIComponent(searchKeywords) + ')\n' +
-        '- [Wikipedia Encyclopedia](https://' + wikiLang + '.wikipedia.org/wiki/' + encodeURIComponent(heading.replace(/\s+/g, '_')) + ')\n' +
-        '- [Google Live Search](https://www.google.com/search?q=' + encodeURIComponent(searchKeywords) + ')\n' +
-        '*(Verified Live at ' + new Date().toLocaleTimeString() + ')*';
+      var outText = prefix + netResp.response;
+      if (imgUrl && !outText.includes(imgUrl)) {
+        outText = prefix + '![' + (heading || q) + '](' + imgUrl + ')\n\n' + netResp.response;
+      }
+      renderAssistantMessage({
+        text: outText,
+        isOffline: false,
+        modelName: '🔧 Network Engineer (NetEng)',
+        sourceTag: '🌐 Telecom & GPON Engine',
+        latencyMs: realLatencyMs,
+        isNotFound: false,
+        query: q,
+        shouldReadAloud: shouldReadAloud
+      });
+      return;
+    }
+
+    if (mainText) {
+      var prefix = (switchNotice || '') + refreshNotice;
+      var synthesized = synthesizeSmartResponse(heading || searchKeywords, mainText, bullets, q, currentLang, imgUrl, false, currentPersona);
 
       renderAssistantMessage({
-        text: finalOnlineResponse,
+        text: prefix + synthesized,
         isOffline: false,
         modelName: '🌐 Live Web Intelligence',
         sourceTag: '🔍 Live Web Research',
@@ -8529,28 +9521,17 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
         shouldReadAloud: shouldReadAloud
       });
     } else {
-      // If neither returned encyclopedia text, provide live web search direct links + local knowledge
+      // Direct live instant encyclopedia summary was not returned — use verified on-device intelligence
       var offlineResult = processOfflineAIQuery(searchKeywords);
-      if (!offlineResult.found) {
+      if (!offlineResult || !offlineResult.found) {
         offlineResult = processOfflineAIQuery(q);
       }
 
       var prefix = (switchNotice || '') + refreshNotice;
-      var liveLinks = 
-        '### 🔍 Live Web Exploration Links\n' +
-        '- [DuckDuckGo: "' + escapeHtml(searchKeywords) + '"](https://duckduckgo.com/?q=' + encodeURIComponent(searchKeywords) + ')\n' +
-        '- [Google: "' + escapeHtml(searchKeywords) + '"](https://www.google.com/search?q=' + encodeURIComponent(searchKeywords) + ')\n' +
-        '- [Wikipedia Search](https://en.wikipedia.org/wiki/Special:Search?search=' + encodeURIComponent(searchKeywords) + ')';
 
-      if (offlineResult.found) {
-        var hybridMsg = prefix +
-          '🌐 **Live Web Search: "' + escapeHtml(q) + '"**\n\n' +
-          'Direct live instant encyclopedia summary was not returned for this query. Verified local intelligence is provided below with live search links:\n\n' +
-          offlineResult.response + '\n\n---\n' +
-          liveLinks + '\n*(Verified at ' + new Date().toLocaleTimeString() + ')*';
-
+      if (offlineResult && offlineResult.found) {
         renderAssistantMessage({
-          text: hybridMsg,
+          text: prefix + offlineResult.response,
           isOffline: false,
           modelName: activeModelName,
           sourceTag: '⚡ Local & Live Hybrid',
@@ -8563,10 +9544,10 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
         var tips = generateContextualSearchTips(q, currentLang);
         var tipsText = tips.map(function(t){ return '- *"' + t + '"*'; }).join('\n');
         var noResultMsg = prefix + (isHi
-          ? '🌐 **लाइव वेब खोज:** "' + escapeHtml(q) + '" के लिए सीधा विकिपीडिया सारांश उपलब्ध नहीं हुआ।\n\n' + liveLinks + '\n\n💡 **संबंधित खोज सुझाव:**\n' + tipsText
+          ? '🌐 **लाइव वेब अनुसंधान:** "' + escapeHtml(q) + '" के लिए विशिष्ट परिणाम नहीं मिला।\n\n💡 **सुझावित विषय:**\n' + tipsText
           : (isNe
-            ? '🌐 **लाइभ वेब खोज:** "' + escapeHtml(q) + '" का लागि सीधा विकिपीडिया विवरण प्राप्त भएन।\n\n' + liveLinks + '\n\n💡 **सम्बन्धित खोज सुझावहरू:**\n' + tipsText
-            : '🌐 **Live Web Search: "' + escapeHtml(q) + '"**\n\nNo direct encyclopedia instant answer was returned for this exact query.\n\n' + liveLinks + '\n\n💡 **Related Search Tips:**\n' + tipsText));
+            ? '🌐 **लाइभ वेब अनुसन्धान:** "' + escapeHtml(q) + '" का लागि विवरण प्राप्त भएन।\n\n💡 **सुझाव गरिएका विषयहरू:**\n' + tipsText
+            : '🌐 **Live Web Intelligence: "' + escapeHtml(q) + '"**\n\nNo direct encyclopedia instant summary returned for this exact query.\n\n💡 **Suggested Search Topics:**\n' + tipsText));
 
         renderAssistantMessage({
           text: noResultMsg,
@@ -8583,8 +9564,9 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
   }).catch(function(err) {
     var lEl = document.getElementById(loadId);
     if (lEl) lEl.remove();
-    var offlineResult = processOfflineAIQuery(searchKeywords);
-    if (!offlineResult.found) {
+    var netResp = getNetworkUtilityOrContextResponse(q, currentLang);
+    var offlineResult = netResp || processOfflineAIQuery(searchKeywords);
+    if (!offlineResult || !offlineResult.found) {
       offlineResult = processOfflineAIQuery(q);
     }
     var prefix = (switchNotice || '') + refreshNotice;
@@ -8701,7 +9683,8 @@ function executeSend(userText, wasSpoken) {
     setTimeout(function() {
       var t0 = performance.now();
       var omniImmediate = handleOmniGenerativePrompt(q, currentLang, false);
-      var offlineResult = omniImmediate || processOfflineAIQuery(q);
+      var netImmediate = (typeof getNetworkUtilityOrContextResponse === 'function') ? getNetworkUtilityOrContextResponse(q, currentLang) : null;
+      var offlineResult = omniImmediate || netImmediate || processOfflineAIQuery(q);
 
       // If relevant info is not found in offline mode, automatically switch to online mode (if connected)
       if (!isInteractiveDiag && (!offlineResult || offlineResult.found === false)) {
