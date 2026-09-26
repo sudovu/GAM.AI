@@ -767,7 +767,7 @@
   <div class="brand">
     <div class="brand-title">GAM<span>.AI</span></div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <div class="badge-nano">v1.5.1</div>
+      <div class="badge-nano">MICRO v3.1</div>
       <button class="mobile-close-btn" id="btn-close-sidebar" onclick="closeSidebar()" style="display:none; background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;" title="Close Sidebar">✕</button>
     </div>
   </div>
@@ -1168,8 +1168,7 @@
         <div style="flex:1; min-width:0;">
           <div style="font-size:1.15rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span>Vhuwon Mathers</span>
-            <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">@sudovu</span>
-            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.5.1</span>
+            <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">sudovu</span>
           </div>
           <div style="font-size:0.84rem; color:var(--accent); margin-top:2px; font-weight:600;">
             Creator & Lead Architect of GAM.AI
@@ -8426,39 +8425,6 @@ function renderGponTopologySVG() {
   '</svg>';
 }
 
-function renderRouterTopologySVG() {
-  return '<svg viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:640px; height:auto; font-family:-apple-system,sans-serif;">' +
-    '<defs>' +
-      '<linearGradient id="gIspModem" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#334155"/></linearGradient>' +
-      '<linearGradient id="gRouter" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#065f46"/><stop offset="100%" stop-color="#059669"/></linearGradient>' +
-      '<linearGradient id="gCctv" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#4338ca"/></linearGradient>' +
-      '<linearGradient id="gWifi" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0c4a6e"/><stop offset="100%" stop-color="#0284c7"/></linearGradient>' +
-      '<filter id="glowGreen"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#10b981" flood-opacity="0.3"/></filter>' +
-    '</defs>' +
-    '<rect x="15" y="45" width="130" height="75" rx="10" fill="url(#gIspModem)" stroke="#64748b" stroke-width="1.5"/>' +
-    '<text x="80" y="73" fill="#f8fafc" font-size="12" font-weight="800" text-anchor="middle">ISP ONT / MODEM</text>' +
-    '<text x="80" y="90" fill="#94a3b8" font-size="10" text-anchor="middle">Bridge / Gateway</text>' +
-    '<text x="80" y="105" fill="#38bdf8" font-size="9" text-anchor="middle">PPPoE / DHCP</text>' +
-    '<line x1="145" y1="82" x2="245" y2="82" stroke="#38bdf8" stroke-width="3"/>' +
-    '<text x="195" y="74" fill="#38bdf8" font-size="9" font-weight="700" text-anchor="middle">WAN Port (Blue)</text>' +
-    '<text x="195" y="96" fill="#94a3b8" font-size="8" text-anchor="middle">RJ-45 Cat6</text>' +
-    '<rect x="245" y="25" width="190" height="115" rx="12" fill="url(#gRouter)" stroke="#34d399" stroke-width="2" filter="url(#glowGreen)"/>' +
-    '<text x="340" y="52" fill="#fff" font-size="13" font-weight="800" text-anchor="middle">HIKVISION ROUTER</text>' +
-    '<text x="340" y="70" fill="#d1fae5" font-size="10" font-weight="700" text-anchor="middle">IP: 192.168.0.1</text>' +
-    '<text x="340" y="86" fill="#a7f3d0" font-size="9" text-anchor="middle">DHCP: .100 - .200 (Mask /24)</text>' +
-    '<text x="340" y="102" fill="#6ee7b7" font-size="9" text-anchor="middle">NAT &amp; Port 8000 / RTSP 554</text>' +
-    '<text x="340" y="122" fill="#facc15" font-size="9" font-weight="600" text-anchor="middle">Wi-Fi 6 / AC Dual Band</text>' +
-    '<line x1="435" y1="58" x2="520" y2="45" stroke="#818cf8" stroke-width="2.5"/>' +
-    '<rect x="520" y="20" width="145" height="50" rx="8" fill="url(#gCctv)" stroke="#a5b4fc" stroke-width="1.5"/>' +
-    '<text x="592" y="40" fill="#fff" font-size="10" font-weight="800" text-anchor="middle">NVR / IP CAMERAS</text>' +
-    '<text x="592" y="56" fill="#c7d2fe" font-size="9" text-anchor="middle">LAN Port · IP 192.168.0.200</text>' +
-    '<line x1="435" y1="105" x2="520" y2="120" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4,3"/>' +
-    '<rect x="520" y="95" width="145" height="50" rx="8" fill="url(#gWifi)" stroke="#7dd3fc" stroke-width="1.5"/>' +
-    '<text x="592" y="115" fill="#fff" font-size="10" font-weight="800" text-anchor="middle">WIRELESS CLIENTS</text>' +
-    '<text x="592" y="131" fill="#bae6fd" font-size="9" text-anchor="middle">2.4G &amp; 5G (WPA2/WPA3 AES)</text>' +
-  '</svg>';
-}
-
 function formatResponse(text) {
   if (!text) return 'Empty response.';
 
@@ -8603,110 +8569,6 @@ function getNetworkUtilityOrContextResponse(q, lang) {
   var qLower = (q || '').toLowerCase().trim();
   var isHi = (lang === 'hi');
   var isNe = (lang === 'ne');
-
-  // 0. ROUTER & GATEWAY PROVISIONING (Hikvision, TP-Link, Tenda, Netgear, Cisco, Huawei, MikroTik, D-Link)
-  var isHikvisionRouter = /(hikvision.*router|router.*hikvision|setup.*hikvision|hikvision.*setup|hikvision.*wifi|hikvision.*wireless|hikvision.*ap|hikvision.*gateway|hikvision.*camera.*router)/i.test(qLower);
-  var isGenericRouter = !isHikvisionRouter && /(setup.*router|router.*setup|configure.*router|router.*config|wifi.*router.*setup|wireless.*router.*setup|tp-?link.*router|tenda.*router|netgear.*router|d-?link.*router|mercusys.*router|totolink.*router)/i.test(qLower);
-
-  if (isHikvisionRouter) {
-    return {
-      found: true,
-      topic: 'Hikvision Wireless Router & Gateway Setup',
-      response: '📡 **Hikvision Wireless Router & Gateway Complete Setup Guide**\n\n' +
-        renderRouterTopologySVG() + '\n\n' +
-        '### 💡 Architectural Overview & Default Specifications\n' +
-        'Hikvision wireless routers (e.g. DS-3WR12C, DS-3WR3N, DS-3WR4AC, AX3000 series) deliver high-performance Gigabit routing with dual-band Wi-Fi 6/AC radios, hardware NAT acceleration, and specialized virtual server mapping for CCTV NVR, DVR, and IP camera video streams.\n\n' +
-        '- **Default Gateway IP:** `192.168.0.1` (or `192.168.1.1`, URL: `http://router.hikvision.com`)\n' +
-        '- **Default Subnet Mask:** `255.255.255.0` (`/24`)\n' +
-        '- **Default DHCP Pool:** `192.168.0.100` – `192.168.0.200`\n' +
-        '- **Default Credentials:** Modern firmware prompts to create a strong administrator password on first boot. Legacy default: `admin` / `admin` or `12345`.\n' +
-        '- **Factory Default SSID:** `Hikvision_XXXX` (open or printed on router base label).\n\n' +
-        '---\n\n' +
-        '### 🔧 Complete Step-by-Step Configuration Workflow\n\n' +
-        '#### Step 1: Physical Cabling & Web GUI Login\n' +
-        '1. Connect the incoming fiber ONT / ISP Ethernet drop cable into the **WAN Port (Blue RJ-45)** on the router.\n' +
-        '2. Connect your PC to any **LAN Port (ports 1–3)** using a Cat6 Ethernet patch cable, or join the default Wi-Fi network (`Hikvision_XXXX`).\n' +
-        '3. Open your web browser and navigate to **`http://192.168.0.1`** (or `http://192.168.1.1`).\n' +
-        '4. Create a new strong administrator password (at least 8 characters with letters, numbers, and symbols) and click **Log In**.\n\n' +
-        '#### Step 2: WAN Internet Connection Setup\n' +
-        'Navigate to **Network** ➔ **WAN Settings**:\n' +
-        '- **PPPoE Mode (Fiber / Broadband ISPs):**\n' +
-        '  - Select **PPPoE** as the Connection Type.\n' +
-        '  - Enter the **PPPoE Username** and **Password** supplied by your ISP.\n' +
-        '  - Set **MTU** to `1492` (adjusts for PPPoE encapsulation to prevent packet fragmentation).\n' +
-        '  - Set DNS to Auto or assign Primary `8.8.8.8` and Secondary `1.1.1.1`.\n' +
-        '- **Dynamic IP (DHCP):** Select if connected behind an existing ISP fiber ONT or bridge modem.\n' +
-        '- **Static IP:** Enter assigned Public IP, Subnet Mask, Gateway, and ISP DNS servers.\n\n' +
-        '#### Step 3: Wireless (Wi-Fi 2.4GHz & 5GHz) Configuration\n' +
-        'Navigate to **Wireless** ➔ **Basic Settings**:\n' +
-        '- **SSID Naming:** Set distinct network names (e.g. `Office_WiFi_2.4G` and `Office_WiFi_5G`) or enable **Smart Connect** (Band Steering).\n' +
-        '- **Security Mode:** Select **WPA2-PSK [AES]** or **WPA2/WPA3-Personal Mixed**.\n' +
-        '- **Wi-Fi Password:** Set a strong pre-shared key (minimum 12–16 characters).\n' +
-        '- **RF Optimization:** 2.4 GHz channel width at `20 MHz` (channels 1, 6, 11) for low interference; 5 GHz channel width at `80 MHz` (channels 36, 44, 149) for maximum throughput.\n\n' +
-        '#### Step 4: Port Forwarding / Virtual Server for Hikvision CCTV & NVR\n' +
-        'To stream video and manage Hikvision DVR/NVR from the internet or Hik-Connect, navigate to **Advanced** ➔ **NAT / Virtual Server**:\n' +
-        '- **Server Port (iVMS-4200 / Hik-Connect):** WAN Port `8000` ➔ LAN Port `8000` (TCP, NVR IP: `192.168.0.200`)\n' +
-        '- **RTSP Video Streaming:** WAN Port `554` ➔ LAN Port `554` (TCP/UDP, NVR IP: `192.168.0.200`)\n' +
-        '- **Web Client Access (HTTP):** WAN Port `8080` ➔ LAN Port `80` (TCP, NVR IP: `192.168.0.200`)\n' +
-        '- **HTTPS Secure Web:** WAN Port `8443` ➔ LAN Port `443` (TCP, NVR IP: `192.168.0.200`)\n' +
-        '*(Tip: Reserve a static IP for the NVR under **Network ➔ DHCP Server ➔ Static Binding**).*\n\n' +
-        '#### Step 5: Security Hardening Best Practices\n' +
-        '- **Disable Remote Web Management:** Block WAN port 80/443 access under **System Tools ➔ Remote Management**.\n' +
-        '- **Disable WPS:** Turn off Wi-Fi Protected Setup to block PIN brute-force attacks.\n' +
-        '- **Subnet Isolation:** Change LAN IP to `192.168.88.1` if your upstream ISP ONT already uses `192.168.1.1` to eliminate IP conflict.\n\n' +
-        '---\n\n' +
-        '### ⚡ Diagnostic Verification CLI Commands\n' +
-        '```text\n' +
-        '# Windows: Check Default Gateway & Ping Router\n' +
-        'ipconfig /all\n' +
-        'ping 192.168.0.1                     ! Test Local Router Reachability (< 1ms)\n' +
-        'ping 8.8.8.8                         ! Test Public Internet WAN Gateway\n' +
-        'tracert 1.1.1.1                      ! Trace ISP Hops & Gateway Path\n\n' +
-        '# Linux / macOS: Verify Route & DNS Resolution\n' +
-        'ip route show default\n' +
-        'ping -c 4 192.168.0.1\n' +
-        'nslookup router.hikvision.com\n' +
-        '```\n\n' +
-        '<details class="cmd-desc-box"><summary>📖 Describe Commands (Line-by-Line Breakdown)</summary>' +
-        '<div class="cmd-desc-content">' +
-        '<ul class="cmd-param-list">' +
-        '<li><span class="cmd-param-tag">192.168.0.1</span>: The primary management IP address of the Hikvision router.</li>' +
-        '<li><span class="cmd-param-tag">PPPoE MTU 1492</span>: Point-to-Point Protocol over Ethernet payload ceiling, reserving 8 bytes for PPPoE header.</li>' +
-        '<li><span class="cmd-param-tag">Port 8000 (TCP)</span>: Hikvision proprietary communication and media transmission port for iVMS and Hik-Connect.</li>' +
-        '<li><span class="cmd-param-tag">Port 554 (RTSP)</span>: Real-Time Streaming Protocol for high-definition live video feeds.</li>' +
-        '<li><span class="cmd-param-tag">WPA2-PSK [AES]</span>: Industry-standard 128-bit cryptographic encryption preventing Wi-Fi eavesdropping.</li>' +
-        '</ul></div></details>\n\n' +
-        '[[btn:🔒 Port Forwarding NVR|Hikvision port forwarding 8000 RTSP 554]] [[btn:🧮 Subnet /24|Calculate subnet 192.168.0.0/24]] [[btn:⚡ GPON Provisioning|Generate Huawei GPON OLT service-port config for VLAN 100]] [[btn:🩺 MTU & MSS|MTU and MSS troubleshooting with DF bit ping commands]]'
-    };
-  }
-
-  if (isGenericRouter) {
-    return {
-      found: true,
-      topic: 'Wireless Router Setup & Gateway Configuration',
-      response: '📡 **Universal Wireless Router Setup & Gateway Configuration Guide**\n\n' +
-        renderRouterTopologySVG() + '\n\n' +
-        '### 💡 Standard Router Gateway Specifications\n' +
-        '| Brand | Default Web IP | Web Address URL | Default Admin / Password |\n|---|---|---|---|\n' +
-        '| **TP-Link** | `192.168.0.1` / `192.168.1.1` | `http://tplinkwifi.net` | Prompt on boot / `admin` |\n' +
-        '| **Tenda** | `192.168.0.1` | `http://tendawifi.com` | Blank / Prompt on boot |\n' +
-        '| **Netgear** | `192.168.1.1` | `http://routerlogin.net` | `admin` / `password` |\n' +
-        '| **D-Link** | `192.168.0.1` | `http://dlinkrouter.local` | `admin` / Blank |\n' +
-        '| **Cisco Home** | `192.168.1.1` | `http://192.168.1.1` | `admin` / `admin` or `cisco` |\n' +
-        '| **MikroTik** | `192.168.88.1` | `http://192.168.88.1` | `admin` / Blank |\n\n' +
-        '### 🔧 Universal 4-Step Setup Workflow\n' +
-        '1. **WAN Uplink:** Plug the ISP optical ONT/modem Ethernet cable into the **WAN (Blue)** port.\n' +
-        '2. **Access Web GUI:** Connect PC to LAN port 1 and navigate to the default router IP in Chrome or Edge.\n' +
-        '3. **WAN Protocol:** Select **PPPoE** (enter ISP credentials, set MTU `1492`) or **Dynamic IP (DHCP)**.\n' +
-        '4. **Wi-Fi Security:** Set SSID and configure **WPA2/WPA3-Personal [AES]** with a minimum 12-character password.\n\n' +
-        '### ⚡ Diagnostic Verification CLI\n' +
-        '```text\n' +
-        'ping 192.168.0.1                     ! Test local gateway reachability\n' +
-        'ping 8.8.8.8                         ! Test public internet access\n' +
-        '```\n\n' +
-        '[[btn:📡 Hikvision Router|Setup hikvision router]] [[btn:🧮 Subnet /24|Calculate subnet 192.168.0.0/24]] [[btn:⚡ GPON Provisioning|Generate Huawei GPON OLT service-port config for VLAN 100]]'
-    };
-  }
 
   // 1. CONTEXT / REFERENCE LOG & ERROR ANALYZER
   var isOspfLog = /(ospf-5-adjchg|ospf.*adjchg|nbr.*down|dead\s*timer\s*expired|mtu.*mismatch.*dbd)/i.test(qLower);
@@ -9441,7 +9303,7 @@ function synthesizeSmartResponse(heading, mainText, bullets, q, lang, imgUrl, is
   var netResp = getNetworkUtilityOrContextResponse(q, lang) || getNetworkUtilityOrContextResponse(heading, lang);
   if (netResp && netResp.found) {
     var respText = netResp.response;
-    if (imgUrl && !respText.includes(imgUrl) && isRelevantImage(heading, q)) {
+    if (imgUrl && !respText.includes(imgUrl)) {
       respText = '![' + heading + '](' + imgUrl + ')\n\n' + respText;
     }
     return respText;
@@ -9532,7 +9394,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
 
   var searchKeywords = cleanQ
     .replace(/^(Please\s+elaborate\s+and\s+explain\s+this\s+in\s+simpler\s+terms\s+with\s+easy\s+steps:?)\s*/i, '')
-    .replace(/^(Please\s+explain|Explain|What\s+is|What\s+are|What\s+was|Who\s+sent|Who\s+launched|Who\s+made|Who\s+built|Who\s+created|Who\s+is|Who\s+was|Where\s+is|When\s+was|Tell\s+me\s+about|How\s+to\s+configure|How\s+to\s+set\s+up|How\s+to\s+setup|How\s+to\s+use|How\s+to|How\s+do\s+i\s+setup|How\s+do\s+i|How\s+do|Setup|Set\s+up|Configure|Config|Installation\s+of|Install)\s+/i, '')
+    .replace(/^(Please\s+explain|Explain|What\s+is|What\s+are|What\s+was|Who\s+sent|Who\s+launched|Who\s+made|Who\s+built|Who\s+created|Who\s+is|Who\s+was|Where\s+is|When\s+was|Tell\s+me\s+about|How\s+to\s+configure|How\s+to\s+set\s+up|How\s+to\s+use|How\s+to|How\s+do)\s+/i, '')
     .replace(/^(कृपया\s+इसे\s+सरल\s+भाषा\s+में\s+समझाएं:?)\s*/i, '')
     .replace(/^(कृपया\s+समझाएं|क्या\s+है|किसे\s+कहते\s+हैं|किसने\s+बनाया|किसने\s+भेजा)\s*/i, '')
     .replace(/^(कृपया\s+यसलाई\s+सजिलो\s+भाषामा\s+व्याख्या\s+गर्नुहोस्:?)\s*/i, '')
@@ -9540,57 +9402,6 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
     .trim();
   if (!searchKeywords) {
     searchKeywords = cleanQ || withoutEmojis.trim() || q;
-  }
-
-  function findRelevantWikiHit(searchItems, queryStr, rawQ) {
-    if (!searchItems || !searchItems.length) return null;
-    var combined = ((queryStr || '') + ' ' + (rawQ || '')).toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-    var stopWords = /^(setup|set|up|configure|config|router|about|please|tell|what|with|from|this|that|your|have|more|like|steps|guide|help|how|the|and|for)$/i;
-    var qWords = combined.split(/\s+/).filter(function(w) {
-      return w.length >= 3 && !stopWords.test(w);
-    });
-
-    if (qWords.length > 0) {
-      for (var i = 0; i < searchItems.length; i++) {
-        var item = searchItems[i];
-        var titleLower = (item.title || '').toLowerCase();
-        var snipLower = (item.snippet || '').toLowerCase();
-        var matched = qWords.some(function(w) {
-          return titleLower.indexOf(w) !== -1 || snipLower.indexOf(w) !== -1;
-        });
-        if (matched) return item;
-      }
-      return null;
-    }
-
-    var allWords = combined.split(/\s+/).filter(function(w) { return w.length >= 4; });
-    if (allWords.length > 0) {
-      for (var j = 0; j < searchItems.length; j++) {
-        var itm = searchItems[j];
-        var tLow = (itm.title || '').toLowerCase();
-        var sLow = (itm.snippet || '').toLowerCase();
-        if (allWords.some(function(w) { return tLow.indexOf(w) !== -1 || sLow.indexOf(w) !== -1; })) {
-          return itm;
-        }
-      }
-      return null;
-    }
-
-    return searchItems[0];
-  }
-
-  function isRelevantImage(heading, query) {
-    if (!heading || !query) return false;
-    var h = heading.toLowerCase();
-    var stopWords = /^(setup|set|up|configure|config|router|about|please|tell|what|with|from|this|that|your|have|more|like|steps|guide|help|how|the|and|for)$/i;
-    var qWords = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function(w) {
-      return w.length >= 3 && !stopWords.test(w);
-    });
-    if (!qWords.length) {
-      var all = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function(w) { return w.length >= 4; });
-      return all.some(function(w) { return h.indexOf(w) !== -1; });
-    }
-    return qWords.some(function(w) { return h.indexOf(w) !== -1; });
   }
 
   // 1. DuckDuckGo Instant Answer API
@@ -9605,8 +9416,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
   var pWiki = safeFetchJson(wikiSearchUrl)
     .then(function(data) {
       if (data && data.query && data.query.search && data.query.search.length > 0) {
-        var topItem = findRelevantWikiHit(data.query.search, searchKeywords, q);
-        if (!topItem) return null;
+        var topItem = data.query.search[0];
         var topTitle = topItem.title;
         var extractUrl = 'https://' + wikiLang + '.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&piprop=thumbnail&pithumbsize=600&exintro=1&explaintext=1&titles=' + encodeURIComponent(topTitle) + '&format=json&origin=*';
         return safeFetchJson(extractUrl)
@@ -9630,8 +9440,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
         return safeFetchJson(enWikiUrl)
           .then(function(de) {
             if (de && de.query && de.query.search && de.query.search.length > 0) {
-              var topEn = findRelevantWikiHit(de.query.search, searchKeywords, q);
-              if (!topEn) return null;
+              var topEn = de.query.search[0];
               var enExtUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&piprop=thumbnail&pithumbsize=600&exintro=1&explaintext=1&titles=' + encodeURIComponent(topEn.title) + '&format=json&origin=*';
               return safeFetchJson(enExtUrl).then(function(de2) {
                 var pgs = (de2 && de2.query && de2.query.pages) ? de2.query.pages : {};
@@ -9710,7 +9519,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
     if (netResp && netResp.found) {
       var prefix = (switchNotice || '') + refreshNotice;
       var outText = prefix + netResp.response;
-      if (imgUrl && !outText.includes(imgUrl) && isRelevantImage(heading, q)) {
+      if (imgUrl && !outText.includes(imgUrl)) {
         outText = prefix + '![' + (heading || q) + '](' + imgUrl + ')\n\n' + netResp.response;
       }
       renderAssistantMessage({
@@ -9728,8 +9537,7 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
 
     if (mainText) {
       var prefix = (switchNotice || '') + refreshNotice;
-      var safeImg = isRelevantImage(heading, q) ? imgUrl : '';
-      var synthesized = synthesizeSmartResponse(heading || searchKeywords, mainText, bullets, q, currentLang, safeImg, false, currentPersona);
+      var synthesized = synthesizeSmartResponse(heading || searchKeywords, mainText, bullets, q, currentLang, imgUrl, false, currentPersona);
 
       renderAssistantMessage({
         text: prefix + synthesized,

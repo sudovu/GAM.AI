@@ -206,8 +206,8 @@ def build_apk():
                     try:
                         sys.path.insert(0, os.path.dirname(__file__))
                         from snapshot_version import create_snapshot
-                        create_snapshot("v1.5.1", "Router Setup Intelligence & Query Relevance Hardening",
-                                        "Enhanced query stop-word extraction, strict Wikipedia relevance matching, multi-vendor router provisioning for Hikvision, TP-Link, Tenda, Netgear, and unified v1.5.1 release.", target_apk)
+                        create_snapshot("v1.4.0", "Online vs Offline Distinction, Auto-Switch & Live Refresh",
+                                        "Automated build snapshot with online/offline mode distinction, auto-switching, live refresh, and lens accuracy.", target_apk)
                     except Exception as snap_err:
                         print(f"  * Snapshot archiving note: {snap_err}")
 
