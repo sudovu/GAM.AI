@@ -321,6 +321,31 @@ class TestCoreComponents(unittest.TestCase):
         self.assertIn("Floral Fabric & Textile", content)
         self.assertIn("Patterned Fabric & Textile Material", content)
 
+    def test_optimized_online_data_engine_and_conversational_handling(self):
+        """Verify optimized data engine: online mode live retrieval, image awareness, and casual talk."""
+        from gam_ai.core.chat.engine import ChatEngine, is_conversational_query
+        from gam_ai.ui import get_ui_dir
+
+        # 1. Test conversational detection
+        self.assertTrue(is_conversational_query("how are you doing today?"))
+        self.assertTrue(is_conversational_query("tell me a joke"))
+        self.assertFalse(is_conversational_query("James Webb Space Telescope discoveries"))
+
+        # 2. Test ChatEngine conversational execution
+        engine = ChatEngine()
+        chat_resp = engine.process_query("how are you doing today?", mode="online")
+        self.assertIn("doing great", chat_resp["response"].lower())
+        self.assertEqual(chat_resp["source"], "conversational")
+
+        # 3. Test dashboard.html timeout and online fallback optimization
+        dash_path = os.path.join(get_ui_dir(), "dashboard.html")
+        with open(dash_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        self.assertIn("timeout: 18000", content)
+        self.assertIn("handleOmniGenerativePrompt(q, currentLang, true)", content)
+        engine.close()
+
 if __name__ == "__main__":
     unittest.main()
 

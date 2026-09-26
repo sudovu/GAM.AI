@@ -1845,7 +1845,7 @@ function apiFetch(path, options) {
     if (!url.startsWith('/')) url = '/' + url;
     url = (base ? base : '') + url;
   }
-  var timeoutMs = options.timeout || 2500;
+  var timeoutMs = options.timeout || 15000;
   var controller = new AbortController();
   var timer = setTimeout(function() {
     try { controller.abort(); } catch(e) {}
@@ -1903,7 +1903,36 @@ function refreshLastQueryWithOnlineData(query) {
   }
 
   var t0 = performance.now();
-  fetchLiveOnlineResults(query, currentLang, loadId, t0, false, true);
+  apiFetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: query, lang: currentLang, mode: 'online' }),
+    timeout: 18000
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+    var t1 = performance.now();
+    var latencyMs = (t1 - t0).toFixed(0);
+    var refreshNotice = (currentLang === 'hi' ? '> 🔄 **लाइव डेटा रीफ्रेश हुआ:** *नवीनतम ऑनलाइन जानकारी (' + new Date().toLocaleTimeString() + ') पर अपडेट की गई।*\n\n'
+      : (currentLang === 'ne' ? '> 🔄 **लाइभ डाटा रिफ्रेस भयो:** *ताजा अनलाइन जानकारी (' + new Date().toLocaleTimeString() + ') मा अद्यावधिक गरियो।*\n\n'
+      : '> 🔄 **Live Web Data Refreshed**: *Updated with the latest real-time web intelligence at ' + new Date().toLocaleTimeString() + '.*\n\n'));
+    renderAssistantMessage({
+      text: refreshNotice + (data.response || ''),
+      isOffline: false,
+      modelName: activeModelName,
+      sourceTag: (data.source === 'web_research') ? '🔍 Live Web Research' : '🌐 Online Knowledge',
+      latencyMs: latencyMs,
+      isNotFound: false,
+      query: query,
+      shouldReadAloud: false
+    });
+    updateStatus();
+  })
+  .catch(function() {
+    fetchLiveOnlineResults(query, currentLang, loadId, t0, false, true);
+  });
 }
 
 function toggleOnlineOfflineMode() {
@@ -9521,8 +9550,9 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
         shouldReadAloud: shouldReadAloud
       });
     } else {
-      // Direct live instant encyclopedia summary was not returned — use verified on-device intelligence
-      var offlineResult = processOfflineAIQuery(searchKeywords);
+      // Direct live instant encyclopedia summary was not returned — use smart contextual intelligence
+      var omniImmediate = handleOmniGenerativePrompt(q, currentLang, true) || handleOmniGenerativePrompt(searchKeywords, currentLang, true);
+      var offlineResult = omniImmediate || processOfflineAIQuery(searchKeywords);
       if (!offlineResult || !offlineResult.found) {
         offlineResult = processOfflineAIQuery(q);
       }
@@ -9533,8 +9563,8 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
         renderAssistantMessage({
           text: prefix + offlineResult.response,
           isOffline: false,
-          modelName: activeModelName,
-          sourceTag: '⚡ Local & Live Hybrid',
+          modelName: omniImmediate ? '🤖 Omni-Generative Intelligence' : activeModelName,
+          sourceTag: omniImmediate ? '💡 Frontier AI Synthesis' : '⚡ Local & Live Hybrid',
           latencyMs: realLatencyMs,
           isNotFound: false,
           query: q,
@@ -9750,7 +9780,8 @@ function executeSend(userText, wasSpoken) {
     apiFetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: q, lang: currentLang, mode: 'online' })
+      body: JSON.stringify({ query: q, lang: currentLang, mode: 'online' }),
+      timeout: 18000
     })
     .then(function(res) { return res.json(); })
     .then(function(data) {

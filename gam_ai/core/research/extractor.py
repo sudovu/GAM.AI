@@ -17,9 +17,10 @@ class ExtractedClaim:
     content_hash: str
     conditions: Optional[str] = None
     tags: List[str] = field(default_factory=list)
+    image_url: Optional[str] = None
 
 class SelectiveExtractor:
-    def extract(self, query: str, raw_text: str, source_url: str, title: Optional[str] = None) -> ExtractedClaim:
+    def extract(self, query: str, raw_text: str, source_url: str, title: Optional[str] = None, image_url: Optional[str] = None) -> ExtractedClaim:
         raw_size = len(raw_text.encode("utf-8"))
         domain = self._extract_domain(source_url)
         topic = self._infer_topic(query, raw_text)
@@ -39,7 +40,8 @@ class SelectiveExtractor:
             compressed_size_bytes=compressed_size,
             compression_ratio=ratio,
             content_hash=content_hash,
-            tags=[topic.lower(), "verified_research"]
+            tags=[topic.lower(), "verified_research"],
+            image_url=image_url
         )
 
     def _extract_domain(self, url: str) -> str:
@@ -62,9 +64,19 @@ class SelectiveExtractor:
         return " ".join(words[:2]).title() if words else "General"
 
     def _distill_facts(self, query: str, text: str) -> str:
-        sentences = [s.strip() for s in text.replace("\n", ". ").split(".") if len(s.strip()) > 15]
-        q_words = set(re.findall(r"\w+", query.lower()))
+        clean_text = text.strip()
+        if not clean_text:
+            return ""
 
+        # If text is already a concise verified extract under 600 chars, preserve it cleanly
+        if len(clean_text) <= 600 and "\n" not in clean_text:
+            return clean_text
+
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', clean_text.replace("\n", " ")) if len(s.strip()) > 15]
+        if not sentences:
+            return clean_text[:400]
+
+        q_words = set(re.findall(r"\w+", query.lower()))
         scored = []
         for s in sentences:
             s_words = set(re.findall(r"\w+", s.lower()))
@@ -72,7 +84,10 @@ class SelectiveExtractor:
             scored.append((overlap, s))
 
         scored.sort(key=lambda x: x[0], reverse=True)
-        top_sentences = [s for score, s in scored[:2] if score > 0]
+        # Select up to top 4 overlapping sentences to provide full, comprehensive context
+        top_sentences = [s for score, s in scored[:4] if score > 0]
         if top_sentences:
-            return ". ".join(top_sentences) + "."
-        return (sentences[0] + ".") if sentences else text[:150]
+            return " ".join(top_sentences)
+
+        # Fallback to the first 3 consecutive sentences for smooth narrative flow
+        return " ".join(sentences[:3])

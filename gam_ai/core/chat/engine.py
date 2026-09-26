@@ -1,17 +1,18 @@
 
 CONVERSATIONAL_PHRASES = {
-    "hello", "hi", "hey", "good morning", "good afternoon", "good evening",
-    "how are you", "how are you doing", "how's it going", "what's up",
-    "thank you", "thanks", "bye", "goodbye", "see you", "tell me a joke",
-    "say a joke", "tell a joke", "who are you", "what is your name",
-    "what can you do", "help me", "नमस्ते", "नमस्कार", "धन्यवाद"
+    "hello", "hi", "hey", "hey there", "good morning", "good afternoon", "good evening",
+    "how are you", "how are you doing", "how's it going", "what's up", "how do you do",
+    "thank you", "thanks", "thank you so much", "bye", "goodbye", "see you", "see ya",
+    "tell me a joke", "say a joke", "tell a joke", "make me laugh", "funny joke",
+    "who are you", "what is your name", "what can you do", "what are your features",
+    "help me", "help", "नमस्ते", "नमस्कार", "धन्यवाद", "कस्तो छ", "के छ"
 }
 
 def is_conversational_query(text: str) -> bool:
     clean = text.lower().strip("?!.,'\" ")
     if clean in CONVERSATIONAL_PHRASES:
         return True
-    for phrase in ("how are you", "tell me a joke", "say a joke", "who are you", "what can you do", "tell me a story"):
+    for phrase in ("how are you", "how's it going", "tell me a joke", "say a joke", "tell a joke", "who are you", "what is your name", "what can you do", "tell me a story"):
         if phrase in clean:
             return True
     return False
@@ -185,34 +186,54 @@ class ChatEngine:
 
         freq = self.research.record_query(effective_query)
 
-        knowledge_matches = self.knowledge.search_knowledge(effective_query, limit=2)
-        source_type = "local_knowledge"
-        knowledge_texts = [k["claim"] for k in knowledge_matches]
+        discovered_image: Optional[str] = None
+        source_type = "local_offline"
+        knowledge_texts = []
 
-        cache_key = f"research:{effective_query.lower()}"
-        cached_entry = self.cache.get(cache_key)
+        is_connected = self.capabilities.check_network_connectivity()
+        is_chatty = is_conversational_query(user_text) or is_conversational_query(effective_query)
 
-        if not knowledge_matches and cached_entry:
-            source_type = "cache"
-            knowledge_texts.append(cached_entry["content"])
+        # In explicit ONLINE mode (for non-conversational questions), execute live web research first
+        if mode == "online" and is_connected and not is_chatty:
+            res = self.research.research(effective_query, force_refresh=True)
+            if res.get("content") and res.get("source") == "web_research":
+                knowledge_texts.append(res["content"])
+                source_type = "web_research"
+                discovered_image = res.get("image_url")
 
-            if freq >= self.promotion_threshold or cached_entry["access_count"] >= self.promotion_threshold:
-                promoted_id = self.knowledge.promote_from_cache(
-                    topic=effective_query.title(),
-                    claim=cached_entry["content"],
-                    source=cached_entry.get("source")
-                )
-                logger.info("Promoted query '%s' to permanent knowledge (id=%s)", effective_query, promoted_id)
+        # If not online or online research had no result, check local knowledge and smart cache
+        if not knowledge_texts and not is_chatty:
+            knowledge_matches = self.knowledge.search_knowledge(effective_query, limit=2)
+            if knowledge_matches:
+                source_type = "local_knowledge"
+                knowledge_texts = [k["claim"] for k in knowledge_matches]
+            else:
+                cache_key = f"research:{effective_query.lower()}"
+                cached_entry = self.cache.get(cache_key)
+                if cached_entry:
+                    source_type = "cache"
+                    knowledge_texts.append(cached_entry["content"])
+                    if freq >= self.promotion_threshold or cached_entry["access_count"] >= self.promotion_threshold:
+                        promoted_id = self.knowledge.promote_from_cache(
+                            topic=effective_query.title(),
+                            claim=cached_entry["content"],
+                            source=cached_entry.get("source")
+                        )
+                        logger.info("Promoted query '%s' to permanent knowledge (id=%s)", effective_query, promoted_id)
 
-        if not knowledge_texts:
-            is_online = (mode != "offline") and self.capabilities.check_network_connectivity()
+        # In AUTO mode with no local hits, query live research if connected
+        if not knowledge_texts and not is_chatty:
+            is_online = (mode != "offline") and is_connected
             if is_online:
-                res = self.research.research(effective_query)
+                res = self.research.research(effective_query, force_refresh=False)
                 if res.get("content"):
                     knowledge_texts.append(res["content"])
                     source_type = "web_research"
+                    discovered_image = res.get("image_url")
             else:
                 source_type = "local_offline"
+        elif is_chatty:
+            source_type = "conversational"
 
         doc_chunks = self.retriever.retrieve_context(effective_query, top_k=2)
         for dc in doc_chunks:
@@ -233,26 +254,31 @@ class ChatEngine:
         gen_request = GenerationRequest(prompt=prompt_str, max_tokens=safe_max_tokens)
         gen_response = model.generate(gen_request)
 
+        final_response_text = gen_response.text
+        if discovered_image and discovered_image not in final_response_text and ("![" not in final_response_text):
+            final_response_text = f"![{effective_query}]({discovered_image})\n\n{final_response_text}"
+
         # Update in-memory rolling history
         self.memory.add_interaction("user", user_text)
-        self.memory.add_interaction("assistant", gen_response.text)
+        self.memory.add_interaction("assistant", final_response_text)
         self.memory.reset_active()
 
         # Persist conversation turn in SQLite database
         self.save_message_to_db(conversation_id, "user", user_text, token_count=len(user_text.split()))
-        self.save_message_to_db(conversation_id, "assistant", gen_response.text, token_count=gen_response.completion_tokens)
+        self.save_message_to_db(conversation_id, "assistant", final_response_text, token_count=gen_response.completion_tokens)
 
-        is_offline_result = (mode == "offline") or (source_type != "web_research")
+        is_offline_result = (mode == "offline") or (source_type != "web_research" and mode != "online")
 
         return {
-            "response": gen_response.text,
+            "response": final_response_text,
             "source": source_type,
             "mode": "offline" if is_offline_result else "online",
             "prompt_tokens": gen_response.prompt_tokens,
             "completion_tokens": gen_response.completion_tokens,
             "model_name": gen_response.model_name,
             "frequency": freq,
-            "conversation_id": conversation_id
+            "conversation_id": conversation_id,
+            "image_url": discovered_image
         }
 
     def get_system_status(self) -> str:

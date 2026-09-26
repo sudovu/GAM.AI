@@ -12,6 +12,7 @@ class SearchResultItem:
     score: float = 1.0
     published_date: Optional[str] = None
     raw_content: Optional[str] = None
+    image_url: Optional[str] = None
 
 class ISearchProvider(ABC):
     @abstractmethod
