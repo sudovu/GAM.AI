@@ -12,6 +12,9 @@ on:
   release:
     types: [ created ]
 
+permissions:
+  contents: write
+
 jobs:
   test:
     name: Run Python Test Suite & Benchmarks
@@ -49,7 +52,7 @@ jobs:
           python scripts/build_apk.py
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -57,7 +60,7 @@ jobs:
 
       - name: Accept Android SDK Licenses
         run: |
-          yes | sdkmanager --licenses 2>/dev/null || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || yes | sdkmanager --licenses 2>/dev/null || true
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
@@ -177,7 +180,7 @@ jobs:
           ls -la release-final/
 
       - name: Publish All Platforms to GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: release-final/*
         env:
