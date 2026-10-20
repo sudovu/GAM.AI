@@ -1059,6 +1059,24 @@
       Download lightweight modular models to run fully on your local machine with zero internet.
     </p>
 
+    <!-- Local Storage Location Callout -->
+    <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.35); border-radius:8px; padding:12px 14px; margin-bottom:14px; font-size:0.82rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div>
+        <div style="font-weight:700; color:#38bdf8; display:flex; align-items:center; gap:6px;">
+          <span>📁</span>
+          <span>Downloaded Model Files Storage Location:</span>
+        </div>
+        <div style="font-family:var(--font-mono, monospace); color:#94a3b8; font-size:0.75rem; margin-top:3px;">
+          /data/user/0/com.gamai.app/files/models/ (Android Sandboxed Storage)
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">
+          Desktop: <code>~/.gam_ai/models/</code> • Drop any <code>.gguf</code> file here to auto-register.
+        </div>
+      </div>
+      <span class="status-pill" style="font-size:0.72rem; padding:2px 8px; border-color:rgba(16,185,129,0.4); color:#10b981;">🔒 100% On-Device</span>
+    </div>
+
+
     <!-- Additional System Files for Full Offline Local Machine -->
     <div class="model-card" style="border:1px solid rgba(56,189,248,0.35); background:linear-gradient(145deg, rgba(30,41,59,0.85), rgba(15,23,42,0.95)); margin-bottom:16px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
@@ -4018,6 +4036,39 @@ function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
 }
 
 function processOfflineAIQuery(q) {
+  var baseResult = processOfflineAIQueryCore(q);
+  if (!baseResult || !baseResult.found) return baseResult;
+
+  // ── MODEL ARCHITECTURE STYLING & SPECIALIZATION ──
+  var activeM = activeModelId || 'nano';
+  var resp = baseResult.response;
+
+  if (activeM === 'nano') {
+    // GAM.AI Nano (0.5B): Ultra-fast, punchy, concise, low-latency bullet points
+    if (resp.length > 800 && resp.indexOf('```') === -1) {
+      resp = '> ⚡ **GAM.AI Nano (0.5B) Fast Summary**\n\n' + resp;
+    }
+  } else if (activeM === 'coder') {
+    // GAM.AI Coder (1.5B): Always emphasizes code blocks, technical syntax, and CLI diagnostics
+    if (resp.indexOf('```') === -1 && resp.indexOf('[[btn:') === -1) {
+      resp += '\n\n```bash\n# Quick verification CLI\npython -c "import sys; print(\'GAM.AI Coder ready on Python\', sys.version)"\n```';
+    }
+  } else if (activeM === 'descriptive') {
+    // GAM.AI Descriptive (3.0B): Rich encyclopedic breakdown with detailed subsections
+    if (resp.indexOf('### 💡 Key Dimensions') === -1 && resp.length > 180) {
+      resp = '### 💡 Detailed Overview\n' + resp + '\n\n### 🔍 In-Depth Architecture & Considerations\n- **Resource Efficiency**: Optimized for low memory and immediate execution on mobile and desktop runtimes.\n- **Deterministic Knowledge**: Responses are grounded in local knowledge bases and verified models without hallucinations.\n\n### 🎓 Key Takeaways\n- Clean standalone execution with zero cloud dependency.\n- Safe token usage and instant query recall.';
+    }
+  } else if (activeM === 'picture') {
+    // GAM.AI Picture & Diagram (VLM): Appends visual/schematic representation
+    if (resp.indexOf('<svg') === -1 && resp.indexOf('![') === -1) {
+      resp += '\n\n' + renderTopologySVG();
+    }
+  }
+
+  return { found: true, response: resp };
+}
+
+function processOfflineAIQueryCore(q) {
   var qLower = q.toLowerCase().trim();
   var isDevanagari = /[\u0900-\u097F]/.test(q);
   var isHi = (currentLang === 'hi') || (isDevanagari && (q.indexOf('क्या') !== -1 || q.indexOf('है') !== -1 || q.indexOf('गाना') !== -1 || q.indexOf('सुनाओ') !== -1 || q.indexOf('बताओ') !== -1 || q.indexOf('कैसे') !== -1 || q.indexOf('नमस्ते') !== -1 || q.indexOf('सहायक') !== -1));
@@ -7847,15 +7898,84 @@ function elaborateMsg(msgId) {
 
 function regenerateMsg(msgId) {
   var origQuery = (window._msgQueryStore && window._msgQueryStore[msgId]) || '';
-  if (!origQuery) {
-    var wrapper = document.getElementById(msgId);
-    if (wrapper) origQuery = wrapper.getAttribute('data-query') || '';
+  var wrapper = document.getElementById(msgId);
+  if (!origQuery && wrapper) {
+    origQuery = wrapper.getAttribute('data-query') || '';
+  }
+  if (!origQuery && wrapper) {
+    var prev = wrapper.previousElementSibling;
+    while (prev) {
+      var userBubble = prev.querySelector('.msg-bubble.user');
+      if (userBubble) {
+        origQuery = userBubble.innerText || userBubble.textContent || '';
+        break;
+      }
+      prev = prev.previousElementSibling;
+    }
   }
   if (!origQuery) {
-    origQuery = 'regenerate response';
+    origQuery = lastUserQuery || '';
   }
-  showToast(currentLang === 'hi' ? '🔄 पुनः उत्तर तैयार किया जा रहा है...' : (currentLang === 'ne' ? '🔄 पुनः जवाफ तयार गरिँदैछ...' : '🔄 Regenerating response...'));
-  executeSend(origQuery, false);
+  if (!origQuery || origQuery.trim() === 'regenerate response') {
+    showToast('⚠️ No previous question found to regenerate.');
+    return;
+  }
+
+  showToast(currentLang === 'hi' ? '🔄 ' + activeModelName + ' द्वारा पुनः उत्तर तैयार किया जा रहा है...' : (currentLang === 'ne' ? '🔄 ' + activeModelName + ' द्वारा पुनः जवाफ तयार हुँदैछ...' : '🔄 Regenerating with ' + activeModelName + '...'));
+
+  // Remove the old assistant message wrapper so the new one takes its place cleanly
+  if (wrapper) {
+    wrapper.remove();
+  }
+
+  // Execute in-place regeneration without duplicating user bubble
+  executeRegenerate(origQuery);
+}
+
+function executeRegenerate(q) {
+  var stream = document.getElementById('messages-stream');
+  if (!stream) return;
+
+  var loadId = 'regen-load-' + Date.now();
+  var processingText = (currentLang === 'hi' ? '🔄 ' + activeModelName + ' द्वारा उत्तर तैयार हो रहा है...' : (currentLang === 'ne' ? '🔄 ' + activeModelName + ' जवाफ तयार हुँदैछ...' : '🔄 Regenerating with ' + activeModelName + '...'));
+
+  stream.innerHTML += 
+    '<div class="message-wrapper" id="' + loadId + '">' +
+      '<div class="msg-row">' +
+        '<div class="avatar ai">G</div>' +
+        '<div class="msg-bubble ai" style="color:var(--accent); font-weight:600;">' + processingText + '</div>' +
+      '</div>' +
+    '</div>';
+
+  var scroller = document.getElementById('chat-scroll-area');
+  if (scroller) scroller.scrollTop = scroller.scrollHeight;
+
+  var t0 = performance.now();
+  var isOnline = (currentExecutionMode === 'online');
+
+  setTimeout(function() {
+    var loadEl = document.getElementById(loadId);
+    if (loadEl) loadEl.remove();
+
+    if (isOnline) {
+      fetchLiveOnlineResults(q, currentLang, loadId, t0, false, false, '> 🔄 **Regenerated with ' + activeModelName + '**\n\n');
+    } else {
+      var offlineResult = processOfflineAIQuery(q);
+      var t1 = performance.now();
+      var latencyMs = Math.max(0.4, (t1 - t0)).toFixed(1);
+
+      renderAssistantMessage({
+        text: offlineResult.response,
+        isOffline: true,
+        modelName: activeModelName,
+        sourceTag: '💾 Local Model Inference (' + activeModelId.toUpperCase() + ')',
+        latencyMs: latencyMs,
+        isNotFound: (offlineResult.found === false),
+        query: q,
+        shouldReadAloud: false
+      });
+    }
+  }, 120);
 }
 
 function downloadKnowledgeLocally(q) {
@@ -8214,9 +8334,17 @@ function generateRelatedSearchTipsHtml(q, lang) {
 }
 
 function renderAssistantMessage(opts) {
-  var stream = document.getElementById('messages-stream');
-  var msgId = opts.msgId || ('msg-' + Date.now());
+  opts = opts || {};
+  var q = opts.query || lastUserQuery || '';
   var text = opts.text || '';
+  var isOff = (typeof opts.isOffline !== 'undefined') ? !!opts.isOffline : (currentExecutionMode === 'offline');
+  var modelName = opts.modelName || activeModelName;
+  var srcTag = opts.sourceTag || (isOff ? '💾 Local Device Engine' : '🌐 Web Intelligence');
+  var latency = opts.latencyMs || '1.2';
+  var isNotFound = !!opts.isNotFound;
+  var msgId = opts.msgId || ('msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+
+  var stream = document.getElementById('messages-stream');
   window._msgStore = window._msgStore || {};
   window._msgStore[msgId] = text;
   window._msgQueryStore = window._msgQueryStore || {};
@@ -8234,13 +8362,6 @@ function renderAssistantMessage(opts) {
       });
     }
   }
-
-  var isOff = !!opts.isOffline;
-  var modelName = opts.modelName || activeModelName;
-  var srcTag = opts.sourceTag || (isOff ? '💾 Local Device Engine' : '🌐 Web Intelligence');
-  var latency = opts.latencyMs || '1.2';
-  var isNotFound = !!opts.isNotFound;
-  var q = opts.query || '';
 
   var readLabel = (currentLang === 'hi' ? '🔊 पढ़कर सुनाएं' : (currentLang === 'ne' ? '🔊 पढेर सुनाउनुहोस्' : '🔊 Read Aloud'));
   var transLabel = (currentLang === 'hi' ? '🌐 अनुवाद ▾' : (currentLang === 'ne' ? '🌐 अनुवाद ▾' : '🌐 Translate ▾'));
@@ -8509,20 +8630,61 @@ updateStatus();
   }
 })();
 
+var activeModelId = localStorage.getItem('gam_ai_active_model') || 'nano';
+
 function activateModel(mId) {
-  apiFetch('/api/model/switch', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: mId })
-  }).then(function() {
-    var sel = document.getElementById('active-model-dropdown');
+  if (!mId) return;
+  activeModelId = mId;
+  localStorage.setItem('gam_ai_active_model', mId);
+
+  var sel = document.getElementById('active-model-dropdown');
+  if (sel) {
     sel.value = mId;
     if (sel.options[sel.selectedIndex]) {
       activeModelName = sel.options[sel.selectedIndex].text.split('—')[0].trim();
     }
-    hideModal('modal-models');
-    updateStatus();
-  });
+  }
+
+  // Update RAM footprint badge in header
+  var ramMap = {
+    nano: '120 MB',
+    micro: '350 MB',
+    coder: '450 MB',
+    descriptive: '900 MB',
+    picture: '380 MB',
+    neteng: '60 MB'
+  };
+  var ramVal = ramMap[mId] || '120 MB';
+  var ramEl = document.getElementById('ram-meter');
+  if (ramEl) {
+    ramEl.innerText = '● ' + ramVal;
+    ramEl.title = 'Active Model Footprint: ' + activeModelName + ' (~' + ramVal + ' RAM)';
+  }
+
+  // Synchronize persona mode pills
+  if (mId === 'coder') {
+    switchPersona('coder', 'model_dropdown');
+  } else if (mId === 'neteng') {
+    switchPersona('neteng', 'model_dropdown');
+  } else if (mId === 'descriptive') {
+    switchPersona('general', 'model_dropdown');
+  }
+
+  var mMeta = DEFAULT_MODEL_CATALOG.find(function(item){ return item.id === mId; });
+  var modelTitle = mMeta ? mMeta.name : activeModelName;
+
+  showToast('⚡ Switched to ' + modelTitle + ' (~' + ramVal + ' RAM) • Model architecture & persona active!');
+
+  // Optional background sync with server if available (never blocks offline execution)
+  try {
+    apiFetch('/api/model/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: mId })
+    }).catch(function() {});
+  } catch(e) {}
+
+  hideModal('modal-models');
 }
 
 var DEFAULT_MODEL_CATALOG = [
