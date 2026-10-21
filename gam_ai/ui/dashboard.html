@@ -914,7 +914,7 @@
   <div class="brand">
     <div class="brand-title">GAM<span>.AI</span></div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <div class="badge-nano">v1.6.0</div>
+      <div class="badge-nano">v1.6.1</div>
       <button class="mobile-close-btn" id="btn-close-sidebar" onclick="closeSidebar()" style="display:none; background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;" title="Close Sidebar">✕</button>
     </div>
   </div>
@@ -1354,7 +1354,7 @@
           <div style="font-size:1.15rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span>Vhuwon Mathers</span>
             <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">@sudovu</span>
-            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.0</span>
+            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.1</span>
           </div>
           <div style="font-size:0.84rem; color:var(--accent); margin-top:2px; font-weight:600;">
             Creator & Lead Architect of GAM.AI
@@ -2525,219 +2525,9 @@ function refreshSandboxPreview() {
   var docContent = code;
   if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
     if (code.toLowerCase().includes('<svg')) {
-      docContent = '<!DOCTYPE html><html><body style="margin:0; padding:20px; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#0f172a;">' + code + '
-<!-- MODAL: DIRECT IOS / IPADOS INSTALLATION -->
-<div class="modal-overlay" id="modal-ios-install" style="display:none; align-items:center; justify-content:center; padding:16px;">
-  <div class="modal-card" style="max-width:540px; width:100%; max-height:90vh; overflow-y:auto; border-radius:18px; border:1px solid rgba(56,189,248,0.3); background:#0f172a; box-shadow:0 25px 50px -12px rgba(0,0,0,0.85); padding:24px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, #0284c7, #0f172a); border:1px solid #38bdf8; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
-          🍏
-        </div>
-        <div>
-          <h2 style="font-size:1.25rem; font-weight:800; color:#f8fafc; margin:0;">Install on iPhone & iPad</h2>
-          <div style="font-size:0.78rem; color:#38bdf8; font-weight:600;">Direct Installation • No App Store Required • 100% Offline</div>
-        </div>
-      </div>
-      <button onclick="closeModal('modal-ios-install')" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; padding:4px 8px;">✕</button>
-    </div>
-
-    <!-- OPTION 1: 1-TAP PROFILE (RECOMMENDED) -->
-    <div style="background:#1e293b; border:1px solid rgba(16,185,129,0.4); border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#10b981; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>⚡</span> Method 1: 1-Tap Apple Profile (.mobileconfig)
-        </strong>
-        <span style="font-size:0.68rem; background:rgba(16,185,129,0.2); color:#10b981; padding:2px 8px; border-radius:10px; font-weight:700;">RECOMMENDED</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 12px 0;">
-        Installs GAM.AI permanently as a full-screen, standalone app on your iOS Home Screen. Never expires, zero certificates or PC needed.
-      </p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.mobileconfig" class="btn btn-primary" style="flex:1; text-align:center; padding:10px 16px; font-size:0.85rem; font-weight:700; background:#10b981; border-color:#10b981; color:#000; text-decoration:none; border-radius:10px; display:inline-block;" download>
-          📲 Download & Install Profile
-        </a>
-      </div>
-      <div style="font-size:0.75rem; color:#94a3b8; margin-top:10px; background:rgba(0,0,0,0.25); padding:8px 10px; border-radius:8px;">
-        <strong>How to complete:</strong> 1. Tap Download & Allow → 2. Open iPhone <em>Settings</em> → 3. Tap <em>Profile Downloaded</em> at top → 4. Tap <em>Install</em>.
-      </div>
-    </div>
-
-    <!-- OPTION 2: SAFARI ADD TO HOME SCREEN (PWA) -->
-    <div style="background:#1e293b; border:1px solid #2e3d56; border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#38bdf8; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>🌐</span> Method 2: Safari "Add to Home Screen"
-        </strong>
-        <span style="font-size:0.68rem; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 8px; border-radius:10px; font-weight:600;">INSTANT</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 10px 0;">
-        When visiting in Safari, tap the <strong>Share</strong> button (box with upward arrow) at the bottom toolbar, scroll down, and tap <strong>"Add to Home Screen"</strong> (➕).
-      </p>
-      <a href="https://gautambhuwan.com.np/gam-ai/" target="_blank" class="btn btn-secondary" style="display:block; text-align:center; padding:9px 14px; font-size:0.82rem; font-weight:600; text-decoration:none; border-radius:10px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08);">
-        🚀 Launch Live Web App (PWA)
-      </a>
-    </div>
-
-    <!-- OPTION 3: SIDELOADING (.IPA) -->
-    <div style="background:#1e293b; border:1px solid #2e3d56; border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#f8fafc; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>📦</span> Method 3: Direct IPA Download (AltStore / TrollStore)
-        </strong>
-        <span style="font-size:0.68rem; background:#334155; color:#94a3b8; padding:2px 8px; border-radius:10px; font-weight:600;">ADVANCED</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 10px 0;">
-        Download the standalone <code>.ipa</code> binary package to install via AltStore, SideStore, Scarlet, TrollStore, or Sideloadly.
-      </p>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
-          📦 Download IPA (v1.6.0)
-        </a>
-        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
-          ⚡ Open in AltStore
-        </a>
-      </div>
-    </div>
-
-    <!-- OPTION 4: OTA / GITHUB -->
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-      <a href="itms-services://?action=download-manifest&url=https://gautambhuwan.com.np/downloads/gam-ai/manifest.plist" style="flex:1; text-align:center; padding:10px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#cbd5e1; font-size:0.8rem; text-decoration:none; font-weight:600;">
-        📲 Apple OTA Install
-      </a>
-      <a href="https://github.com/sudovu/GAM.AI/releases" target="_blank" style="flex:1; text-align:center; padding:10px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#cbd5e1; font-size:0.8rem; text-decoration:none; font-weight:600;">
-        🐙 GitHub Releases
-      </a>
-    </div>
-  </div>
-</div>
-
-
-<script>
-// Smart iOS & iPadOS Direct Install Detector
-(function() {
-  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-  if (isIOS && !isStandalone && !sessionStorage.getItem('gam_ios_prompt_dismissed')) {
-    setTimeout(function() {
-      var bar = document.createElement('div');
-      bar.id = 'ios-install-banner';
-      bar.style.cssText = 'position:fixed; bottom:80px; left:16px; right:16px; background:#0f172a; border:1px solid #10b981; border-radius:14px; padding:12px 16px; z-index:9999; display:flex; align-items:center; justify-content:space-between; box-shadow:0 10px 25px rgba(0,0,0,0.7); backdrop-filter:blur(8px);';
-      bar.innerHTML = '<div style="display:flex; align-items:center; gap:10px;"><span style="font-size:1.4rem;">🍏</span><div><strong style="color:#f8fafc; font-size:0.88rem; display:block;">Install GAM.AI on iPhone</strong><span style="color:#94a3b8; font-size:0.75rem;">Run offline & full-screen</span></div></div><div style="display:flex; align-items:center; gap:8px;"><button onclick="showModal(\'modal-ios-install\')" style="background:#10b981; color:#000; font-weight:700; border:none; padding:6px 12px; border-radius:8px; font-size:0.8rem; cursor:pointer;">Install</button><button onclick="document.getElementById(\'ios-install-banner\').remove(); sessionStorage.setItem(\'gam_ios_prompt_dismissed\', \'1\');" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer; padding:4px;">✕</button></div>';
-      document.body.appendChild(bar);
-    }, 1500);
-  }
-})();
-</script>
-
-</body></html>';
+      docContent = '<!DOCTYPE html><html><body style="margin:0; padding:20px; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#0f172a;">' + code + '</body></html>';
     } else {
-      docContent = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:system-ui,sans-serif; padding:16px; background:#0b1120; color:#f8fafc;} pre{background:#030712; padding:12px; border-radius:8px; border:1px solid #1e293b; color:#38bdf8; overflow-x:auto;}</style></head><body><h3>Executable Output Preview</h3>' + code + '
-<!-- MODAL: DIRECT IOS / IPADOS INSTALLATION -->
-<div class="modal-overlay" id="modal-ios-install" style="display:none; align-items:center; justify-content:center; padding:16px;">
-  <div class="modal-card" style="max-width:540px; width:100%; max-height:90vh; overflow-y:auto; border-radius:18px; border:1px solid rgba(56,189,248,0.3); background:#0f172a; box-shadow:0 25px 50px -12px rgba(0,0,0,0.85); padding:24px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, #0284c7, #0f172a); border:1px solid #38bdf8; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
-          🍏
-        </div>
-        <div>
-          <h2 style="font-size:1.25rem; font-weight:800; color:#f8fafc; margin:0;">Install on iPhone & iPad</h2>
-          <div style="font-size:0.78rem; color:#38bdf8; font-weight:600;">Direct Installation • No App Store Required • 100% Offline</div>
-        </div>
-      </div>
-      <button onclick="closeModal('modal-ios-install')" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; padding:4px 8px;">✕</button>
-    </div>
-
-    <!-- OPTION 1: 1-TAP PROFILE (RECOMMENDED) -->
-    <div style="background:#1e293b; border:1px solid rgba(16,185,129,0.4); border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#10b981; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>⚡</span> Method 1: 1-Tap Apple Profile (.mobileconfig)
-        </strong>
-        <span style="font-size:0.68rem; background:rgba(16,185,129,0.2); color:#10b981; padding:2px 8px; border-radius:10px; font-weight:700;">RECOMMENDED</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 12px 0;">
-        Installs GAM.AI permanently as a full-screen, standalone app on your iOS Home Screen. Never expires, zero certificates or PC needed.
-      </p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.mobileconfig" class="btn btn-primary" style="flex:1; text-align:center; padding:10px 16px; font-size:0.85rem; font-weight:700; background:#10b981; border-color:#10b981; color:#000; text-decoration:none; border-radius:10px; display:inline-block;" download>
-          📲 Download & Install Profile
-        </a>
-      </div>
-      <div style="font-size:0.75rem; color:#94a3b8; margin-top:10px; background:rgba(0,0,0,0.25); padding:8px 10px; border-radius:8px;">
-        <strong>How to complete:</strong> 1. Tap Download & Allow → 2. Open iPhone <em>Settings</em> → 3. Tap <em>Profile Downloaded</em> at top → 4. Tap <em>Install</em>.
-      </div>
-    </div>
-
-    <!-- OPTION 2: SAFARI ADD TO HOME SCREEN (PWA) -->
-    <div style="background:#1e293b; border:1px solid #2e3d56; border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#38bdf8; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>🌐</span> Method 2: Safari "Add to Home Screen"
-        </strong>
-        <span style="font-size:0.68rem; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 8px; border-radius:10px; font-weight:600;">INSTANT</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 10px 0;">
-        When visiting in Safari, tap the <strong>Share</strong> button (box with upward arrow) at the bottom toolbar, scroll down, and tap <strong>"Add to Home Screen"</strong> (➕).
-      </p>
-      <a href="https://gautambhuwan.com.np/gam-ai/" target="_blank" class="btn btn-secondary" style="display:block; text-align:center; padding:9px 14px; font-size:0.82rem; font-weight:600; text-decoration:none; border-radius:10px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08);">
-        🚀 Launch Live Web App (PWA)
-      </a>
-    </div>
-
-    <!-- OPTION 3: SIDELOADING (.IPA) -->
-    <div style="background:#1e293b; border:1px solid #2e3d56; border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#f8fafc; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>📦</span> Method 3: Direct IPA Download (AltStore / TrollStore)
-        </strong>
-        <span style="font-size:0.68rem; background:#334155; color:#94a3b8; padding:2px 8px; border-radius:10px; font-weight:600;">ADVANCED</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 10px 0;">
-        Download the standalone <code>.ipa</code> binary package to install via AltStore, SideStore, Scarlet, TrollStore, or Sideloadly.
-      </p>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
-          📦 Download IPA (v1.6.0)
-        </a>
-        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
-          ⚡ Open in AltStore
-        </a>
-      </div>
-    </div>
-
-    <!-- OPTION 4: OTA / GITHUB -->
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-      <a href="itms-services://?action=download-manifest&url=https://gautambhuwan.com.np/downloads/gam-ai/manifest.plist" style="flex:1; text-align:center; padding:10px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#cbd5e1; font-size:0.8rem; text-decoration:none; font-weight:600;">
-        📲 Apple OTA Install
-      </a>
-      <a href="https://github.com/sudovu/GAM.AI/releases" target="_blank" style="flex:1; text-align:center; padding:10px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#cbd5e1; font-size:0.8rem; text-decoration:none; font-weight:600;">
-        🐙 GitHub Releases
-      </a>
-    </div>
-  </div>
-</div>
-
-
-<script>
-// Smart iOS & iPadOS Direct Install Detector
-(function() {
-  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-  if (isIOS && !isStandalone && !sessionStorage.getItem('gam_ios_prompt_dismissed')) {
-    setTimeout(function() {
-      var bar = document.createElement('div');
-      bar.id = 'ios-install-banner';
-      bar.style.cssText = 'position:fixed; bottom:80px; left:16px; right:16px; background:#0f172a; border:1px solid #10b981; border-radius:14px; padding:12px 16px; z-index:9999; display:flex; align-items:center; justify-content:space-between; box-shadow:0 10px 25px rgba(0,0,0,0.7); backdrop-filter:blur(8px);';
-      bar.innerHTML = '<div style="display:flex; align-items:center; gap:10px;"><span style="font-size:1.4rem;">🍏</span><div><strong style="color:#f8fafc; font-size:0.88rem; display:block;">Install GAM.AI on iPhone</strong><span style="color:#94a3b8; font-size:0.75rem;">Run offline & full-screen</span></div></div><div style="display:flex; align-items:center; gap:8px;"><button onclick="showModal(\'modal-ios-install\')" style="background:#10b981; color:#000; font-weight:700; border:none; padding:6px 12px; border-radius:8px; font-size:0.8rem; cursor:pointer;">Install</button><button onclick="document.getElementById(\'ios-install-banner\').remove(); sessionStorage.setItem(\'gam_ios_prompt_dismissed\', \'1\');" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer; padding:4px;">✕</button></div>';
-      document.body.appendChild(bar);
-    }, 1500);
-  }
-})();
-</script>
-
-</body></html>';
+      docContent = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:system-ui,sans-serif; padding:16px; background:#0b1120; color:#f8fafc;} pre{background:#030712; padding:12px; border-radius:8px; border:1px solid #1e293b; color:#38bdf8; overflow-x:auto;}</style></head><body><h3>Executable Output Preview</h3>' + code + '</body></html>';
     }
   }
   
@@ -4344,112 +4134,7 @@ function processOfflineAIQueryCore(q) {
     if (qLower.indexOf('html') !== -1 || qLower.indexOf('web') !== -1 || qLower.indexOf('card') !== -1) {
       return {
         found: true,
-        response: '🌐 **Interactive Modern Glassmorphism Web Card**\n\nHere is a complete, self-contained HTML/CSS/JS component ready to preview in-app:\n\n```html\n<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>GAM.AI Glass Component</title>\n  <style>\n    body {\n      margin: 0;\n      min-height: 100vh;\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      background: radial-gradient(circle at top right, #1e1b4b, #030712);\n      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n      color: #f8fafc;\n    }\n    .glass-card {\n      background: rgba(30, 41, 59, 0.7);\n      backdrop-filter: blur(16px);\n      border: 1px solid rgba(56, 189, 248, 0.3);\n      border-radius: 16px;\n      padding: 24px;\n      width: 320px;\n      box-shadow: 0 10px 30px rgba(0,0,0,0.5);\n      text-align: center;\n      transition: transform 0.3s ease;\n    }\n    .glass-card:hover { transform: translateY(-4px); }\n    .pulse-dot {\n      width: 10px;\n      height: 10px;\n      background: #10b981;\n      border-radius: 50%;\n      display: inline-block;\n      box-shadow: 0 0 10px #10b981;\n      margin-right: 6px;\n    }\n    .card-btn {\n      background: linear-gradient(135deg, #0284c7, #2563eb);\n      border: none;\n      color: #fff;\n      padding: 10px 20px;\n      border-radius: 9999px;\n      font-weight: 700;\n      cursor: pointer;\n      margin-top: 16px;\n      transition: all 0.2s;\n    }\n    .card-btn:active { transform: scale(0.96); }\n  </style>\n</head>\n<body>\n  <div class="glass-card">\n    <div style="font-size:0.8rem; color:#94a3b8; font-family:monospace; margin-bottom:8px;">\n      <span class="pulse-dot"></span>LOCAL RUNTIME\n    </div>\n    <h2 style="margin:0 0 8px 0; color:#38bdf8;">GAM.AI Engine</h2>\n    <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.5;">\n      High-performance edge intelligence engineered by Vhuwon Mathers. Tap below to test live interaction!\n    </p>\n    <button class="card-btn" onclick="alert(\'Interactive JavaScript execution successful!\')">Click to Trigger</button>\n  </div>\n
-<!-- MODAL: DIRECT IOS / IPADOS INSTALLATION -->
-<div class="modal-overlay" id="modal-ios-install" style="display:none; align-items:center; justify-content:center; padding:16px;">
-  <div class="modal-card" style="max-width:540px; width:100%; max-height:90vh; overflow-y:auto; border-radius:18px; border:1px solid rgba(56,189,248,0.3); background:#0f172a; box-shadow:0 25px 50px -12px rgba(0,0,0,0.85); padding:24px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, #0284c7, #0f172a); border:1px solid #38bdf8; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
-          🍏
-        </div>
-        <div>
-          <h2 style="font-size:1.25rem; font-weight:800; color:#f8fafc; margin:0;">Install on iPhone & iPad</h2>
-          <div style="font-size:0.78rem; color:#38bdf8; font-weight:600;">Direct Installation • No App Store Required • 100% Offline</div>
-        </div>
-      </div>
-      <button onclick="closeModal('modal-ios-install')" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; padding:4px 8px;">✕</button>
-    </div>
-
-    <!-- OPTION 1: 1-TAP PROFILE (RECOMMENDED) -->
-    <div style="background:#1e293b; border:1px solid rgba(16,185,129,0.4); border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#10b981; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>⚡</span> Method 1: 1-Tap Apple Profile (.mobileconfig)
-        </strong>
-        <span style="font-size:0.68rem; background:rgba(16,185,129,0.2); color:#10b981; padding:2px 8px; border-radius:10px; font-weight:700;">RECOMMENDED</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 12px 0;">
-        Installs GAM.AI permanently as a full-screen, standalone app on your iOS Home Screen. Never expires, zero certificates or PC needed.
-      </p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.mobileconfig" class="btn btn-primary" style="flex:1; text-align:center; padding:10px 16px; font-size:0.85rem; font-weight:700; background:#10b981; border-color:#10b981; color:#000; text-decoration:none; border-radius:10px; display:inline-block;" download>
-          📲 Download & Install Profile
-        </a>
-      </div>
-      <div style="font-size:0.75rem; color:#94a3b8; margin-top:10px; background:rgba(0,0,0,0.25); padding:8px 10px; border-radius:8px;">
-        <strong>How to complete:</strong> 1. Tap Download & Allow → 2. Open iPhone <em>Settings</em> → 3. Tap <em>Profile Downloaded</em> at top → 4. Tap <em>Install</em>.
-      </div>
-    </div>
-
-    <!-- OPTION 2: SAFARI ADD TO HOME SCREEN (PWA) -->
-    <div style="background:#1e293b; border:1px solid #2e3d56; border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#38bdf8; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>🌐</span> Method 2: Safari "Add to Home Screen"
-        </strong>
-        <span style="font-size:0.68rem; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 8px; border-radius:10px; font-weight:600;">INSTANT</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 10px 0;">
-        When visiting in Safari, tap the <strong>Share</strong> button (box with upward arrow) at the bottom toolbar, scroll down, and tap <strong>"Add to Home Screen"</strong> (➕).
-      </p>
-      <a href="https://gautambhuwan.com.np/gam-ai/" target="_blank" class="btn btn-secondary" style="display:block; text-align:center; padding:9px 14px; font-size:0.82rem; font-weight:600; text-decoration:none; border-radius:10px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08);">
-        🚀 Launch Live Web App (PWA)
-      </a>
-    </div>
-
-    <!-- OPTION 3: SIDELOADING (.IPA) -->
-    <div style="background:#1e293b; border:1px solid #2e3d56; border-radius:14px; padding:16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#f8fafc; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
-          <span>📦</span> Method 3: Direct IPA Download (AltStore / TrollStore)
-        </strong>
-        <span style="font-size:0.68rem; background:#334155; color:#94a3b8; padding:2px 8px; border-radius:10px; font-weight:600;">ADVANCED</span>
-      </div>
-      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 10px 0;">
-        Download the standalone <code>.ipa</code> binary package to install via AltStore, SideStore, Scarlet, TrollStore, or Sideloadly.
-      </p>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
-          📦 Download IPA (v1.6.0)
-        </a>
-        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
-          ⚡ Open in AltStore
-        </a>
-      </div>
-    </div>
-
-    <!-- OPTION 4: OTA / GITHUB -->
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-      <a href="itms-services://?action=download-manifest&url=https://gautambhuwan.com.np/downloads/gam-ai/manifest.plist" style="flex:1; text-align:center; padding:10px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#cbd5e1; font-size:0.8rem; text-decoration:none; font-weight:600;">
-        📲 Apple OTA Install
-      </a>
-      <a href="https://github.com/sudovu/GAM.AI/releases" target="_blank" style="flex:1; text-align:center; padding:10px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#cbd5e1; font-size:0.8rem; text-decoration:none; font-weight:600;">
-        🐙 GitHub Releases
-      </a>
-    </div>
-  </div>
-</div>
-
-
-<script>
-// Smart iOS & iPadOS Direct Install Detector
-(function() {
-  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-  if (isIOS && !isStandalone && !sessionStorage.getItem('gam_ios_prompt_dismissed')) {
-    setTimeout(function() {
-      var bar = document.createElement('div');
-      bar.id = 'ios-install-banner';
-      bar.style.cssText = 'position:fixed; bottom:80px; left:16px; right:16px; background:#0f172a; border:1px solid #10b981; border-radius:14px; padding:12px 16px; z-index:9999; display:flex; align-items:center; justify-content:space-between; box-shadow:0 10px 25px rgba(0,0,0,0.7); backdrop-filter:blur(8px);';
-      bar.innerHTML = '<div style="display:flex; align-items:center; gap:10px;"><span style="font-size:1.4rem;">🍏</span><div><strong style="color:#f8fafc; font-size:0.88rem; display:block;">Install GAM.AI on iPhone</strong><span style="color:#94a3b8; font-size:0.75rem;">Run offline & full-screen</span></div></div><div style="display:flex; align-items:center; gap:8px;"><button onclick="showModal(\'modal-ios-install\')" style="background:#10b981; color:#000; font-weight:700; border:none; padding:6px 12px; border-radius:8px; font-size:0.8rem; cursor:pointer;">Install</button><button onclick="document.getElementById(\'ios-install-banner\').remove(); sessionStorage.setItem(\'gam_ios_prompt_dismissed\', \'1\');" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer; padding:4px;">✕</button></div>';
-      document.body.appendChild(bar);
-    }, 1500);
-  }
-})();
-</script>
-
-</body>\n</html>\n```\n\n**Interactive Runner:** Tap **Run / Preview** above to test and view this live right inside your app!'
+        response: '🌐 **Interactive Modern Glassmorphism Web Card**\n\nHere is a complete, self-contained HTML/CSS/JS component ready to preview in-app:\n\n```html\n<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>GAM.AI Glass Component</title>\n  <style>\n    body {\n      margin: 0;\n      min-height: 100vh;\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      background: radial-gradient(circle at top right, #1e1b4b, #030712);\n      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n      color: #f8fafc;\n    }\n    .glass-card {\n      background: rgba(30, 41, 59, 0.7);\n      backdrop-filter: blur(16px);\n      border: 1px solid rgba(56, 189, 248, 0.3);\n      border-radius: 16px;\n      padding: 24px;\n      width: 320px;\n      box-shadow: 0 10px 30px rgba(0,0,0,0.5);\n      text-align: center;\n      transition: transform 0.3s ease;\n    }\n    .glass-card:hover { transform: translateY(-4px); }\n    .pulse-dot {\n      width: 10px;\n      height: 10px;\n      background: #10b981;\n      border-radius: 50%;\n      display: inline-block;\n      box-shadow: 0 0 10px #10b981;\n      margin-right: 6px;\n    }\n    .card-btn {\n      background: linear-gradient(135deg, #0284c7, #2563eb);\n      border: none;\n      color: #fff;\n      padding: 10px 20px;\n      border-radius: 9999px;\n      font-weight: 700;\n      cursor: pointer;\n      margin-top: 16px;\n      transition: all 0.2s;\n    }\n    .card-btn:active { transform: scale(0.96); }\n  </style>\n</head>\n<body>\n  <div class="glass-card">\n    <div style="font-size:0.8rem; color:#94a3b8; font-family:monospace; margin-bottom:8px;">\n      <span class="pulse-dot"></span>LOCAL RUNTIME\n    </div>\n    <h2 style="margin:0 0 8px 0; color:#38bdf8;">GAM.AI Engine</h2>\n    <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.5;">\n      High-performance edge intelligence engineered by Vhuwon Mathers. Tap below to test live interaction!\n    </p>\n    <button class="card-btn" onclick="alert(\'Interactive JavaScript execution successful!\')">Click to Trigger</button>\n  </div>\n<\/body>\n</html>\n```\n\n**Interactive Runner:** Tap **Run / Preview** above to test and view this live right inside your app!'
       };
     }
 
@@ -11705,10 +11390,10 @@ if ('speechSynthesis' in window) {
         Download the standalone <code>.ipa</code> binary package to install via AltStore, SideStore, Scarlet, TrollStore, or Sideloadly.
       </p>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
-          📦 Download IPA (v1.6.0)
+        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.1.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
+          📦 Download IPA (v1.6.1)
         </a>
-        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
+        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.1.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
           ⚡ Open in AltStore
         </a>
       </div>
