@@ -102,7 +102,39 @@ GAM.AI is architected with a strict **Never Run Out of Tokens** engine that guar
 
 ---
 
-## 6. Quickstart
+## 6. Cross-Platform Downloads & Installation
+
+GAM.AI is designed to run everywhere — natively on mobile devices, desktop operating systems, and standalone web browsers.
+
+### 🍏 iOS & iPadOS (iPhone & iPad)
+Install GAM.AI directly on iOS without Xcode, a Mac, or the App Store:
+
+- **Method 1: 1-Tap Apple Configuration Profile (Recommended)**:
+  - Download [`gam-ai.mobileconfig`](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.mobileconfig)
+  - Open iOS **Settings** → tap **Profile Downloaded: GAM.AI** → tap **Install**.
+  - Adds GAM.AI permanently to your iOS Home Screen with full-screen standalone execution and zero certificate expiration.
+- **Method 2: Safari "Add to Home Screen" (PWA)**:
+  - Open [https://gautambhuwan.com.np/gam-ai/](https://gautambhuwan.com.np/gam-ai/) in Safari on iPhone or iPad.
+  - Tap the **Share** button (`⎋`), scroll down, and tap **"Add to Home Screen"** (`➕`).
+- **Method 3: Standalone `.ipa` Sideloading**:
+  - Download the standalone [iOS IPA (`gam-ai-v1.6.0.ipa`)](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa)
+  - Install via [AltStore (1-Tap)](altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa), SideStore, Scarlet, Sideloadly, or TrollStore.
+- **Method 4: Apple OTA Manifest**:
+  - Open `itms-services://?action=download-manifest&url=https://gautambhuwan.com.np/downloads/gam-ai/manifest.plist` in Safari for native direct system install prompt.
+
+### 🤖 Android (Phones, Tablets & Foldables)
+- Download the compiled, code-signed [GAM.AI Universal Release APK (`gam-ai-v1.6.0.apk`)](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.apk) (Android 7.0+).
+- Sideload via `adb install -r gam-ai-v1.6.0.apk` or tap directly in your Android file manager.
+
+### 💻 Windows (10 / 11 / Server x64)
+- Download the standalone portable executable [`gam-ai.exe`](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.exe). Zero installation or Python runtime required.
+
+### 🌐 Standalone Live Web Intelligence
+- Launch the full offline-capable app in any modern browser at [https://gautambhuwan.com.np/gam-ai/](https://gautambhuwan.com.np/gam-ai/).
+
+---
+
+## 7. Quickstart
 
 ### Packaging All Platforms in 1 Step
 ```bash

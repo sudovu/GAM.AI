@@ -162,10 +162,40 @@ jobs:
           path: dist/gam-ai-web-app.zip
           retention-days: 30
 
+  build-ios:
+    name: Build & Package iOS Standalone IPA & MobileConfig Profile
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install pillow
+
+      - name: Build iOS IPA, Profile, and Manifest
+        run: |
+          python scripts/build_ios_artifacts.py
+
+      - name: Upload iOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gam-ai-ios-artifacts
+          path: |
+            dist/*.ipa
+            dist/*.mobileconfig
+            dist/manifest.plist
+          retention-days: 30
+
   release:
     name: Attach All Platform Artifacts to GitHub Release
     if: github.event_name == 'release'
-    needs: [build-apk, build-windows, build-linux, build-web-pwa]
+    needs: [build-apk, build-windows, build-linux, build-web-pwa, build-ios]
     runs-on: ubuntu-latest
     steps: 
       - name: Download All Artifacts
