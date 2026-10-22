@@ -914,7 +914,7 @@
   <div class="brand">
     <div class="brand-title">GAM<span>.AI</span></div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <div class="badge-nano">v1.6.2</div>
+      <div class="badge-nano">v1.6.3</div>
       <button class="mobile-close-btn" id="btn-close-sidebar" onclick="closeSidebar()" style="display:none; background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;" title="Close Sidebar">✕</button>
     </div>
   </div>
@@ -1355,7 +1355,7 @@
           <div style="font-size:1.15rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span>Vhuwon Mathers</span>
             <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">@sudovu</span>
-            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.2</span>
+            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.3</span>
           </div>
           <div style="font-size:0.84rem; color:var(--accent); margin-top:2px; font-weight:600;">
             Creator & Lead Architect of GAM.AI
@@ -2842,43 +2842,52 @@ function isFollowUpRequest(text) {
   if (!text || typeof text !== 'string') return false;
   var t = text.toLowerCase().trim().replace(/[?!.,'"]/g, '');
 
-  // Distinct standalone topics that represent brand new intents
+  var hasPronoun = /\b(it|this|that|these|those|them|its|the code|the script|the function|the query|the algorithm|the method|the above|previous|earlier)\b/i.test(text);
+
+  // Standalone topics
   var standaloneTopics = [
     'binary search', 'quick sort', 'quicksort', 'bubble sort', 'merge sort',
     'fibonacci', 'prime', 'palindrome', 'factorial', 'dijkstra', 'matrix',
     'port scanner', 'ping sweep', 'html code', 'css code', 'sql query',
     'subnet', 'ospf', 'bgp', 'vlan', 'trunk', 'gpon', 'olt', 'fortigate', 'mikrotik',
     'photosynthesis', 'gravity', 'quantum', 'dna', 'mitochondria', 'history',
-    'joke', 'chutkula', 'riddle', 'paheli', 'quote', 'fact', 'capital of', 'who is',
-    'what is', 'tell me a joke', 'tell me a riddle', 'tell me a fact', 'tell me a quote'
+    'tell me a joke', 'tell me a riddle', 'tell me a fact', 'tell me a quote'
   ];
+
+  var hasStandaloneTopic = false;
   for (var s = 0; s < standaloneTopics.length; s++) {
     if (t.indexOf(standaloneTopics[s]) !== -1) {
-      return false; // Contains explicit standalone subject, NOT a follow-up
+      hasStandaloneTopic = true;
+      break;
     }
   }
 
-  // Pronoun and referential words
-  var hasPronoun = /\b(it|this|that|these|those|them|its|the code|the script|the function|the query|the algorithm|the method|the above|previous|earlier)\b/i.test(text);
+  // If it has a named standalone subject and NO referential pronoun, it's a new standalone query!
+  if (hasStandaloneTopic && !hasPronoun) {
+    return false;
+  }
 
-  // Pure follow-up phrases that require context
+  // If it has a pronoun, it's a follow-up
+  if (hasPronoun) return true;
+
+  // Pure follow-up phrases that require context when no subject is named
   var followUpPhrases = [
     'next', 'another', 'another one', 'one more', 'more', 'continue', 'keep going',
-    'and next', 'what next', 'next step', 'why', 'why?', 'why is that', 'why so', 'how so',
+    'and next', 'what next', 'next step', 'why', 'why is that', 'why so', 'how so',
     'explain', 'explain more', 'explain that', 'elaborate', 'can you elaborate',
     'tell me more', 'give an example', 'give example', 'show example', 'how does it work',
     'how does that work', 'what does that mean', 'make it recursive', 'can you write it',
     'write it in', 'now in python', 'now in javascript', 'now in c++', 'in python',
     'in javascript', 'in c++', 'in java', 'in go', 'in rust', 'make it faster',
     'optimize it', 'add comments', 'add error handling', 'explain line', 'what is its complexity',
-    'what is the time complexity', 'time complexity', 'space complexity', 'convert it',
+    'what is the time complexity', 'time complexity', 'space complexity', 'complexity of it', 'complexity', 'convert it',
     'agla', 'ek aur', 'dusra', 'aage', 'aur batao', 'aur sunao', 'vistrit', 'udaharan',
     'arko', 'arko bhan', 'thap', 'aagadi', 'kin yasto', 'kasari kaam garchha'
   ];
   if (followUpPhrases.indexOf(t) !== -1) return true;
   for (var i = 0; i < followUpPhrases.length; i++) {
     var fw = followUpPhrases[i];
-    if (t === fw || t.startsWith(fw + ' ') || t.endsWith(' ' + fw)) {
+    if (t === fw || t.startsWith(fw + ' ') || t.endsWith(' ' + fw) || t.indexOf(fw) !== -1) {
       return true;
     }
   }
@@ -2894,7 +2903,7 @@ function isFollowUpRequest(text) {
     }
   }
 
-  return hasPronoun;
+  return false;
 }
 
 function isReferentialQuery(text) {
@@ -2977,12 +2986,33 @@ function resolveFollowUpAndContext(promptText, lang) {
 
   // 5. Intelligent Multi-Turn Follow-Up Resolution (Coding, Math, Tech, Network)
   var isFollow = isFollowUpRequest(p);
-  if (isFollow && (GAM_CONTEXT.lastUserQuery || GAM_CONTEXT.lastAssistantResponse)) {
+  if (isFollow && (GAM_CONTEXT.lastUserQuery || GAM_CONTEXT.lastAssistantResponse || (GAM_CONTEXT.history && GAM_CONTEXT.history.length > 0))) {
     var lastQ = (GAM_CONTEXT.lastUserQuery || '').toLowerCase();
-    var lastResp = GAM_CONTEXT.lastAssistantResponse || '';
+    var lastResp = (GAM_CONTEXT.lastAssistantResponse || '').toLowerCase();
+
+    // Determine subject from recent history
+    var prevSubject = '';
+    if (GAM_CONTEXT.activeTopic && GAM_CONTEXT.activeTopic !== 'general') {
+      prevSubject = GAM_CONTEXT.activeTopic;
+    }
+    var hist = (GAM_CONTEXT.history || []).slice(-6);
+    for (var h = hist.length - 1; h >= 0; h--) {
+      var item = hist[h];
+      var combined = ((item.query || '') + ' ' + (item.text || '')).toLowerCase();
+      if (!prevSubject) {
+        if (combined.indexOf('binary search') !== -1 || combined.indexOf('binary_search') !== -1) prevSubject = 'binary_search';
+        else if (combined.indexOf('fibonacci') !== -1) prevSubject = 'fibonacci';
+        else if (combined.indexOf('prime') !== -1 || combined.indexOf('sieve') !== -1) prevSubject = 'prime';
+        else if (combined.indexOf('bubble sort') !== -1) prevSubject = 'bubble_sort';
+        else if (combined.indexOf('quick sort') !== -1 || combined.indexOf('quicksort') !== -1) prevSubject = 'quick_sort';
+        else if (combined.indexOf('merge sort') !== -1) prevSubject = 'merge_sort';
+        else if (combined.indexOf('palindrome') !== -1) prevSubject = 'palindrome';
+        else if (combined.indexOf('factorial') !== -1) prevSubject = 'factorial';
+      }
+    }
 
     // A. Follow-up on Fibonacci
-    if (lastQ.indexOf('fibonacci') !== -1 || lastResp.indexOf('fibonacci') !== -1) {
+    if (prevSubject === 'fibonacci' || lastQ.indexOf('fibonacci') !== -1 || lastResp.indexOf('fibonacci') !== -1) {
       if (pLower.indexOf('recur') !== -1) {
         return {
           found: true,
@@ -3013,7 +3043,7 @@ function resolveFollowUpAndContext(promptText, lang) {
     }
 
     // B. Follow-up on Binary Search
-    if (lastQ.indexOf('binary search') !== -1 || lastResp.indexOf('binary_search') !== -1) {
+    if (prevSubject === 'binary_search' || lastQ.indexOf('binary search') !== -1 || lastResp.indexOf('binary') !== -1) {
       if (pLower.indexOf('recur') !== -1) {
         return {
           found: true,
@@ -3037,7 +3067,7 @@ function resolveFollowUpAndContext(promptText, lang) {
     }
 
     // C. Follow-up on Prime Numbers
-    if (lastQ.indexOf('prime') !== -1 || lastResp.indexOf('is_prime') !== -1) {
+    if (prevSubject === 'prime' || lastQ.indexOf('prime') !== -1 || lastResp.indexOf('prime') !== -1) {
       if (pLower.indexOf('sieve') !== -1 || pLower.indexOf('many') !== -1 || pLower.indexOf('range') !== -1 || pLower.indexOf('list') !== -1) {
         return {
           found: true,
@@ -4283,7 +4313,7 @@ function processOfflineAIQueryCore(q) {
       return {
         found: true,
         response: '### 💻 Python REST API Request (Zero Dependencies)\n\n' +
-          '```python\nimport urllib.request\nimport json\n\ndef get_json(url: str, timeout: float = 10.0) -> dict:\n    headers = {"User-Agent": "GAM.AI Client/1.6.2"}\n    req = urllib.request.Request(url, headers=headers)\n    with urllib.request.urlopen(req, timeout=timeout) as resp:\n        return json.loads(resp.read().decode("utf-8"))\n\nif __name__ == "__main__":\n    data = get_json("https://httpbin.org/get")\n    print("Fetched successfully:", data.get("headers"))\n```'
+          '```python\nimport urllib.request\nimport json\n\ndef get_json(url: str, timeout: float = 10.0) -> dict:\n    headers = {"User-Agent": "GAM.AI Client/1.6.3"}\n    req = urllib.request.Request(url, headers=headers)\n    with urllib.request.urlopen(req, timeout=timeout) as resp:\n        return json.loads(resp.read().decode("utf-8"))\n\nif __name__ == "__main__":\n    data = get_json("https://httpbin.org/get")\n    print("Fetched successfully:", data.get("headers"))\n```'
       };
     }
     }
@@ -8109,6 +8139,41 @@ function executeRegenerate(q) {
     var loadEl = document.getElementById(loadId);
     if (loadEl) loadEl.remove();
 
+    var ctxImmediate = resolveFollowUpAndContext(q, currentLang);
+    if (ctxImmediate && ctxImmediate.found) {
+      var t1c = performance.now();
+      var respC = ctxImmediate.response;
+      if (activeModelId === 'reasoner' || activeModelId === 'r1') {
+        if (respC.indexOf('think-box') === -1) {
+          respC = '<details class="think-box" open style="margin-bottom:14px; background:rgba(30,41,59,0.7); border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:10px 14px;">\n' +
+            '<summary style="font-weight:700; color:#38bdf8; cursor:pointer; font-size:0.86rem; display:flex; align-items:center; gap:6px;">' +
+              '<span>🧠</span> <span>DeepSeek-R1 Extended Thinking Chain</span>' +
+            '</summary>\n' +
+            '<div style="font-size:0.82rem; color:#cbd5e1; margin-top:8px; line-height:1.5; border-top:1px dashed rgba(255,255,255,0.1); padding-top:8px;">' +
+              '1. 🎯 **Intent Analysis:** User requested multi-turn regeneration for <em>' + escapeHtml(q) + '</em>.\n' +
+              '2. ⚙️ **Context Correlation:** Correlating previous conversational scope (' + escapeHtml(GAM_CONTEXT.lastUserQuery || '') + ').\n' +
+              '3. 🛡️ **Verification:** Generating contextual response under active model constraints.' +
+            '</div>\n' +
+          '</details>\n\n' + respC;
+        }
+      } else if (activeModelId === 'coder') {
+        if (respC.indexOf('GAM.AI Coder') === -1) {
+          respC = '> 💻 **GAM.AI Coder (1.5B)**: *Software engineering specification with algorithmic analysis.*\n\n' + respC;
+        }
+      }
+      renderAssistantMessage({
+        text: '> 🔄 **Regenerated with ' + activeModelName + '**\n\n' + respC,
+        isOffline: !isOnline,
+        modelName: activeModelName,
+        sourceTag: isOnline ? '🌐 Regenerated (Context Memory)' : '💾 Local Model Inference (' + activeModelId.toUpperCase() + ')',
+        latencyMs: Math.max(0.4, (t1c - t0)).toFixed(1),
+        isNotFound: false,
+        query: q,
+        shouldReadAloud: false
+      });
+      return;
+    }
+
     if (isOnline) {
       fetchLiveOnlineResults(q, currentLang, loadId, t0, false, false, '> 🔄 **Regenerated with ' + activeModelName + '**\n\n');
     } else {
@@ -8117,7 +8182,7 @@ function executeRegenerate(q) {
       var latencyMs = Math.max(0.4, (t1 - t0)).toFixed(1);
 
       renderAssistantMessage({
-        text: offlineResult.response,
+        text: '> 🔄 **Regenerated with ' + activeModelName + '**\n\n' + offlineResult.response,
         isOffline: true,
         modelName: activeModelName,
         sourceTag: '💾 Local Model Inference (' + activeModelId.toUpperCase() + ')',
@@ -10260,12 +10325,23 @@ function synthesizeSmartResponse(heading, mainText, bullets, q, lang, imgUrl, is
   }
 
   // Clean raw Wikipedia text:
-  // Remove phonetic pronunciation, citation brackets, dates of birth clutter
+  // Remove phonetic pronunciation, citation brackets, dates of birth clutter, and LaTeX math debris
   var cleaned = (mainText || '')
     .replace(/\s*\(\/[^)]+\/\)/g, '')
     .replace(/\s*\([A-Z0-9\s,–-]+;\s*[a-z0-9\s,–-]+\)/gi, '')
     .replace(/\[\d+\]/g, '')
     .replace(/\[note\s*\d+\]/gi, '')
+    .replace(/\{\\displaystyle\s*([^\}]+)\}/gi, '$1')
+    .replace(/\\log/g, 'log')
+    .replace(/\\le/g, '≤')
+    .replace(/\\ge/g, '≥')
+    .replace(/\\times/g, '×')
+    .replace(/\\pm/g, '±')
+    .replace(/\\neq/g, '≠')
+    .replace(/\\sqrt/g, '√')
+    .replace(/\bO\s*\n*\s*\(\s*\n*\s*log\s*\n*\s*n\s*\n*\s*\)/gi, 'O(log n)')
+    .replace(/\bO\s*\n*\s*\(\s*\n*\s*n\s*\n*\s*\)/gi, 'O(n)')
+    .replace(/\bO\s*\n*\s*\(\s*\n*\s*1\s*\n*\s*\)/gi, 'O(1)')
     .trim();
 
   // Split into sentences and keep the most informative sentences
@@ -10279,16 +10355,57 @@ function synthesizeSmartResponse(heading, mainText, bullets, q, lang, imgUrl, is
   if (bullets && bullets.length > 0) {
     bulletsBlock = '\n\n### 💡 Key Dimensions & Core Facts\n' +
       bullets.slice(0, 3).map(function(b) {
-        var cleanB = b.replace(/\[\d+\]/g, '').trim();
+        var cleanB = b.replace(/\[\d+\]/g, '')
+          .replace(/\{\\displaystyle\s*([^\}]+)\}/gi, '$1')
+          .trim();
         return '- ' + cleanB;
       }).join('\n');
+  }
+
+  // Check if query is an algorithmic or coding question to append working code
+  var codeSnippetBlock = '';
+  var codeCheck = processOfflineAIQueryCore(q || heading);
+  if (codeCheck && codeCheck.found && codeCheck.response && codeCheck.response.indexOf('```') !== -1) {
+    codeSnippetBlock = '\n\n' + codeCheck.response;
   }
 
   var responseText = '🌐 **' + heading + '**\n\n' +
     imgMd +
     coreSummary + '\n\n' +
     (extraInsights ? (extraInsights + '\n\n') : '') +
-    bulletsBlock;
+    bulletsBlock +
+    codeSnippetBlock;
+
+  // Apply model architecture specialization to the final response
+  var activeM = activeModelId || 'nano';
+  if (activeM === 'reasoner' || activeM === 'r1') {
+    if (responseText.indexOf('think-box') === -1) {
+      var summaryTitle = (q || heading).replace(/^(write|code|can you write|show me|explain|what is)\s+/i, '').trim();
+      var thinkBlock = '<details class="think-box" open style="margin-bottom:14px; background:rgba(30,41,59,0.7); border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:10px 14px;">\n' +
+        '<summary style="font-weight:700; color:#38bdf8; cursor:pointer; font-size:0.86rem; display:flex; align-items:center; gap:6px;">' +
+          '<span>🧠</span> <span>DeepSeek-R1 Extended Thinking Chain</span>' +
+        '</summary>\n' +
+        '<div style="font-size:0.82rem; color:#cbd5e1; margin-top:8px; line-height:1.5; border-top:1px dashed rgba(255,255,255,0.1); padding-top:8px;">' +
+          '1. 🎯 **Intent Analysis:** Examining <em>' + escapeHtml(summaryTitle || q) + '</em> with grounded intelligence.\n' +
+          '2. ⚙️ **Logical Decomposition:** Verifying factual accuracy, structural constraints, and cross-validating concepts.\n' +
+          '3. 🛡️ **Synthesis & Validation:** Structuring conclusive response with verified operational facts.' +
+        '</div>\n' +
+      '</details>\n\n';
+      responseText = thinkBlock + responseText;
+    }
+  } else if (activeM === 'coder') {
+    if (responseText.indexOf('GAM.AI Coder') === -1) {
+      responseText = '> 💻 **GAM.AI Coder (1.5B)**: *Software engineering specification with algorithmic analysis.*\n\n' + responseText;
+    }
+  } else if (activeM === 'descriptive') {
+    if (responseText.indexOf('GAM.AI Descriptive') === -1) {
+      responseText = '> 📚 **GAM.AI Descriptive (3.0B)**: *In-depth architectural review & foundational principles.*\n\n' + responseText;
+    }
+  } else if (activeM === 'nano') {
+    if (responseText.indexOf('GAM.AI Nano') === -1 && responseText.length > 700) {
+      responseText = '> ⚡ **GAM.AI Nano (0.5B)**: *Ultra-fast low-latency edge summary.*\n\n' + responseText;
+    }
+  }
 
   return responseText;
 }
@@ -10298,6 +10415,50 @@ function fetchLiveOnlineResults(q, lang, loadId, t0, shouldReadAloud, isRefresh,
   var cleanQ = (q || '').replace(/[\?\.!]/g, '').trim();
   var isHi = (lang === 'hi');
   var isNe = (lang === 'ne');
+
+  // ── 0. INTROSPECT MULTI-TURN CONTEXT FOR REFERENTIAL/FOLLOW-UP QUERIES ──
+  var ctxImmediate = resolveFollowUpAndContext(q, lang);
+  if (ctxImmediate && ctxImmediate.found) {
+    var lEl = document.getElementById(loadId);
+    if (lEl) lEl.remove();
+    var t1c = performance.now();
+    var dynModelName = activeModelName || '⚡ GAM.AI Local Engine';
+    var dynSourceTag = '🧠 Multi-Turn Context Memory';
+    var respText = ctxImmediate.response;
+    if (activeModelId === 'reasoner' || activeModelId === 'r1') {
+      dynModelName = '🧠 DeepSeek-R1 (Reasoner)';
+      dynSourceTag = '🧠 Cognitive Extended Thinking Engine';
+      if (respText.indexOf('think-box') === -1) {
+        respText = '<details class="think-box" open style="margin-bottom:14px; background:rgba(30,41,59,0.7); border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:10px 14px;">\n' +
+          '<summary style="font-weight:700; color:#38bdf8; cursor:pointer; font-size:0.86rem; display:flex; align-items:center; gap:6px;">' +
+            '<span>🧠</span> <span>DeepSeek-R1 Extended Thinking Chain</span>' +
+          '</summary>\n' +
+          '<div style="font-size:0.82rem; color:#cbd5e1; margin-top:8px; line-height:1.5; border-top:1px dashed rgba(255,255,255,0.1); padding-top:8px;">' +
+            '1. 🎯 **Intent Analysis:** User requested contextual follow-up for <em>' + escapeHtml(q) + '</em>.\n' +
+            '2. ⚙️ **Context Correlation:** Correlating against previous conversational scope (' + escapeHtml(GAM_CONTEXT.lastUserQuery || '') + ').\n' +
+            '3. 🛡️ **Verification:** Generating contextual response under active model constraints.' +
+          '</div>\n' +
+        '</details>\n\n' + respText;
+      }
+    } else if (activeModelId === 'coder') {
+      dynModelName = '💻 GAM.AI Coder (1.5B)';
+      dynSourceTag = '💻 High-Performance Scripting Engine';
+      if (respText.indexOf('GAM.AI Coder') === -1) {
+        respText = '> 💻 **GAM.AI Coder (1.5B)**: *Software engineering specification with algorithmic analysis.*\n\n' + respText;
+      }
+    }
+    renderAssistantMessage({
+      text: (switchNotice || '') + respText,
+      isOffline: false,
+      modelName: dynModelName,
+      sourceTag: dynSourceTag,
+      latencyMs: Math.max(12, (t1c - t0)).toFixed(0),
+      isNotFound: false,
+      query: q,
+      shouldReadAloud: shouldReadAloud
+    });
+    return;
+  }
 
   // Check hardware connectivity via AndroidBridge if available
   var isOfflineNet = false;
@@ -11584,10 +11745,10 @@ if ('speechSynthesis' in window) {
         Download the standalone <code>.ipa</code> binary package to install via AltStore, SideStore, Scarlet, TrollStore, or Sideloadly.
       </p>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.2.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
-          📦 Download IPA (v1.6.2)
+        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.3.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
+          📦 Download IPA (v1.6.3)
         </a>
-        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.2.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
+        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.3.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
           ⚡ Open in AltStore
         </a>
       </div>

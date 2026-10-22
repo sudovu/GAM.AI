@@ -177,7 +177,7 @@ class ChatEngine:
         )
         is_pure_followup = any(p in clean for p in pure_followup_phrases)
 
-        if (has_pronoun or is_pure_followup or is_followup_hint) and not has_new_explicit_topic:
+        if has_pronoun or is_pure_followup or (is_followup_hint and not has_new_explicit_topic):
             clean_sub = re.sub(r'^(write|code|can you write|show me|explain|what is)\s+', '', last_user, flags=re.I).strip("?!.,'\" ")
             return f"{user_text} (Context: referring to previous topic '{clean_sub[:80]}')"
 
