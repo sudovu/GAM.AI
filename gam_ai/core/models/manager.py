@@ -51,6 +51,19 @@ MODULAR_CATALOG: Dict[str, Dict[str, Any]] = {
         "url": "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf",
         "description": "Specialized in Python, Bash, network automation, and system administration scripts."
     },
+    "reasoner": {
+        "id": "reasoner",
+        "name": "GAM.AI Reasoner (DeepSeek-R1)",
+        "role": "reasoning",
+        "tier": "reasoning",
+        "parameters": "1.5B",
+        "ram_mb": 450,
+        "download_size_mb": 980,
+        "default_installed": False,
+        "filename": "DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
+        "url": "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
+        "description": "Extended thinking model with step-by-step reasoning chains (<think>...</think>) for logic, math, and system design."
+    },
     "descriptive": {
         "id": "descriptive",
         "name": "GAM.AI Descriptive",

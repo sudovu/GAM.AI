@@ -135,8 +135,13 @@ class ChatEngine:
         self.memory.short_term.clear()
         return deleted
 
-    def _resolve_contextual_query(self, user_text: str) -> str:
-        """Enrich short follow-up queries ('next', 'why', 'explain that') with prior conversation context."""
+    def _resolve_contextual_query(
+        self,
+        user_text: str,
+        is_followup_hint: Optional[bool] = None,
+        followup_type_hint: Optional[str] = None
+    ) -> str:
+        """Enrich short follow-up queries ('next', 'why', 'explain that', pronoun references) with prior conversation context."""
         clean = user_text.lower().strip("?!.,'\" ")
         history = self.memory.short_term.get_messages()
         if not history:
@@ -145,6 +150,36 @@ class ChatEngine:
         # Find the last user and assistant interactions
         last_user = next((m["content"] for m in reversed(history) if m.get("role") == "user"), "")
         last_assistant = next((m["content"] for m in reversed(history) if m.get("role") == "assistant"), "")
+
+        if not last_user and not last_assistant:
+            return user_text
+
+        # Distinguish between fresh standalone queries vs. referential follow-ups
+        standalone_topics = (
+            "binary search", "quick sort", "quicksort", "bubble sort", "merge sort",
+            "fibonacci", "prime", "palindrome", "factorial", "dijkstra", "bfs", "dfs",
+            "tree", "graph", "linked list", "hash table", "stack", "queue", "heap",
+            "subnet", "ospf", "bgp", "vlan", "trunk", "gpon", "olt", "fortigate", "mikrotik",
+            "photosynthesis", "gravity", "quantum", "dna", "mitochondria", "history", "capital of"
+        )
+        has_new_explicit_topic = any(topic in clean for topic in standalone_topics)
+
+        # A true follow-up refers to previous context WITHOUT introducing its own distinct standalone topic
+        import re
+        has_pronoun = bool(re.search(r'\b(it|this|that|these|those|them|its|the code|the script|the function|the above|the algorithm|previous|earlier)\b', clean))
+        
+        # Phrases that only make sense as follow-ups
+        pure_followup_phrases = (
+            "now in python", "now in javascript", "now in c++", "write it in", "convert it",
+            "make it recursive", "write recursively", "make it faster", "optimize it",
+            "add comments", "add error handling", "explain line", "how does it work",
+            "why does it", "what is its complexity", "what's the time complexity", "what about", "how about"
+        )
+        is_pure_followup = any(p in clean for p in pure_followup_phrases)
+
+        if (has_pronoun or is_pure_followup or is_followup_hint) and not has_new_explicit_topic:
+            clean_sub = re.sub(r'^(write|code|can you write|show me|explain|what is)\s+', '', last_user, flags=re.I).strip("?!.,'\" ")
+            return f"{user_text} (Context: referring to previous topic '{clean_sub[:80]}')"
 
         if clean in FOLLOW_UP_TRIGGERS:
             # If the user asks for "next" or "another one"
@@ -157,17 +192,26 @@ class ChatEngine:
             if "story" in last_user.lower() or "poem" in last_user.lower():
                 return f"Continue the story or poem"
             if last_user:
-                return f"Next step or continuation for: {last_user}"
+                return f"Next step or practical continuation for: {last_user}"
 
         if clean in REFERENTIAL_TRIGGERS or clean.startswith("why ") or clean.startswith("explain "):
+            if last_user:
+                return f"Explain in detail the concept and mechanism of: {last_user}"
             if last_assistant:
                 return f"Elaborate and explain the following concept in detail with examples: {last_assistant[:150]}"
-            if last_user:
-                return f"Elaborate in detail on: {last_user}"
 
         return user_text
 
-    def process_query(self, user_text: str, mode: str = "auto", conversation_id: str = "default") -> Dict[str, Any]:
+    def process_query(
+        self,
+        user_text: str,
+        mode: str = "auto",
+        conversation_id: str = "default",
+        model_id: Optional[str] = None,
+        history: Optional[List[Dict[str, Any]]] = None,
+        is_followup: Optional[bool] = None,
+        followup_type: Optional[str] = None
+    ) -> Dict[str, Any]:
         user_text = SecurityGuard.sanitize_input(user_text.strip())
         if not user_text:
             return {"response": "", "source": "empty", "mode": "offline", "tokens": 0}
@@ -181,8 +225,22 @@ class ChatEngine:
                 "data": cmd_result.get("data")
             }
 
+        # Ingest external history if passed from client and short_term memory is empty
+        if history and isinstance(history, list):
+            current_msgs = self.memory.short_term.get_messages()
+            if not current_msgs:
+                for turn in history[-8:]:
+                    r = turn.get("role", "user")
+                    c = turn.get("content") or turn.get("text") or ""
+                    if c and r in ("user", "assistant"):
+                        self.memory.short_term.add_message(r, c)
+
         # Multi-turn context resolution
-        effective_query = self._resolve_contextual_query(user_text)
+        effective_query = self._resolve_contextual_query(
+            user_text,
+            is_followup_hint=is_followup,
+            followup_type_hint=followup_type
+        )
 
         freq = self.research.record_query(effective_query)
 
@@ -249,7 +307,8 @@ class ChatEngine:
         )
         prompt_str = self.context_budget.assemble_prompt_string(payload)
 
-        model = self.models.load_model(self.config.default_model_tier)
+        chosen_tier = model_id or self.config.default_model_tier
+        model = self.models.load_model(chosen_tier)
         safe_max_tokens = self.context_budget.get_remaining_generation_tokens(payload)
         gen_request = GenerationRequest(prompt=prompt_str, max_tokens=safe_max_tokens)
         gen_response = model.generate(gen_request)

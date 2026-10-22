@@ -232,7 +232,19 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
             query = req_data.get("query") or req_data.get("message") or req_data.get("prompt") or ""
             mode = req_data.get("mode", "auto")
             conversation_id = req_data.get("conversation_id", "default")
-            result = self.engine.process_query(query, mode=mode, conversation_id=conversation_id)
+            model_id = req_data.get("model") or req_data.get("model_id") or "nano"
+            history = req_data.get("history") or []
+            is_followup = req_data.get("is_followup", False)
+            followup_type = req_data.get("followup_type")
+            result = self.engine.process_query(
+                query,
+                mode=mode,
+                conversation_id=conversation_id,
+                model_id=model_id,
+                history=history,
+                is_followup=is_followup,
+                followup_type=followup_type
+            )
             self._send_json(result)
 
         elif self.path in ("/api/chat/clear", "/api/chat/reset"):

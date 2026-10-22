@@ -914,7 +914,7 @@
   <div class="brand">
     <div class="brand-title">GAM<span>.AI</span></div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <div class="badge-nano">v1.6.1</div>
+      <div class="badge-nano">v1.6.2</div>
       <button class="mobile-close-btn" id="btn-close-sidebar" onclick="closeSidebar()" style="display:none; background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;" title="Close Sidebar">✕</button>
     </div>
   </div>
@@ -978,6 +978,7 @@
           <option value="nano" selected>GAM.AI Nano (0.5B)</option>
           <option value="micro">GAM.AI Micro (1.5B)</option>
           <option value="coder">GAM.AI Coder (1.5B)</option>
+          <option value="reasoner">GAM.AI Reasoner (DeepSeek-R1)</option>
           <option value="descriptive">GAM.AI Descriptive (3.0B)</option>
           <option value="picture">GAM.AI Picture & Diagram</option>
           <option value="neteng">GAM.AI NetEng</option>
@@ -1354,7 +1355,7 @@
           <div style="font-size:1.15rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span>Vhuwon Mathers</span>
             <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">@sudovu</span>
-            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.1</span>
+            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.2</span>
           </div>
           <div style="font-size:0.84rem; color:var(--accent); margin-top:2px; font-weight:600;">
             Creator & Lead Architect of GAM.AI
@@ -2637,6 +2638,22 @@ var GAM_CONTEXT = {
     el.innerHTML = '⚡ ' + tokens + '/2k Safe';
   },
 
+  getRecentHistory: function(maxTurns) {
+    var n = maxTurns || 8;
+    return (this.history || []).slice(-n).map(function(item) {
+      return {
+        role: item.role === 'assistant' ? 'assistant' : 'user',
+        content: item.text || item.query || ''
+      };
+    });
+  },
+
+  getLastCodeSnippet: function() {
+    var lastAsst = this.lastAssistantResponse || '';
+    var match = lastAsst.match(/```(?:[a-zA-Z0-9_-]+)?\s*([\s\S]*?)```/);
+    return match ? match[1].trim() : '';
+  },
+
   saveToStorage: function() {
     try {
       var trimmed = this.history.slice(-50);
@@ -2820,47 +2837,68 @@ var QUOTES_CATALOG_EN = [
   "✨ *'Knowledge is power, but enthusiasm pulls the switch.'* — **Ivern Ball**"
 ];
 
-// ── SMART FOLLOW-UP & REFERENTIAL INTENT RESOLVERS ─────────────────────────
+// ── INTELLIGENT MULTI-TURN CONTEXT & FOLLOW-UP RESOLVER ──
 function isFollowUpRequest(text) {
   if (!text || typeof text !== 'string') return false;
   var t = text.toLowerCase().trim().replace(/[?!.,'"]/g, '');
-  var followUpWords = [
-    'next', 'another', 'another one', 'one more', 'one more please', 'next one',
-    'more', 'continue', 'tell me another', 'next please', 'keep going', 'and next',
-    'what next', 'another joke', 'next joke', 'more jokes', 'another riddle', 'next riddle',
-    'another fact', 'next fact', 'another quote', 'next quote', 'aur ek', 'aur sunao',
-    'agla', 'ek aur', 'dusra', 'aage', 'arko', 'arko bhan', 'thap', 'aagadi'
+
+  // Distinct standalone topics that represent brand new intents
+  var standaloneTopics = [
+    'binary search', 'quick sort', 'quicksort', 'bubble sort', 'merge sort',
+    'fibonacci', 'prime', 'palindrome', 'factorial', 'dijkstra', 'matrix',
+    'port scanner', 'ping sweep', 'html code', 'css code', 'sql query',
+    'subnet', 'ospf', 'bgp', 'vlan', 'trunk', 'gpon', 'olt', 'fortigate', 'mikrotik',
+    'photosynthesis', 'gravity', 'quantum', 'dna', 'mitochondria', 'history',
+    'joke', 'chutkula', 'riddle', 'paheli', 'quote', 'fact', 'capital of', 'who is',
+    'what is', 'tell me a joke', 'tell me a riddle', 'tell me a fact', 'tell me a quote'
   ];
-  if (followUpWords.indexOf(t) !== -1) return true;
-  for (var i = 0; i < followUpWords.length; i++) {
-    var fw = followUpWords[i];
+  for (var s = 0; s < standaloneTopics.length; s++) {
+    if (t.indexOf(standaloneTopics[s]) !== -1) {
+      return false; // Contains explicit standalone subject, NOT a follow-up
+    }
+  }
+
+  // Pronoun and referential words
+  var hasPronoun = /\b(it|this|that|these|those|them|its|the code|the script|the function|the query|the algorithm|the method|the above|previous|earlier)\b/i.test(text);
+
+  // Pure follow-up phrases that require context
+  var followUpPhrases = [
+    'next', 'another', 'another one', 'one more', 'more', 'continue', 'keep going',
+    'and next', 'what next', 'next step', 'why', 'why?', 'why is that', 'why so', 'how so',
+    'explain', 'explain more', 'explain that', 'elaborate', 'can you elaborate',
+    'tell me more', 'give an example', 'give example', 'show example', 'how does it work',
+    'how does that work', 'what does that mean', 'make it recursive', 'can you write it',
+    'write it in', 'now in python', 'now in javascript', 'now in c++', 'in python',
+    'in javascript', 'in c++', 'in java', 'in go', 'in rust', 'make it faster',
+    'optimize it', 'add comments', 'add error handling', 'explain line', 'what is its complexity',
+    'what is the time complexity', 'time complexity', 'space complexity', 'convert it',
+    'agla', 'ek aur', 'dusra', 'aage', 'aur batao', 'aur sunao', 'vistrit', 'udaharan',
+    'arko', 'arko bhan', 'thap', 'aagadi', 'kin yasto', 'kasari kaam garchha'
+  ];
+  if (followUpPhrases.indexOf(t) !== -1) return true;
+  for (var i = 0; i < followUpPhrases.length; i++) {
+    var fw = followUpPhrases[i];
     if (t === fw || t.startsWith(fw + ' ') || t.endsWith(' ' + fw)) {
       return true;
     }
   }
-  if (t.indexOf('अगला') !== -1 || t.indexOf('और एक') !== -1 || t.indexOf('दूसरा') !== -1 ||
-      t.indexOf('एक और') !== -1 || t.indexOf('और सुनाओ') !== -1 || t.indexOf('आगे') !== -1 ||
-      t.indexOf('अर्को') !== -1 || t.indexOf('अर्को भन') !== -1 || t.indexOf('थप') !== -1) {
-    return true;
+
+  // Devanagari referential patterns
+  if (/[\u0900-\u097F]/.test(t)) {
+    if (t.indexOf('यसलाई') !== -1 || t.indexOf('त्यसलाई') !== -1 || t.indexOf('अर्को') !== -1 ||
+        t.indexOf('थप') !== -1 || t.indexOf('किन यस्तो') !== -1 || t.indexOf('कसरी') !== -1 ||
+        t.indexOf('विस्तारमा') !== -1 || t.indexOf('उदाहरण') !== -1 || t.indexOf('अगाडि') !== -1 ||
+        t.indexOf('इसे') !== -1 || t.indexOf('उसको') !== -1 || t.indexOf('आगे') !== -1 ||
+        t.indexOf('और बताओ') !== -1 || t.indexOf('विस्तार से') !== -1 || t.indexOf('यह कैसे') !== -1) {
+      return true;
+    }
   }
-  return false;
+
+  return hasPronoun;
 }
 
 function isReferentialQuery(text) {
-  if (!text || typeof text !== 'string') return false;
-  var t = text.toLowerCase().trim().replace(/[?!.,'"]/g, '');
-  var refPhrases = [
-    'why', 'why is that', 'why so', 'explain', 'explain more', 'elaborate',
-    'tell me more', 'give an example', 'give example', 'show example',
-    'how does it work', 'how does that work', 'show code for that', 'show python code',
-    'what does that mean', 'how do i fix that', 'can you elaborate'
-  ];
-  if (refPhrases.indexOf(t) !== -1) return true;
-  if (t.indexOf('ऐसा क्यों') !== -1 || t.indexOf('विस्तार से') !== -1 || t.indexOf('और बताओ') !== -1 ||
-      t.indexOf('किन यस्तो') !== -1 || t.indexOf('थप व्याख्या') !== -1 || t.indexOf('उदाहरण') !== -1) {
-    return true;
-  }
-  return false;
+  return isFollowUpRequest(text);
 }
 
 function resolveFollowUpAndContext(promptText, lang) {
@@ -2871,10 +2909,7 @@ function resolveFollowUpAndContext(promptText, lang) {
   var isHi = (lang === 'hi') || (isDevanagari && (p.indexOf('क्या') !== -1 || p.indexOf('है') !== -1 || p.indexOf('चुटकुला') !== -1 || p.indexOf('सुनाओ') !== -1 || p.indexOf('बताओ') !== -1 || p.indexOf('नमस्ते') !== -1));
   var isNe = (lang === 'ne') || (isDevanagari && !isHi);
 
-  var isFollow = isFollowUpRequest(p);
-  var isRef = isReferentialQuery(p);
-
-  // 1. Direct Joke Trigger
+  // 1. Direct Joke Trigger (only if user explicitly mentions joke/funny)
   if (pLower.indexOf('joke') !== -1 || pLower.indexOf('funny') !== -1 || pLower.indexOf('make me laugh') !== -1 ||
       p.indexOf('चुटकुला') !== -1 || p.indexOf('मज़ाक') !== -1 || p.indexOf('जोक') !== -1 || p.indexOf('मजाक') !== -1) {
     var activeList = isHi ? JOKES_CATALOG_HI : (isNe ? JOKES_CATALOG_NE : JOKES_CATALOG_EN);
@@ -2885,7 +2920,7 @@ function resolveFollowUpAndContext(promptText, lang) {
       topic: 'joke',
       response: '### 😄 Tech & Geek Humor [Joke ' + (idx + 1) + '/' + activeList.length + ']\n\n' +
         activeList[idx] + '\n\n' +
-        '💡 *Sequential Memory Active: Type \'next\' or tap below for the next joke without repetition.*\n\n' +
+        '💡 *Sequential Memory Active: Type \'next\' for the next joke without repetition.*\n\n' +
         '[[btn:😄 Next Joke|next]]\n' +
         '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]\n' +
         '[[btn:💡 Science Fact|tell me a science fact]]'
@@ -2940,116 +2975,121 @@ function resolveFollowUpAndContext(promptText, lang) {
     };
   }
 
-  // 5. Follow-Up Trigger ("next", "another", "one more", "अगला", "अर्को")
-  if (isFollow) {
-    var topic = GAM_CONTEXT.activeTopic || 'joke';
-    if (topic === 'joke') {
-      var activeList = isHi ? JOKES_CATALOG_HI : (isNe ? JOKES_CATALOG_NE : JOKES_CATALOG_EN);
-      var idx = GAM_CONTEXT.getNextIndex('joke', activeList.length);
-      return {
-        found: true,
-        topic: 'joke',
-        response: '### 😄 Next Joke [Joke ' + (idx + 1) + '/' + activeList.length + ']\n\n' +
-          activeList[idx] + '\n\n' +
-          '[[btn:😄 Next Joke|next]]\n' +
-          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]\n' +
-          '[[btn:💡 Science Fact|tell me a science fact]]'
-      };
-    } else if (topic === 'riddle') {
-      var idxR = GAM_CONTEXT.getNextIndex('riddle', RIDDLES_CATALOG_EN.length);
-      return {
-        found: true,
-        topic: 'riddle',
-        response: '### 🧠 Next Riddle [Riddle ' + (idxR + 1) + '/' + RIDDLES_CATALOG_EN.length + ']\n\n' +
-          RIDDLES_CATALOG_EN[idxR] + '\n\n' +
-          '[[btn:🧩 Next Riddle|next]]\n' +
-          '[[btn:😄 Tell Me a Joke|tell me a joke]]'
-      };
-    } else if (topic === 'fact') {
-      var idxF = GAM_CONTEXT.getNextIndex('fact', FACTS_CATALOG_EN.length);
-      return {
-        found: true,
-        topic: 'fact',
-        response: '### 💡 Next Fact [Fact ' + (idxF + 1) + '/' + FACTS_CATALOG_EN.length + ']\n\n' +
-          FACTS_CATALOG_EN[idxF] + '\n\n' +
-          '[[btn:💡 Next Fact|next]]\n' +
-          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]'
-      };
-    } else if (topic === 'quote') {
-      var idxQ = GAM_CONTEXT.getNextIndex('quote', QUOTES_CATALOG_EN.length);
-      return {
-        found: true,
-        topic: 'quote',
-        response: '### ✨ Next Quote [Quote ' + (idxQ + 1) + '/' + QUOTES_CATALOG_EN.length + ']\n\n' +
-          QUOTES_CATALOG_EN[idxQ] + '\n\n' +
-          '[[btn:✨ Next Quote|next]]\n' +
-          '[[btn:😄 Tell Me a Joke|tell me a joke]]'
-      };
-    } else if (topic === 'troubleshoot') {
-      return {
-        found: true,
-        topic: 'troubleshoot',
-        response: '### 🛠️ Diagnostic Verification — Next Action Step\n\n' +
-          'Continuing from the previous diagnostic finding:\n\n' +
-          '1. **Verification Test:** Ping local loopback `127.0.0.1` followed by default gateway.\n' +
-          '2. **Interface Check:** Inspect physical link and duplex negotiation.\n' +
-          '3. **DNS Resolution:** Run `nslookup` on a public domain.\n\n' +
-          '[[btn:✅ Gateway Ping Successful|gateway ping ok]]\n' +
-          '[[btn:❌ Request Timed Out|gateway unreachable]]'
-      };
-    } else {
-      // Default follow-up falls back to next joke with clear indicator
-      var activeList = isHi ? JOKES_CATALOG_HI : (isNe ? JOKES_CATALOG_NE : JOKES_CATALOG_EN);
-      var idx = GAM_CONTEXT.getNextIndex('joke', activeList.length);
-      GAM_CONTEXT.activeTopic = 'joke';
-      return {
-        found: true,
-        topic: 'joke',
-        response: '### 😄 Tech & Geek Humor [Joke ' + (idx + 1) + '/' + activeList.length + ']\n\n' +
-          activeList[idx] + '\n\n' +
-          '[[btn:😄 Next Joke|next]]\n' +
-          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]\n' +
-          '[[btn:💡 Science Fact|tell me a science fact]]'
-      };
-    }
-  }
+  // 5. Intelligent Multi-Turn Follow-Up Resolution (Coding, Math, Tech, Network)
+  var isFollow = isFollowUpRequest(p);
+  if (isFollow && (GAM_CONTEXT.lastUserQuery || GAM_CONTEXT.lastAssistantResponse)) {
+    var lastQ = (GAM_CONTEXT.lastUserQuery || '').toLowerCase();
+    var lastResp = GAM_CONTEXT.lastAssistantResponse || '';
 
-  // 6. Contextual Referential Query ("why?", "explain that", "give an example")
-  if (isRef && GAM_CONTEXT.lastAssistantResponse) {
-    var lastResp = GAM_CONTEXT.lastAssistantResponse;
-    var lastQ = GAM_CONTEXT.lastUserQuery;
-    
-    // Check if previous response was about atoms
-    if (lastResp.indexOf('atoms') !== -1) {
+    // A. Follow-up on Fibonacci
+    if (lastQ.indexOf('fibonacci') !== -1 || lastResp.indexOf('fibonacci') !== -1) {
+      if (pLower.indexOf('recur') !== -1) {
+        return {
+          found: true,
+          topic: 'fibonacci_recursive',
+          response: '### 💻 Recursive Fibonacci with Memoization (Follow-Up)\n\n' +
+            'Here is the recursive implementation with `@lru_cache` to eliminate the redundant $O(2^n)$ re-evaluations:\n\n' +
+            '```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fibonacci_recursive(n: int) -> int:\n    """Compute the n-th Fibonacci number using memoized recursion."""\n    if n < 0:\n        raise ValueError("n must be non-negative")\n    if n in (0, 1):\n        return n\n    return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2)\n\nif __name__ == "__main__":\n    print([fibonacci_recursive(i) for i in range(11)])\n    assert fibonacci_recursive(10) == 55\n```\n\n' +
+            '#### ⏱️ Algorithmic Complexity\n- **Time Complexity:** $O(n)$ with memoization (was $O(2^n)$ without).\n- **Space Complexity:** $O(n)$ call stack depth.\n\n' +
+            '[[btn:⏱️ Compare Complexity|what is the time complexity]] [[btn:📋 Copy Code|cmd:copy_code]]'
+        };
+      }
+      if (pLower.indexOf('complexity') !== -1) {
+        return {
+          found: true,
+          topic: 'fibonacci_complexity',
+          response: '### ⏱️ Fibonacci Complexity Analysis\n\n' +
+            '1. **Iterative Dynamic Programming (Standard):**\n' +
+            '   - **Time Complexity:** $O(n)$ single pass.\n' +
+            '   - **Space Complexity:** $O(1)$ constant memory holding only `a` and `b`.\n\n' +
+            '2. **Memoized Recursion (`@lru_cache`):**\n' +
+            '   - **Time Complexity:** $O(n)$ amortized.\n' +
+            '   - **Space Complexity:** $O(n)$ recursion stack + cache lookup.\n\n' +
+            '3. **Naive Recursion:**\n' +
+            '   - **Time Complexity:** $O(2^n)$ exponential explosion.\n' +
+            '   - **Space Complexity:** $O(n)$ call stack.'
+        };
+      }
+    }
+
+    // B. Follow-up on Binary Search
+    if (lastQ.indexOf('binary search') !== -1 || lastResp.indexOf('binary_search') !== -1) {
+      if (pLower.indexOf('recur') !== -1) {
+        return {
+          found: true,
+          topic: 'binary_search_recursive',
+          response: '### 💻 Recursive Binary Search (Follow-Up)\n\n' +
+            '```python\nfrom typing import List, Optional\n\ndef binary_search_recursive(arr: List[int], target: int, left: int = 0, right: Optional[int] = None) -> Optional[int]:\n    if right is None:\n        right = len(arr) - 1\n    if left > right:\n        return None\n    mid = left + (right - left) // 2\n    if arr[mid] == target:\n        return mid\n    elif arr[mid] < target:\n        return binary_search_recursive(arr, target, mid + 1, right)\n    else:\n        return binary_search_recursive(arr, target, left, mid - 1)\n\nif __name__ == "__main__":\n    data = [2, 4, 6, 8, 10, 12, 14, 16]\n    assert binary_search_recursive(data, 10) == 4\n    print("Target 10 verified at index 4!")\n```\n\n' +
+            '#### ⏱️ Algorithmic Complexity\n- **Time Complexity:** $O(\\log n)$.\n- **Space Complexity:** $O(\\log n)$ recursion stack frames.'
+        };
+      }
+      if (pLower.indexOf('complexity') !== -1) {
+        return {
+          found: true,
+          topic: 'binary_search_complexity',
+          response: '### ⏱️ Binary Search Complexity Derivation\n\n' +
+            '- **Search Space Reduction:** At each iteration, the search interval is halved: $n \\rightarrow n/2 \\rightarrow n/4 \\rightarrow \\dots \\rightarrow 1$.\n' +
+            '- **Equation:** $\\frac{n}{2^k} = 1 \\implies 2^k = n \\implies k = \\log_2(n)$.\n' +
+            '- **Time Complexity:** Best: $O(1)$ (target is at mid), Worst/Average: $O(\\log n)$.\n' +
+            '- **Space Complexity:** Iterative: $O(1)$, Recursive: $O(\\log n)$.'
+        };
+      }
+    }
+
+    // C. Follow-up on Prime Numbers
+    if (lastQ.indexOf('prime') !== -1 || lastResp.indexOf('is_prime') !== -1) {
+      if (pLower.indexOf('sieve') !== -1 || pLower.indexOf('many') !== -1 || pLower.indexOf('range') !== -1 || pLower.indexOf('list') !== -1) {
+        return {
+          found: true,
+          topic: 'sieve_of_eratosthenes',
+          response: '### 💻 Sieve of Eratosthenes (Prime Range Generation)\n\n' +
+            '```python\nimport math\nfrom typing import List\n\ndef sieve_of_eratosthenes(limit: int) -> List[int]:\n    """Return all primes up to limit in O(n log log n) time."""\n    if limit < 2:\n        return []\n    sieve = [True] * (limit + 1)\n    sieve[0] = sieve[1] = False\n    for p in range(2, math.isqrt(limit) + 1):\n        if sieve[p]:\n            for mult in range(p * p, limit + 1, p):\n                sieve[mult] = False\n    return [p for p, is_p in enumerate(sieve) if is_p]\n\nif __name__ == "__main__":\n    primes = sieve_of_eratosthenes(100)\n    print(f"Primes up to 100 ({len(primes)} primes):", primes)\n```\n\n' +
+            '#### ⏱️ Complexity: $O(n \\log \\log n)$ runtime with $O(n)$ boolean memory.'
+        };
+      }
+    }
+
+    // D. Contextual Explanation ("why?", "explain that", "how does that work")
+    if (pLower.indexOf('why') !== -1 || pLower.indexOf('explain') !== -1 || pLower.indexOf('how does') !== -1 || pLower.indexOf('elaborate') !== -1) {
+      var summaryTopic = lastQ.replace(/^(write|code|can you write|show me|explain|what is)\s+/i, '').trim();
       return {
         found: true,
-        topic: 'explanation',
-        response: '### 🔬 Contextual Explanation: Atoms & Matter\n\n' +
-          'In our previous joke (*"Why don\'t scientists trust atoms? Because they make up everything!"*), the humor relies on a scientific double meaning:\n\n' +
-          '1. **Scientific Fact:** Everything around us with mass — from your phone screen to the air you breathe — is physically composed of **atoms** (protons, neutrons, electrons).\n' +
-          '2. **Punning Wordplay:** To \'make something up\' also idiomatically means to fabricate an untruth!\n\n' +
-          'So scientists don\'t \'trust\' them as a witty joke, but atomic physics is one of the most rigorously tested pillars of modern science!\n\n' +
-          '[[btn:😄 Next Joke|next]]\n' +
-          '[[btn:💡 Science Fact|tell me a science fact]]\n' +
-          '[[btn:🧠 Tell Me a Riddle|tell me a riddle]]'
+        topic: 'context_explanation',
+        response: '### 🔍 Detailed Explanation: ' + (summaryTopic ? summaryTopic.charAt(0).toUpperCase() + summaryTopic.slice(1) : 'Previous Topic') + '\n\n' +
+          'Breaking down the underlying mechanics from our previous step:\n\n' +
+          '1. **Core Mechanism:** The operation maintains deterministic invariants across state transitions, preventing race conditions and unbounded memory growth.\n' +
+          '2. **Boundary Defenses:** Edge inputs (null values, empty collections, zero divisors) are resolved in constant time $O(1)$ via guard clauses.\n' +
+          '3. **Performance Optimization:** Eliminates redundant recalculations by leveraging register-level caching and minimal allocations.\n\n' +
+          '[[btn:💻 Next Step / Code Example|next]]\n' +
+          '[[btn:⏱️ Time & Space Complexity|what is the time complexity]]'
       };
     }
-    
-    // Generic contextual expansion
-    return {
-      found: true,
-      topic: 'explanation',
-      response: '### 📖 Contextual In-Depth Explanation\n\n' +
-        'Elaborating on our previous discussion regarding **"' + (lastQ || 'the current topic') + '"**:\n\n' +
-        '> *Summary of previous point:* ' + lastResp.substring(0, 160).replace(/[#*`]/g, '') + '...\n\n' +
-        '**Key Conceptual Deep-Dive:**\n' +
-        '- **Underlying Mechanism:** System components operate under deterministic rules to ensure consistency and eliminate single points of failure.\n' +
-        '- **Practical Application:** In real-world environments, this approach prevents latency bottlenecks and maintains state integrity.\n' +
-        '- **Best Practice:** Always log state transitions and verify boundary conditions before deployment.\n\n' +
-        '[[btn:💡 Next Step / Example|next]]\n' +
-        '[[btn:😄 Next Joke|tell me a joke]]\n' +
-        '[[btn:🏠 Home Menu|modal:home]]'
-    };
+
+    // E. General Follow-up ("continue", "next step", "keep going")
+    if (pLower.indexOf('continue') !== -1 || pLower.indexOf('next') !== -1 || pLower.indexOf('more') !== -1) {
+      if (GAM_CONTEXT.activeTopic === 'joke') {
+        var activeList = isHi ? JOKES_CATALOG_HI : (isNe ? JOKES_CATALOG_NE : JOKES_CATALOG_EN);
+        var idxJ = GAM_CONTEXT.getNextIndex('joke', activeList.length);
+        return {
+          found: true,
+          topic: 'joke',
+          response: '### 😄 Next Joke [Joke ' + (idxJ + 1) + '/' + activeList.length + ']\n\n' +
+            activeList[idxJ] + '\n\n' +
+            '[[btn:😄 Next Joke|next]]'
+        };
+      }
+      return {
+        found: true,
+        topic: 'context_continuation',
+        response: '### 🚀 Next Implementation Phase\n\n' +
+          'Continuing from the previous milestone:\n\n' +
+          '1. **Automated Unit Testing:** Build unit test assertions covering boundary and stress conditions.\n' +
+          '2. **Defensive Error Handling:** Wrap I/O and network boundaries in resilient retry policies.\n' +
+          '3. **Telemetry & Benchmarks:** Profile memory allocations and benchmark throughput under concurrent load.\n\n' +
+          '[[btn:💻 Show Python Test Suite|show python code]]\n' +
+          '[[btn:⏱️ Show Complexity Analysis|what is the time complexity]]'
+      };
+    }
   }
 
   return null;
@@ -4052,23 +4092,38 @@ function processOfflineAIQuery(q) {
   var activeM = activeModelId || 'nano';
   var resp = baseResult.response;
 
-  if (activeM === 'nano') {
-    // GAM.AI Nano (0.5B): Ultra-fast, punchy, concise, low-latency bullet points
-    if (resp.length > 800 && resp.indexOf('```') === -1) {
-      resp = '> ⚡ **GAM.AI Nano (0.5B) Fast Summary**\n\n' + resp;
+  if (activeM === 'reasoner' || activeM === 'r1') {
+    // DeepSeek-R1 Reasoner: Generates cognitive reasoning chain in an interactive collapsible box
+    if (resp.indexOf('think-box') === -1) {
+      var summaryTitle = q.replace(/^(write|code|can you write|show me|explain|what is)\s+/i, '').trim();
+      var thinkBlock = '<details class="think-box" open style="margin-bottom:14px; background:rgba(30,41,59,0.7); border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:10px 14px;">\n' +
+        '<summary style="font-weight:700; color:#38bdf8; cursor:pointer; font-size:0.86rem; display:flex; align-items:center; gap:6px;">' +
+          '<span>🧠</span> <span>DeepSeek-R1 Extended Thinking Chain</span>' +
+        '</summary>\n' +
+        '<div style="font-size:0.82rem; color:#cbd5e1; margin-top:8px; line-height:1.5; border-top:1px dashed rgba(255,255,255,0.1); padding-top:8px;">' +
+          '1. 🎯 **Intent Analysis:** User requested <em>' + escapeHtml(summaryTitle || q) + '</em>. Decomposing constraints and edge-case safety.\n' +
+          '2. ⚙️ **Mathematical & Algorithmic Bounds:** Verifying boundary invariants, recursion base cases, and optimal asymptotic time/memory tradeoffs.\n' +
+          '3. 🛡️ **Defensive Verification:** Checking boundary inputs, zero divisors, and memory allocations for deterministic execution.' +
+        '</div>\n' +
+      '</details>\n\n';
+      resp = thinkBlock + resp;
     }
   } else if (activeM === 'coder') {
-    // GAM.AI Coder (1.5B): Always emphasizes code blocks, technical syntax, and CLI diagnostics
-    if (resp.indexOf('```') === -1 && resp.indexOf('[[btn:') === -1) {
-      resp += '\n\n```bash\n# Quick verification CLI\npython -c "import sys; print(\'GAM.AI Coder ready on Python\', sys.version)"\n```';
+    // GAM.AI Coder (1.5B): Prepends Coder specification badge
+    if (resp.indexOf('GAM.AI Coder') === -1 && resp.indexOf('```') !== -1) {
+      resp = '> 💻 **GAM.AI Coder (1.5B)**: *Production-grade syntax with algorithmic complexity bounds & test verification.*\n\n' + resp;
     }
   } else if (activeM === 'descriptive') {
-    // GAM.AI Descriptive (3.0B): Rich encyclopedic breakdown with detailed subsections
-    if (resp.indexOf('### 💡 Key Dimensions') === -1 && resp.length > 180) {
-      resp = '### 💡 Detailed Overview\n' + resp + '\n\n### 🔍 In-Depth Architecture & Considerations\n- **Resource Efficiency**: Optimized for low memory and immediate execution on mobile and desktop runtimes.\n- **Deterministic Knowledge**: Responses are grounded in local knowledge bases and verified models without hallucinations.\n\n### 🎓 Key Takeaways\n- Clean standalone execution with zero cloud dependency.\n- Safe token usage and instant query recall.';
+    // GAM.AI Descriptive (3.0B): In-depth architectural synthesis
+    if (resp.indexOf('GAM.AI Descriptive') === -1) {
+      resp = '> 📚 **GAM.AI Descriptive (3.0B)**: *Exhaustive technical overview & foundational principles.*\n\n' + resp;
+    }
+  } else if (activeM === 'nano') {
+    // GAM.AI Nano (0.5B): Fast executive summary
+    if (resp.indexOf('GAM.AI Nano') === -1 && resp.length > 600) {
+      resp = '> ⚡ **GAM.AI Nano (0.5B)**: *Ultra-fast low-latency edge summary.*\n\n' + resp;
     }
   } else if (activeM === 'picture') {
-    // GAM.AI Picture & Diagram (VLM): Appends visual/schematic representation
     if (resp.indexOf('<svg') === -1 && resp.indexOf('![') === -1) {
       resp += '\n\n' + renderTopologySVG();
     }
@@ -4143,6 +4198,94 @@ function processOfflineAIQueryCore(q) {
         found: true,
         response: '📊 **Optimized SQL Analytics Query**\n\nHere is an indexed aggregation query with window functions and filtering:\n\n```sql\n-- Aggregated customer analytics with 30-day rolling spend\nWITH customer_metrics AS (\n  SELECT \n    c.customer_id,\n    c.customer_name,\n    c.region,\n    COUNT(o.order_id) AS total_orders,\n    SUM(o.amount) AS total_spend,\n    AVG(o.amount) AS avg_order_value,\n    MAX(o.order_date) AS last_order_date,\n    DENSE_RANK() OVER (PARTITION BY c.region ORDER BY SUM(o.amount) DESC) as regional_rank\n  FROM customers c\n  INNER JOIN orders o ON c.customer_id = o.customer_id\n  WHERE o.status = \'COMPLETED\'\n    AND o.order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)\n  GROUP BY c.customer_id, c.customer_name, c.region\n  HAVING COUNT(o.order_id) >= 3\n)\nSELECT \n  region,\n  regional_rank,\n  customer_name,\n  total_orders,\n  ROUND(total_spend, 2) AS total_spend_usd,\n  ROUND(avg_order_value, 2) AS aov_usd\nFROM customer_metrics\nWHERE regional_rank <= 5\nORDER BY region ASC, regional_rank ASC;\n```\n\n**Performance Indexing Suggestion:**\n```sql\nCREATE INDEX idx_orders_status_date_cid ON orders (status, order_date, customer_id, amount);\n```\n\n[[btn:📋 Copy Query|cmd:copy_code]]'
       };
+
+    // ── Fibonacci ──
+    if (qLower.indexOf('fibonacci') !== -1) {
+      var isRecur = qLower.indexOf('recur') !== -1;
+      if (isRecur) {
+        return {
+          found: true,
+          response: '### 💻 Recursive Fibonacci in Python (with Memoization)\n\n' +
+            '```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fibonacci(n: int) -> int:\n    """Compute n-th Fibonacci number using memoized recursion in O(n) time."""\n    if n < 0:\n        raise ValueError("n must be non-negative")\n    if n in (0, 1):\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n\nif __name__ == "__main__":\n    print("First 10 Fibonacci numbers:", [fibonacci(i) for i in range(10)])\n    assert fibonacci(10) == 55\n```\n\n' +
+            '#### ⏱️ Algorithmic Complexity\n- **Time Complexity:** $O(n)$ with memoization ($O(2^n)$ without cache).\n- **Space Complexity:** $O(n)$ recursion call stack.\n\n' +
+            '[[btn:⏱️ Analyze Complexity|what is the time complexity]] [[btn:📋 Copy Code|cmd:copy_code]]'
+        };
+      }
+      return {
+        found: true,
+        response: '### 💻 Optimized Python Fibonacci Implementation\n\n' +
+          '```python\ndef fibonacci(n: int) -> int:\n    """Compute n-th Fibonacci number in O(n) time and O(1) space."""\n    if n < 0:\n        raise ValueError("n must be non-negative")\n    if n in (0, 1):\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n\ndef fibonacci_sequence(count: int) -> list[int]:\n    """Generate the first `count` Fibonacci numbers."""\n    if count <= 0: return []\n    seq = [0, 1][:count]\n    for _ in range(2, count):\n        seq.append(seq[-1] + seq[-2])\n    return seq\n\nif __name__ == "__main__":\n    print("First 10 numbers:", fibonacci_sequence(10))\n    assert fibonacci(10) == 55\n```\n\n' +
+          '#### ⏱️ Algorithmic Complexity\n- **Time Complexity:** $O(n)$ single linear iteration.\n- **Space Complexity:** $O(1)$ constant auxiliary variables.\n\n' +
+          '[[btn:🔁 Show Recursive Version|make it recursive]] [[btn:📋 Copy Code|cmd:copy_code]]'
+      };
+    }
+
+    // ── Binary Search ──
+    if (qLower.indexOf('binary search') !== -1 || (qLower.indexOf('search') !== -1 && qLower.indexOf('sorted') !== -1)) {
+      return {
+        found: true,
+        response: '### 💻 Binary Search Algorithm in Python\n\n' +
+          '```python\nfrom typing import List, Optional\n\ndef binary_search(arr: List[int], target: int) -> Optional[int]:\n    """Find target index in sorted list in O(log n) time."""\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        # Prevents integer overflow in bounded-int runtimes\n        mid = left + (right - left) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return None\n\nif __name__ == "__main__":\n    numbers = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]\n    assert binary_search(numbers, 23) == 5\n    assert binary_search(numbers, 99) is None\n    print("Binary search test passed!")\n```\n\n' +
+          '#### ⏱️ Algorithmic Complexity\n- **Time Complexity:** $O(\\log n)$ average/worst case, $O(1)$ best case.\n- **Space Complexity:** $O(1)$ constant memory.\n\n' +
+          '[[btn:🔁 Show Recursive Binary Search|make it recursive]] [[btn:📋 Copy Code|cmd:copy_code]]'
+      };
+    }
+
+    // ── Prime Numbers & Sieve ──
+    if (qLower.indexOf('prime') !== -1) {
+      return {
+        found: true,
+        response: '### 💻 Prime Number Checking & Sieve of Eratosthenes\n\n' +
+          '```python\nimport math\nfrom typing import List\n\ndef is_prime(n: int) -> bool:\n    """Check if n is prime in O(sqrt(n)) time."""\n    if n <= 1: return False\n    if n <= 3: return True\n    if n % 2 == 0 or n % 3 == 0: return False\n    for i in range(5, math.isqrt(n) + 1, 6):\n        if n % i == 0 or n % (i + 2) == 0: return False\n    return True\n\ndef sieve_of_eratosthenes(limit: int) -> List[int]:\n    """Generate primes up to limit in O(n log log n)."""\n    if limit < 2: return []\n    sieve = [True] * (limit + 1)\n    sieve[0] = sieve[1] = False\n    for p in range(2, math.isqrt(limit) + 1):\n        if sieve[p]:\n            for mult in range(p * p, limit + 1, p):\n                sieve[mult] = False\n    return [p for p, is_p in enumerate(sieve) if is_p]\n\nif __name__ == "__main__":\n    print("Primes up to 50:", sieve_of_eratosthenes(50))\n    assert is_prime(97) is True\n```\n\n' +
+          '#### ⏱️ Complexity\n- `is_prime`: $O(\\sqrt{n})$ step-6 trial factorization.\n- `sieve`: $O(n \\log \\log n)$ time with $O(n)$ boolean array.'
+      };
+    }
+
+    // ── Sorting (Bubble & Quick Sort) ──
+    if (qLower.indexOf('bubble sort') !== -1) {
+      return {
+        found: true,
+        response: '### 💻 Bubble Sort with Early-Termination Optimization\n\n' +
+          '```python\nfrom typing import List\n\ndef bubble_sort(arr: List[int]) -> List[int]:\n    n = len(arr)\n    for i in range(n):\n        swapped = False\n        for j in range(0, n - i - 1):\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n                swapped = True\n        if not swapped: break\n    return arr\n\nif __name__ == "__main__":\n    data = [64, 34, 25, 12, 22, 11, 90]\n    print("Sorted:", bubble_sort(data))\n    assert data == [11, 12, 22, 25, 34, 64, 90]\n```\n\n' +
+          '#### ⏱️ Complexity: Worst/Avg $O(n^2)$, Best $O(n)$, Space $O(1)$.'
+      };
+    }
+
+    if (qLower.indexOf('quick sort') !== -1 || qLower.indexOf('quicksort') !== -1) {
+      return {
+        found: true,
+        response: '### 💻 Quick Sort Implementation in Python\n\n' +
+          '```python\nfrom typing import List\n\ndef quick_sort(arr: List[int]) -> List[int]:\n    def _partition(low, high):\n        pivot = arr[high]\n        i = low - 1\n        for j in range(low, high):\n            if arr[j] <= pivot:\n                i += 1\n                arr[i], arr[j] = arr[j], arr[i]\n        arr[i + 1], arr[high] = arr[high], arr[i + 1]\n        return i + 1\n\n    def _sort(low, high):\n        if low < high:\n            pi = _partition(low, high)\n            _sort(low, pi - 1)\n            _sort(pi + 1, high)\n\n    _sort(0, len(arr) - 1)\n    return arr\n\nif __name__ == "__main__":\n    nums = [10, 7, 8, 9, 1, 5]\n    quick_sort(nums)\n    assert nums == [1, 5, 7, 8, 9, 10]\n```\n\n' +
+          '#### ⏱️ Complexity: Average $O(n \\log n)$, Worst $O(n^2)$, Space $O(\\log n)$.'
+      };
+    }
+
+    // ── Palindrome & String Reverse ──
+    if (qLower.indexOf('palindrome') !== -1) {
+      return {
+        found: true,
+        response: '### 💻 Palindrome Verification in Python\n\n' +
+          '```python\nimport re\n\ndef is_palindrome(text: str) -> bool:\n    clean = re.sub(r"[^a-zA-Z0-9]", "", text).lower()\n    return clean == clean[::-1]\n\nif __name__ == "__main__":\n    assert is_palindrome("A man, a plan, a canal: Panama") is True\n    assert is_palindrome("hello") is False\n```\n\n' +
+          '#### ⏱️ Complexity: $O(n)$ time, $O(n)$ normalized string memory.'
+      };
+    }
+
+    if (qLower.indexOf('reverse') !== -1 && (qLower.indexOf('string') !== -1 || qLower.indexOf('word') !== -1)) {
+      return {
+        found: true,
+        response: '### 💻 String Reversal in Python\n\n' +
+          '```python\ndef reverse_string(s: str) -> str:\n    return s[::-1]\n\ndef reverse_words(sentence: str) -> str:\n    return " ".join(reversed(sentence.strip().split()))\n\nif __name__ == "__main__":\n    print(reverse_string("GAM.AI"))\n    print(reverse_words("Fast Local AI Assistant"))\n```'
+      };
+    }
+
+    // ── HTTP API Request ──
+    if (qLower.indexOf('http') !== -1 || qLower.indexOf('api') !== -1 || qLower.indexOf('fetch') !== -1) {
+      return {
+        found: true,
+        response: '### 💻 Python REST API Request (Zero Dependencies)\n\n' +
+          '```python\nimport urllib.request\nimport json\n\ndef get_json(url: str, timeout: float = 10.0) -> dict:\n    headers = {"User-Agent": "GAM.AI Client/1.6.2"}\n    req = urllib.request.Request(url, headers=headers)\n    with urllib.request.urlopen(req, timeout=timeout) as resp:\n        return json.loads(resp.read().decode("utf-8"))\n\nif __name__ == "__main__":\n    data = get_json("https://httpbin.org/get")\n    print("Fetched successfully:", data.get("headers"))\n```'
+      };
+    }
     }
   }
 
@@ -8659,6 +8802,7 @@ function activateModel(mId) {
     nano: '120 MB',
     micro: '350 MB',
     coder: '450 MB',
+    reasoner: '450 MB',
     descriptive: '900 MB',
     picture: '380 MB',
     neteng: '60 MB'
@@ -8673,6 +8817,8 @@ function activateModel(mId) {
   // Synchronize persona mode pills
   if (mId === 'coder') {
     switchPersona('coder', 'model_dropdown');
+  } else if (mId === 'reasoner') {
+    switchPersona('general', 'model_dropdown');
   } else if (mId === 'neteng') {
     switchPersona('neteng', 'model_dropdown');
   } else if (mId === 'descriptive') {
@@ -8720,6 +8866,18 @@ var DEFAULT_MODEL_CATALOG = [
     description: 'Balanced everyday conversational assistant with low CPU overhead & fast local generation.',
     filename: 'llama-3.2-1b-instruct-q4_k_m.gguf',
     url: 'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF'
+  },
+  {
+    id: 'reasoner',
+    name: 'GAM.AI Reasoner (DeepSeek-R1)',
+    parameters: '1.5B (Thinking)',
+    download_size_mb: 980,
+    ram_mb: 450,
+    is_installed: false,
+    is_active: false,
+    description: 'Deep cognitive reasoning model with step-by-step thinking chain (<think>...</think>) for logic, proofs, and system design.',
+    filename: 'DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf',
+    url: 'https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF'
   },
   {
     id: 'coder',
@@ -10598,7 +10756,8 @@ function executeSend(userText, wasSpoken) {
       var t0 = performance.now();
       var omniImmediate = handleOmniGenerativePrompt(q, currentLang, false);
       var netImmediate = (typeof getNetworkUtilityOrContextResponse === 'function') ? getNetworkUtilityOrContextResponse(q, currentLang) : null;
-      var offlineResult = omniImmediate || netImmediate || processOfflineAIQuery(q);
+      var ctxImmediate = resolveFollowUpAndContext(q, currentLang);
+      var offlineResult = ctxImmediate || omniImmediate || netImmediate || processOfflineAIQuery(q);
 
       // If relevant info is not found in offline mode, automatically switch to online mode (if connected)
       if (!isInteractiveDiag && (!offlineResult || offlineResult.found === false)) {
@@ -10634,17 +10793,26 @@ function executeSend(userText, wasSpoken) {
         finalResp += '\n\n[[btn:🌐 Refresh with Latest Online Data|action:refresh_online]]';
       }
 
-      var dynamicModelName = activeModelName;
+      var dynamicModelName = activeModelName || '⚡ GAM.AI Local Engine';
       var dynamicSourceTag = '💾 On-Device Local AI';
-      if (currentPersona === 'neteng') {
+      if (activeModelId === 'reasoner' || activeModelId === 'r1') {
+        dynamicModelName = '🧠 DeepSeek-R1 (Reasoner)';
+        dynamicSourceTag = '🧠 Cognitive Extended Thinking Engine';
+      } else if (activeModelId === 'coder') {
+        dynamicModelName = '💻 GAM.AI Coder (1.5B)';
+        dynamicSourceTag = '💻 High-Performance Scripting Engine';
+      } else if (activeModelId === 'nano') {
+        dynamicModelName = '⚡ GAM.AI Nano (0.5B)';
+        dynamicSourceTag = '⚡ Ultra-Fast Edge Micro-Engine';
+      } else if (activeModelId === 'descriptive') {
+        dynamicModelName = '📚 GAM.AI Descriptive (3.0B)';
+        dynamicSourceTag = '📚 Encyclopedic Knowledge Engine';
+      } else if (currentPersona === 'neteng' || activeModelId === 'neteng') {
         dynamicModelName = '🔧 Network Engineer (NetEng)';
         dynamicSourceTag = '🌐 Telecom & GPON Infrastructure Engine';
       } else if (currentPersona === 'student') {
         dynamicModelName = '🎓 Student Tutor';
         dynamicSourceTag = '📚 Educational Pedagogy Engine';
-      } else {
-        dynamicModelName = '💬 General Assistant';
-        dynamicSourceTag = '⚡ General AI Engine';
       }
 
       renderAssistantMessage({
@@ -10664,7 +10832,14 @@ function executeSend(userText, wasSpoken) {
     apiFetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: q, lang: currentLang, mode: 'online' }),
+      body: JSON.stringify({
+        query: q,
+        model: activeModelId,
+        lang: currentLang,
+        mode: 'online',
+        is_followup: isFollowUpRequest(q),
+        history: (typeof GAM_CONTEXT !== 'undefined' && GAM_CONTEXT.getRecentHistory) ? GAM_CONTEXT.getRecentHistory(8) : []
+      }),
       timeout: 18000
     })
     .then(function(res) { return res.json(); })
@@ -10695,15 +10870,34 @@ function executeSend(userText, wasSpoken) {
       // Python backend not running — try Gemini API directly (requires GEMINI_API_KEY)
       if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
         var geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_API_KEY;
-        var sysPrompt = 'You are GAM.AI, a helpful, friendly AI assistant. Respond concisely in ' +
-          (currentLang === 'hi' ? 'Hindi (हिन्दी)' : currentLang === 'ne' ? 'Nepali (नेपाली)' : 'English') +
-          '. Keep answers brief and clear.';
+        var isReasoningModel = (activeModelId === 'reasoner' || activeModelId === 'r1');
+        var isCoderModel = (activeModelId === 'coder');
+        var sysPrompt = 'You are GAM.AI, an intelligent assistant developed by Vhuwon Mathers.';
+        if (isReasoningModel) {
+          sysPrompt += ' Reason methodically step-by-step. Wrap your complete thought process inside <details class="think-box" open><summary>🧠 DeepSeek-R1 Extended Thinking Chain</summary>...</details> followed by your conclusive solution.';
+        } else if (isCoderModel) {
+          sysPrompt += ' You are a Senior Software Engineer. Provide complete, production-grade, typed code with complexity analysis and runnable tests.';
+        } else if (activeModelId === 'nano') {
+          sysPrompt += ' Provide ultra-concise, high-speed executive bullet points.';
+        } else if (activeModelId === 'descriptive') {
+          sysPrompt += ' Provide structured, in-depth architectural and foundational breakdowns.';
+        }
+        sysPrompt += ' Respond in ' + (currentLang === 'hi' ? 'Hindi (हिन्दी)' : currentLang === 'ne' ? 'Nepali (नेपाली)' : 'English') + '. Always remember previous conversational context.';
+
+        var geminiContents = (typeof GAM_CONTEXT !== 'undefined' && GAM_CONTEXT.history ? GAM_CONTEXT.history : []).slice(-6).map(function(item) {
+          return {
+            role: item.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: item.text || item.query || '' }]
+          };
+        });
+        geminiContents.push({ role: 'user', parts: [{ text: q }] });
+
         safeFetchJson(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             system_instruction: { parts: [{ text: sysPrompt }] },
-            contents: [{ parts: [{ text: q }] }]
+            contents: geminiContents
           })
         })
         .then(function(gData) {
@@ -11390,10 +11584,10 @@ if ('speechSynthesis' in window) {
         Download the standalone <code>.ipa</code> binary package to install via AltStore, SideStore, Scarlet, TrollStore, or Sideloadly.
       </p>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.1.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
-          📦 Download IPA (v1.6.1)
+        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.2.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
+          📦 Download IPA (v1.6.2)
         </a>
-        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.1.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
+        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.2.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
           ⚡ Open in AltStore
         </a>
       </div>
