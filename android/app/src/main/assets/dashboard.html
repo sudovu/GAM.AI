@@ -914,7 +914,7 @@
   <div class="brand">
     <div class="brand-title">GAM<span>.AI</span></div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <div class="badge-nano">v1.6.3</div>
+      <div class="badge-nano">v1.6.4</div>
       <button class="mobile-close-btn" id="btn-close-sidebar" onclick="closeSidebar()" style="display:none; background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;" title="Close Sidebar">✕</button>
     </div>
   </div>
@@ -945,7 +945,7 @@
     </button>
         <button class="menu-action-btn" id="btn-open-ios" onclick="closeSidebar(); showModal('modal-ios-install');">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M12 8v8M8 12h8"/></svg>
-      <span>🍏 Install on iOS / iPad</span>
+      <span>📲 Install App (iOS & Android)</span>
     </button>
     <button class="menu-action-btn" id="btn-open-models">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
@@ -1355,7 +1355,7 @@
           <div style="font-size:1.15rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span>Vhuwon Mathers</span>
             <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">@sudovu</span>
-            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.3</span>
+            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.4</span>
           </div>
           <div style="font-size:0.84rem; color:var(--accent); margin-top:2px; font-weight:600;">
             Creator & Lead Architect of GAM.AI
@@ -2293,15 +2293,35 @@ function generateOfflineVendorConfig(vendor) {
   return '# Generic router interface configuration\ninterface GigabitEthernet0/0\n ip address 192.168.1.1 255.255.255.0\n no shutdown';
 }
 
-// ─── GEMINI API KEY for online fallback (persisted in localStorage) ─────────
-var GEMINI_API_KEY = localStorage.getItem('gamaiGeminiKey') || '';
+// ─── UNIFIED GEMINI API KEY PERSISTENCE (LocalStorage Sync) ─────────
+function getEffectiveGeminiKey() {
+  return localStorage.getItem('gamaiGeminiKey') || localStorage.getItem('gemini_api_key') || localStorage.getItem('geminiApiKey') || '';
+}
+
+var GEMINI_API_KEY = getEffectiveGeminiKey();
+
+function saveEffectiveGeminiKey(k) {
+  k = (k || '').trim();
+  if (k) {
+    localStorage.setItem('gamaiGeminiKey', k);
+    localStorage.setItem('gemini_api_key', k);
+    localStorage.setItem('geminiApiKey', k);
+  } else {
+    localStorage.removeItem('gamaiGeminiKey');
+    localStorage.removeItem('gemini_api_key');
+    localStorage.removeItem('geminiApiKey');
+  }
+  GEMINI_API_KEY = k;
+  if (typeof updateStudioProviderBadge === 'function') updateStudioProviderBadge();
+  var el = document.getElementById('input-gemini-key');
+  if (el && el.value !== k) el.value = k;
+}
 
 function saveGeminiApiKey() {
   var el = document.getElementById('input-gemini-key');
   var k = el ? el.value.trim() : '';
-  localStorage.setItem('gamaiGeminiKey', k);
-  GEMINI_API_KEY = k;
-  showToast(k ? '✓ Gemini Cloud AI Key saved!' : 'Gemini Key cleared. Live web search active.');
+  saveEffectiveGeminiKey(k);
+  showToast(k ? '✓ Gemini Cloud AI Key saved!' : 'Gemini Key cleared. Live web & local knowledge active.');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3173,6 +3193,1057 @@ function restoreSavedChatIfAny() {
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// GAM.AI UNIVERSAL FACTUAL KNOWLEDGE & ENCYCLOPEDIC ENGINE (v1.6.4)
+// Verified Deep Knowledge across Science, AI, Computing, Space, Geography, History
+// ════════════════════════════════════════════════════════════════════════════
+
+var GAM_WORLD_CAPITALS = {
+  'nepal': { country: 'Nepal', capital: 'Kathmandu', currency: 'Nepalese Rupee (NPR)', region: 'South Asia', fact: 'Home to Mount Everest (8,848.86 m) and the birthplace of Gautama Buddha (Lumbini).' },
+  'india': { country: 'India', capital: 'New Delhi', currency: 'Indian Rupee (INR)', region: 'South Asia', fact: 'Most populous democracy on Earth and birthplace of four major world religions.' },
+  'china': { country: 'China', capital: 'Beijing', currency: 'Renminbi / Yuan (CNY)', region: 'East Asia', fact: 'World\'s oldest continuous civilization and home to the Great Wall (over 21,000 km).' },
+  'united states': { country: 'United States', capital: 'Washington, D.C.', currency: 'US Dollar (USD)', region: 'North America', fact: 'Federal constitutional republic with 50 states; D.C. is a federal district.' },
+  'usa': { country: 'United States', capital: 'Washington, D.C.', currency: 'US Dollar (USD)', region: 'North America', fact: 'Federal constitutional republic with 50 states; D.C. is a federal district.' },
+  'united kingdom': { country: 'United Kingdom', capital: 'London', currency: 'Pound Sterling (GBP)', region: 'Western Europe', fact: 'Comprises England, Scotland, Wales, and Northern Ireland; London on River Thames.' },
+  'uk': { country: 'United Kingdom', capital: 'London', currency: 'Pound Sterling (GBP)', region: 'Western Europe', fact: 'Comprises England, Scotland, Wales, and Northern Ireland; London on River Thames.' },
+  'france': { country: 'France', capital: 'Paris', currency: 'Euro (EUR)', region: 'Western Europe', fact: 'Home to the Eiffel Tower, the Louvre Museum, and birthplace of the metric system.' },
+  'germany': { country: 'Germany', capital: 'Berlin', currency: 'Euro (EUR)', region: 'Central Europe', fact: 'Europe\'s largest economy; Berlin features the historic Brandenburg Gate.' },
+  'japan': { country: 'Japan', capital: 'Tokyo', currency: 'Japanese Yen (JPY)', region: 'East Asia', fact: 'Greater Tokyo Area is the world\'s most populous metropolitan agglomeration (~37M people).' },
+  'australia': { country: 'Australia', capital: 'Canberra', currency: 'Australian Dollar (AUD)', region: 'Oceania', fact: 'Canberra was chosen in 1908 as a planned compromise between rivals Sydney and Melbourne.' },
+  'canada': { country: 'Canada', capital: 'Ottawa', currency: 'Canadian Dollar (CAD)', region: 'North America', fact: 'Second-largest country by area; Ottawa was designated national capital by Queen Victoria.' },
+  'brazil': { country: 'Brazil', capital: 'Brasília', currency: 'Brazilian Real (BRL)', region: 'South America', fact: 'Brasília is a UNESCO World Heritage planned city inaugurated in 1960 (not Rio de Janeiro).' },
+  'russia': { country: 'Russia', capital: 'Moscow', currency: 'Russian Ruble (RUB)', region: 'Eurasia', fact: 'Spans 11 time zones across Europe and Asia; Moscow features the Kremlin and Red Square.' },
+  'italy': { country: 'Italy', capital: 'Rome', currency: 'Euro (EUR)', region: 'Southern Europe', fact: 'Capital of the ancient Roman Empire; completely encloses the independent Vatican City state.' },
+  'spain': { country: 'Spain', capital: 'Madrid', currency: 'Euro (EUR)', region: 'Southwestern Europe', fact: 'Iberian nation; Madrid has served as the national seat of power since 1561.' },
+  'south korea': { country: 'South Korea', capital: 'Seoul', currency: 'South Korean Won (KRW)', region: 'East Asia', fact: 'World leader in semiconductor fabrication, display manufacturing, and consumer electronics.' },
+  'south africa': { country: 'South Africa', capital: 'Pretoria (Exec) / Cape Town (Leg) / Bloemfontein (Jud)', currency: 'South African Rand (ZAR)', region: 'Southern Africa', fact: 'Has three distinct constitutional capitals dividing executive, legislative, and judicial branches.' },
+  'egypt': { country: 'Egypt', capital: 'Cairo', currency: 'Egyptian Pound (EGP)', region: 'North Africa', fact: 'Home to the Giza Pyramid Complex, the Great Sphinx, and the ancient Nile civilization.' },
+  'saudi arabia': { country: 'Saudi Arabia', capital: 'Riyadh', currency: 'Saudi Riyal (SAR)', region: 'Middle East', fact: 'Birthplace of Islam, holding the two holiest cities Mecca and Medina.' },
+  'uae': { country: 'United Arab Emirates', capital: 'Abu Dhabi', currency: 'UAE Dirham (AED)', region: 'Middle East', fact: 'Abu Dhabi is the federal capital and wealthiest emirate; Dubai is commercial hub.' },
+  'united arab emirates': { country: 'United Arab Emirates', capital: 'Abu Dhabi', currency: 'UAE Dirham (AED)', region: 'Middle East', fact: 'Abu Dhabi is the federal capital and wealthiest emirate; Dubai is commercial hub.' },
+  'switzerland': { country: 'Switzerland', capital: 'Bern', currency: 'Swiss Franc (CHF)', region: 'Central Europe', fact: 'Bern acts as the de facto federal city (Bundesstadt); Switzerland has no single constitutionally designated capital.' },
+  'turkey': { country: 'Turkey (Türkiye)', capital: 'Ankara', currency: 'Turkish Lira (TRY)', region: 'Transcontinental', fact: 'Ankara was made capital in 1923 by Atatürk to anchor the new Republic in central Anatolia.' },
+  'pakistan': { country: 'Pakistan', capital: 'Islamabad', currency: 'Pakistani Rupee (PKR)', region: 'South Asia', fact: 'Planned master-built capital constructed in the 1960s to replace Karachi.' },
+  'bangladesh': { country: 'Bangladesh', capital: 'Dhaka', currency: 'Bangladeshi Taka (BDT)', region: 'South Asia', fact: 'Situated on the Ganges-Brahmaputra delta; famous for historic textile and muslin heritage.' },
+  'sri lanka': { country: 'Sri Lanka', capital: 'Sri Jayawardenepura Kotte', currency: 'Sri Lankan Rupee (LKR)', region: 'South Asia', fact: 'Administrative capital is Sri Jayawardenepura Kotte; Colombo is executive and commercial capital.' },
+  'bhutan': { country: 'Bhutan', capital: 'Thimphu', currency: 'Bhutanese Ngultrum (BTN)', region: 'South Asia', fact: 'First carbon-negative country in the world; Thimphu has no traffic traffic lights.' },
+  'singapore': { country: 'Singapore', capital: 'Singapore (City-State)', currency: 'Singapore Dollar (SGD)', region: 'Southeast Asia', fact: 'Island city-state and major global maritime trade, logistics, and financial center.' },
+  'netherlands': { country: 'Netherlands', capital: 'Amsterdam', currency: 'Euro (EUR)', region: 'Western Europe', fact: 'Amsterdam is constitutional capital; The Hague houses parliament and the International Court of Justice.' },
+  'mexico': { country: 'Mexico', capital: 'Mexico City', currency: 'Mexican Peso (MXN)', region: 'North America', fact: 'Constructed on the lakebed ruins of the ancient Aztec capital Tenochtitlan.' },
+  'argentina': { country: 'Argentina', capital: 'Buenos Aires', currency: 'Argentine Peso (ARS)', region: 'South America', fact: 'Second-largest South American country; famous for the pampas plains and Tango culture.' },
+  'new zealand': { country: 'New Zealand', capital: 'Wellington', currency: 'New Zealand Dollar (NZD)', region: 'Oceania', fact: 'Wellington is the world\'s southernmost national capital city.' },
+  'indonesia': { country: 'Indonesia', capital: 'Jakarta', currency: 'Indonesian Rupiah (IDR)', region: 'Southeast Asia', fact: 'World\'s largest island archipelago with over 17,500 islands; moving capital to Nusantara.' },
+  'malaysia': { country: 'Malaysia', capital: 'Kuala Lumpur', currency: 'Malaysian Ringgit (MYR)', region: 'Southeast Asia', fact: 'Home to the iconic 451.9 m Petronas Twin Towers; administrative seat is Putrajaya.' },
+  'thailand': { country: 'Thailand', capital: 'Bangkok', currency: 'Thai Baht (THB)', region: 'Southeast Asia', fact: 'Known locally as Krung Thep Maha Nakhon; never colonized by European powers.' },
+  'vietnam': { country: 'Vietnam', capital: 'Hanoi', currency: 'Vietnamese Dong (VND)', region: 'Southeast Asia', fact: 'Historic northern capital on Red River; Ho Chi Minh City is largest economic hub.' },
+  'philippines': { country: 'Philippines', capital: 'Manila', currency: 'Philippine Peso (PHP)', region: 'Southeast Asia', fact: 'Archipelago of over 7,600 islands in the western Pacific Ocean.' },
+  'norway': { country: 'Norway', capital: 'Oslo', currency: 'Norwegian Krone (NOK)', region: 'Northern Europe', fact: 'Renowned for dramatic glacial fjords and the world\'s largest sovereign wealth fund.' },
+  'sweden': { country: 'Sweden', capital: 'Stockholm', currency: 'Swedish Krona (SEK)', region: 'Northern Europe', fact: 'Stockholm is built across 14 islands where Lake Mälaren meets the Baltic Sea.' },
+  'denmark': { country: 'Denmark', capital: 'Copenhagen', currency: 'Danish Krone (DKK)', region: 'Northern Europe', fact: 'Connected to Sweden by the iconic Øresund bridge-tunnel.' },
+  'finland': { country: 'Finland', capital: 'Helsinki', currency: 'Euro (EUR)', region: 'Northern Europe', fact: 'Consistently ranked as the world\'s happiest nation; has over 187,000 lakes.' },
+  'poland': { country: 'Poland', capital: 'Warsaw', currency: 'Polish Zloty (PLN)', region: 'Central Europe', fact: 'Warsaw Old Town was meticulously rebuilt from 18th-century paintings after WWII.' },
+  'ukraine': { country: 'Ukraine', capital: 'Kyiv', currency: 'Ukrainian Hryvnia (UAH)', region: 'Eastern Europe', fact: 'Largest European country entirely within Europe; Kyiv was founded in 482 AD.' },
+  'greece': { country: 'Greece', capital: 'Athens', currency: 'Euro (EUR)', region: 'Southeastern Europe', fact: 'Birthplace of Western philosophy, theatrical tragedy/comedy, mathematics, and democracy.' },
+  'portugal': { country: 'Portugal', capital: 'Lisbon', currency: 'Euro (EUR)', region: 'Southwestern Europe', fact: 'Lisbon predates London and Paris by centuries, originally settled by Phoenicians.' },
+  'austria': { country: 'Austria', capital: 'Vienna', currency: 'Euro (EUR)', region: 'Central Europe', fact: 'Imperial capital on the Danube; home of Mozart, Beethoven, and the classical symphony.' },
+  'belgium': { country: 'Belgium', capital: 'Brussels', currency: 'Euro (EUR)', region: 'Western Europe', fact: 'Headquarters of the European Union Commission, Council, and NATO Alliance.' },
+  'ireland': { country: 'Ireland', capital: 'Dublin', currency: 'Euro (EUR)', region: 'Western Europe', fact: 'European hub for top global tech corporations; historic literary capital.' },
+  'kenya': { country: 'Kenya', capital: 'Nairobi', currency: 'Kenyan Shilling (KES)', region: 'East Africa', fact: 'Silicon Savannah of Africa; Nairobi features an open-plains national park within city limits.' },
+  'nigeria': { country: 'Nigeria', capital: 'Abuja', currency: 'Nigerian Naira (NGN)', region: 'West Africa', fact: 'Africa\'s most populous country; Abuja was built as a neutral centrally located capital in 1991.' }
+};
+
+// ─── COMPREHENSIVE KNOWLEDGE GRAPH NODES ──────────────────────────────────────
+var GAM_FACTS_GRAPH = [
+  // 1. CREATOR & ARCHITECT
+  {
+    id: 'creator_vhuwon',
+    match: function(q) {
+      return /who\s*(is|created|built|designed|developed|owns|made)\s*(gam|gam\.ai|this app|the app|you|vhuwon|bhuwan)/i.test(q) ||
+             /creator\s*(of\s*gam|of\s*this)?/i.test(q) ||
+             /(vhuwon|bhuwan\s*gautam|sudovu)/i.test(q) ||
+             /[\u0900-\u097F]*(कसले\s*बनायो|कसले\s*निर्माण|भुवन\s*गौतम|निर्माता)/.test(q);
+    },
+    title: 'Vhuwon Mathers (Bhuwan Gautam) — Creator & Lead Architect',
+    category: 'System Architecture',
+    synthesize: function(q, lang) {
+      if (lang === 'ne') {
+        return '### 👨‍💻 भुवन गौतम (Vhuwon Mathers / @sudovu)\n\n' +
+          '**GAM.AI का मुख्य निर्माता तथा लीड आर्किटेक्ट:**\n\n' +
+          '- **पेशा:** सिनियर नेटवर्क तथा सिस्टम्स इन्जिनियर, एआई अनुसन्धाता।\n' +
+          '- **उद्देश्य:** इन्टरनेट बिना नै शतप्रतिशत सुरक्षित, स्थानीय (Offline) र उच्च गतिको एज एआई (Edge AI) प्रविधि हरेक व्यक्तिको डिभाइसमा पुर्‍याउनु।\n' +
+          '- **आधिकारिक वेबसाइट:** [gautambhuwan.com.np](https://gautambhuwan.com.np)\n' +
+          '- **प्रविधि:** Local SLM (Small Language Models), WebRTC, GPON, MikroTik, Linux Kernel, र Android On-Device NPU/GPU Acceleration।\n\n' +
+          '[[btn:🌐 आधिकारिक वेबसाइट हेर्नुहोस्|open_url:https://gautambhuwan.com.np]]\n' +
+          '[[btn:📱 iOS / iPad मा इन्स्टल गर्नुहोस्|modal:ios-install]]';
+      }
+      return '### 👨‍💻 Vhuwon Mathers (Bhuwan Gautam) — Lead Architect of GAM.AI\n\n' +
+        '**Creator, Network Systems Engineer & Edge AI Pioneer:**\n\n' +
+        '- **Handle & Identity:** Known online as `@sudovu` / **Vhuwon Mathers**.\n' +
+        '- **Engineering Focus:** Telecom network architectures (GPON, BGP, OSPF, MPLS), carrier-grade routing (MikroTik, Huawei, Cisco, FortiGate), and autonomous on-device Local AI engines.\n' +
+        '- **Mission for GAM.AI:** To build a zero-subscription, privacy-preserving, edge-native AI assistant that runs directly on user hardware (Android, iOS, Linux, Web) without requiring mandatory cloud surveillance or internet connectivity, while seamlessly integrating Google Gemini cloud intelligence when online.\n' +
+        '- **Official Hub:** [https://gautambhuwan.com.np](https://gautambhuwan.com.np)\n\n' +
+        '[[btn:🌐 Official Portfolio & Bio|open_url:https://gautambhuwan.com.np]]\n' +
+        '[[btn:📱 Install on iPhone / iPad|modal:ios-install]]\n' +
+        '[[btn:⚡ Test Offline Reasoning|write fibonacci in python]]';
+    }
+  },
+
+  // 2. TRANSFORMERS & ATTENTION
+  {
+    id: 'transformers_attention',
+    match: function(q) {
+      return /transformer.*(attention|work|model|architecture)/i.test(q) ||
+             /self[\s\-]attention/i.test(q) ||
+             /(how\s*do\s*transformers\s*work|explain\s*transformer\s*neural)/i.test(q) ||
+             /scaled\s*dot[\s\-]product/i.test(q);
+    },
+    title: 'Transformer Architecture & Self-Attention Mechanism',
+    category: 'Frontier AI & Machine Learning',
+    synthesize: function(q, lang) {
+      return '### 🧠 Transformer Architecture & Self-Attention Mechanism\n\n' +
+        'Introduced by Vaswani et al. in the landmark 2017 paper *"Attention Is All You Need"*, the **Transformer** replaced recurrent (RNN/LSTM) and convolutional networks to become the foundational architecture powering modern LLMs (Gemini, DeepSeek, GPT-4, Claude).\n\n' +
+        '#### 1. The Core Scaled Dot-Product Attention Equation\n' +
+        '$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{Q K^T}{\\sqrt{d_k}}\\right) V$$\n\n' +
+        '- **Queries ($Q$):** What the current token is looking for.\n' +
+        '- **Keys ($K$):** What each token contains / offers.\n' +
+        '- **Values ($V$):** The actual semantic content vector of each token.\n' +
+        '- **$\\sqrt{d_k}$ Scaling Factor:** Prevents the dot products from growing excessively large in high dimensions, which would push softmax gradients into regions with vanishing gradients.\n\n' +
+        '#### 2. Multi-Head Attention (MHA)\n' +
+        'Instead of performing a single attention function, Transformers project $Q, K, V$ into $h$ distinct subspace heads (e.g. 8 to 128 heads). This allows the network to jointly attend to information from different representation subspaces at different positions simultaneously (e.g., syntactic dependencies, pronoun resolution, and semantic rhymes).\n\n' +
+        '#### 3. Key Advantages over Legacy RNNs\n' +
+        '- **Massive Parallelism:** All tokens in a sequence are processed simultaneously during training rather than sequentially step-by-step.\n' +
+        '- **$O(1)$ Path Length:** Direct connection between any two distant tokens eliminates the vanishing gradient degradation over long sequences.\n\n' +
+        '[[btn:🔬 Explain Large Language Models (LLMs)|what are large language models]]\n' +
+        '[[btn:⚡ Explain DeepSeek-R1 Reasoning|how does deepseek r1 work]]';
+    }
+  },
+
+  // 3. LARGE LANGUAGE MODELS (LLMs) & INFERENCE
+  {
+    id: 'llm_fundamentals',
+    match: function(q) {
+      return /what\s*(is|are)\s*(an?\s*)?(llm|large\s*language\s*model)/i.test(q) ||
+             /how\s*do\s*llms\s*work/i.test(q) ||
+             /(tokenization|byte\s*pair\s*encoding|bpe|kv[\s\-]cache)/i.test(q);
+    },
+    title: 'Large Language Models (LLMs) & Deep Inference',
+    category: 'Frontier AI & Machine Learning',
+    synthesize: function(q, lang) {
+      return '### 🤖 Large Language Models (LLMs): Architecture & Inference\n\n' +
+        'A **Large Language Model (LLM)** is a deep neural network (typically a decoder-only autoregressive transformer) trained on hundreds of billions to trillions of textual tokens to model the joint probability distribution of natural language sequences.\n\n' +
+        '#### 1. Core Operating Pipeline\n' +
+        '1. **Tokenization:** Text is sliced into discrete subword chunks (tokens) via algorithms like **Byte-Pair Encoding (BPE)** or **WordPiece**. 1 token $\\approx$ 0.75 English words (or 4 characters).\n' +
+        '2. **Embedding & Positional Encoding:** Each token ID is mapped into a continuous high-dimensional vector space ($d_{\\text{model}} \\approx 2048 - 8192$), enriched with RoPE (Rotary Position Embeddings).\n' +
+        '3. **Autoregressive Generation:** The model predicts the probability distribution of the very next token $t_{n}$ given previous context tokens $t_{1}, \\dots, t_{n-1}$:\n' +
+        '   $$P(t_1, t_2, \\dots, t_n) = \\prod_{i=1}^n P(t_i \\mid t_1, \\dots, t_{i-1})$$\n' +
+        '4. **Sampling & Decoding:**\n' +
+        '   - **Temperature ($T$):** Divides logits before softmax. Lower ($T \\to 0$) makes output deterministic; higher ($T > 0.7$) introduces creative variability.\n' +
+        '   - **Top-$p$ (Nucleus Sampling):** Accumulates the smallest set of tokens whose cumulative probability exceeds threshold $p$.\n\n' +
+        '#### 2. KV-Cache Acceleration\n' +
+        'During generation, past Key and Value projection matrices are cached in VRAM (the **KV-Cache**). This prevents recalculating previous token representations, reducing generation complexity per step from $O(n^2)$ down to $O(n)$.\n\n' +
+        '[[btn:✨ Learn About Google Gemini|explain google gemini]]\n' +
+        '[[btn:🧩 RAG vs Fine-Tuning|explain rag vs fine tuning]]';
+    }
+  },
+
+  // 4. GOOGLE GEMINI AI
+  {
+    id: 'gemini_ai',
+    match: function(q) {
+      return /(google\s*gemini|gemini\s*ai|gemini\s*flash|gemini\s*pro|gemini\s*2\.0|what\s*is\s*gemini)/i.test(q);
+    },
+    title: 'Google Gemini Frontier AI Architecture',
+    category: 'Frontier AI & Machine Learning',
+    synthesize: function(q, lang) {
+      return '### 🌟 Google Gemini Frontier AI Architecture\n\n' +
+        '**Google Gemini** (developed by Google DeepMind) is a family of multimodal frontier models engineered from the ground up to reason natively across text, code, audio, image, and video modalities simultaneously.\n\n' +
+        '#### 1. Architectural Highlights\n' +
+        '- **Native Multimodality:** Unlike legacy models that stitch separate visual/audio encoders to a text LLM, Gemini was pre-trained jointly across interleaved audio, video, image, and text tokens.\n' +
+        '- **Million-Token Context Window:** Gemini 1.5 and 2.0 Flash support up to **1,000,000 to 2,000,000 tokens** of active context—allowing an entire codebase, hours of video, or complete books to be queried with near-perfect needle-in-a-haystack recall (>99.7%).\n' +
+        '- **Gemini Live (Real-Time Audio-to-Audio):** Bidirectional streaming via WebSockets with ultra-low latency (~200–400 ms), interruptible speech, and natural prosody without separate text-to-speech pipelines.\n' +
+        '- **Efficiency & Mixture of Experts (MoE):** Models like Gemini 2.0 Flash and 1.5 Flash utilize sparse MoE routing to deliver state-of-the-art inference speeds and cost-efficiency.\n\n' +
+        '#### 2. GAM.AI Integration\n' +
+        'GAM.AI integrates a direct client-side fallback to `gemini-2.0-flash` so you can use your own Google AI Studio API key directly on device for frontier cloud intelligence, or rely on GAM.AI\'s built-in offline engine when disconnected.\n\n' +
+        '[[btn:🔑 Configure Gemini API Key|prompt:gemini_key]]\n' +
+        '[[btn:🧠 Explain DeepSeek-R1|how does deepseek r1 work]]';
+    }
+  },
+
+  // 5. DEEPSEEK-R1 & REASONING MODELS
+  {
+    id: 'deepseek_r1',
+    match: function(q) {
+      return /(deepseek|deepseek[\s\-]r1|r1\s*model|reasoning\s*model|extended\s*thinking)/i.test(q);
+    },
+    title: 'DeepSeek-R1 & Extended Reasoning Architecture',
+    category: 'Frontier AI & Machine Learning',
+    synthesize: function(q, lang) {
+      return '### 🧠 DeepSeek-R1: Reinforcement Learning & Test-Time Compute\n\n' +
+        '**DeepSeek-R1** (developed by DeepSeek AI, Jan 2025) demonstrated that large-scale Reinforcement Learning (RL) without human-annotated supervised warmups can spontaneously induce advanced reasoning, reflection, backtracking, and algorithmic verification capabilities.\n\n' +
+        '#### 1. Core Technological Innovations\n' +
+        '- **Pure RL Inception (DeepSeek-R1-Zero):** Trained using Group Relative Policy Optimization (GRPO) directly on base models with mathematical and code verification reward functions. The model autonomously learned to generate `<think> ... </think>` chains, re-evaluate assumptions, and correct errors.\n' +
+        '- **Group Relative Policy Optimization (GRPO):** Eliminates the need for a separate memory-heavy Critic model (unlike PPO), computing advantages by sampling a group of outputs for each prompt and normalizing rewards against the group mean.\n' +
+        '- **Distillation to Lightweight SLMs:** DeepSeek distilled reasoning trajectories into 1.5B, 7B, 14B, and 32B dense architectures (e.g. Qwen & Llama), enabling edge devices to run high-grade reasoning locally.\n\n' +
+        '#### 2. Active Model in GAM.AI\n' +
+        'When you select **DeepSeek-R1 (Reasoner)** from the GAM.AI Model Store, queries are structured with an explicit extended cognitive thinking chain before presenting conclusive answers.\n\n' +
+        '[[btn:⚡ Activate DeepSeek-R1 Model|action:set_model:reasoner]]\n' +
+        '[[btn:🔬 Explain Transformer Architecture|how do transformers work]]';
+    }
+  },
+
+  // 6. RAG VS FINE-TUNING
+  {
+    id: 'rag_vs_finetune',
+    match: function(q) {
+      return /(rag\s*vs\s*fine[\s\-]tuning|retrieval\s*augmented\s*generation|fine[\s\-]tuning\s*vs\s*rag|difference\s*between\s*rag)/i.test(q);
+    },
+    title: 'RAG (Retrieval-Augmented Generation) vs Fine-Tuning',
+    category: 'Frontier AI & Machine Learning',
+    synthesize: function(q, lang) {
+      return '### ⚖️ RAG vs Fine-Tuning: Architectural Comparison\n\n' +
+        '| Metric | Retrieval-Augmented Generation (RAG) | Fine-Tuning (SFT / LoRA) |\n' +
+        '|---|---|---|\n' +
+        '| **Mechanism** | Fetches external facts into prompt context via vector search | Modifies internal neural weights ($W + \\Delta W$) |\n' +
+        '| **Knowledge Nature** | Dynamic, real-time, easily updated or deleted | Static, baked into weights during training |\n' +
+        '| **Hallucination Risk** | Low (grounded by explicit citations & excerpts) | Moderate to High (relies on parametric memory) |\n' +
+        '| **Data Privacy** | High (access control applied at search/vector level) | Complex (model can leak training memorization) |\n' +
+        '| **Best Use Case** | Current facts, internal docs, customer records | Tone, style, specialized syntax, strict grammar |\n\n' +
+        '#### Hybrid Architecture (Best Practice):\n' +
+        'Modern enterprise systems fine-tune lightweight models (e.g., using **LoRA / QLoRA**) for domain syntax, while augmenting them with a vector database (Pinecone, Chroma, Milvus) for factual ground-truth retrieval.\n\n' +
+        '[[btn:🤖 What is an LLM?|what is an llm]]\n' +
+        '[[btn:⚡ Vector Databases & Embeddings|what are vector embeddings]]';
+    }
+  },
+
+  // 7. THEORY OF RELATIVITY
+  {
+    id: 'theory_of_relativity',
+    match: function(q) {
+      return /(theory\s*of\s*relativity|special\s*relativity|general\s*relativity|einstein.*relativity|e\s*=\s*mc)/i.test(q) ||
+             /[\u0900-\u097F]*(सापेक्षताको\s*सिद्धान्त|आइन्स्टाइन)/.test(q);
+    },
+    title: 'Einstein\'s Theory of Relativity (Special & General)',
+    category: 'Fundamental Physics',
+    synthesize: function(q, lang) {
+      return '### 🌌 Albert Einstein\'s Theory of Relativity\n\n' +
+        'Formulated by Albert Einstein, the **Theory of Relativity** transformed modern physics by overturning Newtonian concepts of absolute time and static space.\n\n' +
+        '#### 1. Special Relativity (1905)\n' +
+        'Governs physical laws when gravity is negligible:\n' +
+        '- **Postulate 1:** The laws of physics are invariant in all inertial reference frames.\n' +
+        '- **Postulate 2:** The speed of light in vacuum ($c = 299,792,458\\text{ m/s}$) is constant for all observers regardless of motion.\n' +
+        '- **Mass-Energy Equivalence:**\n' +
+        '  $$E = mc^2$$\n' +
+        '  *(A tiny amount of mass $m$ contains enormous latent energy $E$ proportional to the square of light speed).*\n' +
+        '- **Time Dilation:** Moving clocks run slower relative to a stationary observer:\n' +
+        '  $$t\' = \\frac{t}{\\sqrt{1 - \\frac{v^2}{c^2}}}$$\n\n' +
+        '#### 2. General Relativity (1915)\n' +
+        'Unifies gravity not as an invisible pull across space, but as the **geometric curvature of 4D spacetime** caused by mass and energy:\n' +
+        '$$G_{\\mu\\nu} + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4} T_{\\mu\\nu}$$\n' +
+        '- **Gravitational Lensing:** Massive galaxies warp spacetime, bending light passing near them.\n' +
+        '- **Gravitational Waves:** Rpples in spacetime caused by colliding black holes, directly detected by LIGO in 2015.\n' +
+        '- **GPS Verification:** Satellite clocks run ~38 microseconds faster per day due to relativistic time dilation; without Einstein\'s corrections, smartphone GPS would drift by ~10 km per day!\n\n' +
+        '[[btn:🕳️ Explain Black Holes|what is a black hole]]\n' +
+        '[[btn:⚛️ Explain Quantum Mechanics|what is quantum mechanics]]';
+    }
+  },
+
+  // 8. NEWTON'S LAWS OF MOTION
+  {
+    id: 'newton_laws',
+    match: function(q) {
+      return /(newton.*laws?|laws?\s*of\s*motion|first\s*law\s*of\s*motion|second\s*law\s*of\s*motion|third\s*law\s*of\s*motion|f\s*=\s*ma)/i.test(q) ||
+             /[\u0900-\u097F]*(न्युटनका\s*नियम|चालका\s*नियम)/.test(q);
+    },
+    title: 'Sir Isaac Newton\'s Three Laws of Motion',
+    category: 'Classical Mechanics',
+    synthesize: function(q, lang) {
+      return '### 🍎 Sir Isaac Newton\'s Three Laws of Motion (1687)\n\n' +
+        'Published in the *Philosophiae Naturalis Principia Mathematica*, Newton\'s laws form the bedrock of classical mechanics:\n\n' +
+        '#### 1. First Law (Law of Inertia)\n' +
+        '> *"An object at rest stays at rest, and an object in uniform straight-line motion continues with constant velocity, unless acted upon by a non-zero net external force."*\n' +
+        '- **Key Concept:** Inertia is the intrinsic resistance of any physical mass to changes in its velocity.\n\n' +
+        '#### 2. Second Law (Force and Acceleration)\n' +
+        '> *"The acceleration of a body is directly proportional to the net force acting on it and inversely proportional to its mass."*\n' +
+        '$$F = ma = \\frac{dp}{dt}$$\n' +
+        '- **Units:** Force in Newtons (N), mass in kg, acceleration in $\\text{m/s}^2$. 1 Newton is the force needed to accelerate 1 kg at $1\\text{ m/s}^2$.\n\n' +
+        '#### 3. Third Law (Action and Reaction)\n' +
+        '> *"For every action, there is an equal and opposite reaction."*\n' +
+        '$$F_{A \\to B} = -F_{B \\to A}$$\n' +
+        '- **Rocket Propulsion Example:** Rocket engines expel high-velocity exhaust gas downward (action), generating an equal upward thrust (reaction) pushing the spacecraft into orbit.\n\n' +
+        '[[btn:🌌 Theory of Relativity|explain theory of relativity]]\n' +
+        '[[btn:🪐 Solar System Orbit Mechanics|explain solar system]]';
+    }
+  },
+
+  // 9. QUANTUM MECHANICS & COMPUTING
+  {
+    id: 'quantum_mechanics',
+    match: function(q) {
+      return /(quantum\s*mechanics|quantum\s*physics|schrodinger|heisenberg\s*uncertainty|wave[\s\-]particle|quantum\s*entanglement|quantum\s*computing|qubit)/i.test(q) ||
+             /[\u0900-\u097F]*(क्वान्टम\s*भौतिकशास्त्र|क्वान्टम)/.test(q);
+    },
+    title: 'Quantum Mechanics & Quantum Computing',
+    category: 'Modern Physics',
+    synthesize: function(q, lang) {
+      return '### ⚛️ Quantum Mechanics & Quantum Computing\n\n' +
+        '**Quantum Mechanics** is the fundamental theory in physics that describes the behavior of matter and energy at atomic and subatomic scales ($< 10^{-9}\\text{ m}$).\n\n' +
+        '#### 1. Core Principles\n' +
+        '1. **Wave-Particle Duality:** Light and subatomic particles (electrons, photons) exhibit both particle and wave properties (de Broglie wavelength $\\lambda = \\frac{h}{p}$).\n' +
+        '2. **Heisenberg Uncertainty Principle:** It is physically impossible to simultaneously measure both the exact position ($x$) and momentum ($p$) of a quantum particle:\n' +
+        '   $$\\Delta x \\cdot \\Delta p \\ge \\frac{\\hbar}{2}$$\n' +
+        '3. **Superposition:** A quantum system remains in a linear combination of multiple states until measurement collapses the wave function (described by Schrödinger\'s equation $i\\hbar \\frac{\\partial \\psi}{\\partial t} = \\hat{H}\\psi$).\n' +
+        '4. **Quantum Entanglement:** Two or more particles become correlated such that the quantum state of one instantaneously determines the other, regardless of spatial separation (*"spooky action at a distance"*).\n\n' +
+        '#### 2. Quantum Computing & Qubits\n' +
+        '- While classical bits are strictly `0` or `1`, a **Qubit** exists in superposition:\n' +
+        '  $$|\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle \\quad (|\\alpha|^2 + |\\beta|^2 = 1)$$\n' +
+        '- $n$ entangled qubits can represent $2^n$ computational states simultaneously (e.g. 50 qubits represent over 1 quadrillion states in parallel).\n' +
+        '- **Key Algorithms:** **Shor\'s Algorithm** (polynomial-time prime factorization threatening RSA cryptography) and **Grover\'s Algorithm** (quadratic speedup for unindexed database search).\n\n' +
+        '[[btn:🔐 RSA & Cryptography|explain rsa cryptography]]\n' +
+        '[[btn:🌌 Theory of Relativity|explain theory of relativity]]';
+    }
+  },
+
+  // 10. LAWS OF THERMODYNAMICS
+  {
+    id: 'thermodynamics',
+    match: function(q) {
+      return /(laws?\s*of\s*thermodynamics|thermodynamic|entropy|first\s*law\s*of\s*thermodynamics|second\s*law\s*of\s*thermodynamics)/i.test(q) ||
+             /[\u0900-\u097F]*(थर्मोडायनामिक्स|इन्ट्रोपी)/.test(q);
+    },
+    title: 'The Four Laws of Thermodynamics',
+    category: 'Physics & Physical Chemistry',
+    synthesize: function(q, lang) {
+      return '### 🔥 The Four Laws of Thermodynamics\n\n' +
+        'The laws of thermodynamics govern the transfer of energy, heat, and work across physical systems:\n\n' +
+        '#### 0. Zeroth Law (Thermal Equilibrium)\n' +
+        '> If System A is in thermal equilibrium with B, and B is in equilibrium with C, then A is in equilibrium with C. (*Enables the definition and calibration of temperature thermometers*).\n\n' +
+        '#### 1. First Law (Conservation of Energy)\n' +
+        '> Energy cannot be created or destroyed; it can only change form.\n' +
+        '$$\\Delta U = Q - W$$\n' +
+        '- The change in internal energy ($\\Delta U$) equals heat added to system ($Q$) minus work done by system ($W$).\n\n' +
+        '#### 2. Second Law (Entropy & Arrow of Time)\n' +
+        '> In any spontaneous thermodynamic process, the total entropy ($S$) of an isolated system always increases over time:\n' +
+        '$$\\Delta S_{\\text{universe}} \\ge 0$$\n' +
+        '- Heat spontaneously flows from hotter to cooler bodies, never the reverse without external work. Defines the irreversible **Arrow of Time**.\n\n' +
+        '#### 3. Third Law (Absolute Zero)\n' +
+        '> As the temperature of a pure crystalline substance approaches **Absolute Zero** ($0\\text{ K} = -273.15^\\circ\\text{C} = -459.67^\\circ\\text{F}$), its entropy approaches zero.\n\n' +
+        '[[btn:⚛️ Quantum Mechanics|what is quantum mechanics]]\n' +
+        '[[btn:🌌 The Big Bang Theory|explain big bang theory]]';
+    }
+  },
+
+  // 11. BLACK HOLES & COSMOLOGY
+  {
+    id: 'black_holes',
+    match: function(q) {
+      return /(black\s*hole|event\s*horizon|singularity|hawking\s*radiation|schwarzschild)/i.test(q) ||
+             /[\u0900-\u097F]*(ब्ल्याक\s*होल|कृष्ण\s*विवर)/.test(q);
+    },
+    title: 'Black Holes, Event Horizons & Gravitational Singularity',
+    category: 'Astrophysics & Cosmology',
+    synthesize: function(q, lang) {
+      return '### 🕳️ Black Holes: Structure, Physics & Event Horizons\n\n' +
+        'A **Black Hole** is a region of spacetime where gravitational acceleration is so intense that nothing—not even electromagnetic radiation (light)—can escape.\n\n' +
+        '#### 1. Anatomy of a Black Hole\n' +
+        '1. **Event Horizon:** The mathematical boundary of no return where the escape velocity exactly equals the speed of light ($c$). The radius is the **Schwarzschild Radius**:\n' +
+        '   $$r_s = \\frac{2GM}{c^2}$$\n' +
+        '   *(If Earth were compressed into a black hole, its Schwarzschild radius would be ~9 millimeters!)*\n' +
+        '2. **Central Singularity:** In classical general relativity, all mass is crushed into a point of zero volume and infinite density where spacetime curvature diverges to infinity.\n' +
+        '3. **Accretion Disk:** Superheated gas and plasma spiraling inwards at relativistic fractions of light speed, emitting intense X-rays.\n' +
+        '4. **Photon Sphere:** The circular orbit at $1.5 r_s$ where gravity forces photons to travel in orbits.\n\n' +
+        '#### 2. Hawking Radiation & Evaporation\n' +
+        'Stephen Hawking (1974) proved using quantum field theory that quantum virtual particle-antiparticle pairs near the event horizon can be separated. One particle falls in while the other escapes, causing the black hole to slowly radiate thermal energy and eventually evaporate over cosmic timescales.\n\n' +
+        '#### 3. Famous Black Holes\n' +
+        '- **Sagittarius A*:** The supermassive black hole at the center of our Milky Way galaxy (~4.3 million solar masses).\n' +
+        '- **M87*:** In the Messier 87 galaxy (~6.5 billion solar masses), imaged directly by the Event Horizon Telescope (EHT) in 2019.\n\n' +
+        '[[btn:🔭 James Webb Space Telescope|tell me about jwst]]\n' +
+        '[[btn:🌌 Big Bang & Expansion of Universe|explain big bang]]';
+    }
+  },
+
+  // 12. THE BIG BANG THEORY & COSMOLOGY
+  {
+    id: 'big_bang',
+    match: function(q) {
+      return /(big\s*bang|cosmic\s*microwave|cmb|origin\s*of\s*universe|expansion\s*of\s*universe|age\s*of\s*universe)/i.test(q) ||
+             /[\u0900-\u097F]*(बिग\s*ब्याङ|ब्रह्माण्डको\s*उत्पत्ति)/.test(q);
+    },
+    title: 'The Big Bang Theory & Cosmic Evolution',
+    category: 'Cosmology',
+    synthesize: function(q, lang) {
+      return '### 💥 The Big Bang Theory: Origin & Evolution of the Universe\n\n' +
+        'The **Big Bang Model** is the prevailing cosmological description of the observable universe from its earliest known periods through its large-scale evolution.\n\n' +
+        '#### 1. Core Facts & Timeline\n' +
+        '- **Age of the Universe:** **$13.787 \\pm 0.020$ billion years** (determined via WMAP and Planck satellite measurements).\n' +
+        '- **Initial Singularity:** The universe expanded rapidly from an extremely hot, dense point via cosmic inflation ($10^{-36}$ seconds).\n' +
+        '- **Big Bang Nucleosynthesis (First 3–20 minutes):** Light element nuclei formed (~75% Hydrogen, ~25% Helium, traces of Lithium).\n' +
+        '- **Recombination Epoch (~380,000 years later):** Electrons combined with protons to form neutral hydrogen atoms, decoupling light from matter and releasing the **Cosmic Microwave Background (CMB)**.\n\n' +
+        '#### 2. Three Pillars of Observational Evidence\n' +
+        '1. **Hubble-Lemaître Law ($v = H_0 d$):** Distant galaxies are moving away from Earth with redshifted velocities proportional to distance, confirming cosmic metric expansion.\n' +
+        '2. **Cosmic Microwave Background (CMB):** An isotropic 2.725 Kelvin thermal blackbody glow filling the entire sky, discovered by Penzias & Wilson in 1965.\n' +
+        '3. **Abundance of Light Elements:** Primordial ratios of hydrogen and helium match exact theoretical calculations.\n\n' +
+        '#### 3. Cosmic Mass-Energy Composition\n' +
+        '- **Dark Energy:** ~68.3% (drives the accelerated expansion of space).\n' +
+        '- **Dark Matter:** ~26.8% (non-baryonic matter providing gravitational scaffolding for galaxies).\n' +
+        '- **Ordinary Baryonic Matter:** ~4.9% (all stars, planets, gas, and humans!).\n\n' +
+        '[[btn:🕳️ Black Holes & Singularities|what is a black hole]]\n' +
+        '[[btn:🔭 James Webb Space Telescope|tell me about jwst]]';
+    }
+  },
+
+  // 13. PHOTOSYNTHESIS
+  {
+    id: 'photosynthesis',
+    match: function(q) {
+      return /(photosynthesis|how\s*do\s*plants\s*make\s*food|chlorophyll|calvin\s*cycle)/i.test(q) ||
+             /[\u0900-\u097F]*(प्रकाश\s*संश्लेषण|फोटोसिन्थेसिस)/.test(q);
+    },
+    title: 'Photosynthesis: Biochemical Mechanism & Solar Conversion',
+    category: 'Biological Sciences',
+    synthesize: function(q, lang) {
+      return '### 🌿 Photosynthesis: Biological Solar Energy Conversion\n\n' +
+        '**Photosynthesis** is the fundamental biochemical process by which photoautotrophic organisms (green plants, algae, and cyanobacteria) convert radiant light energy into chemical energy stored in glucose carbohydrate bonds.\n\n' +
+        '#### 1. General Chemical Equation\n' +
+        '$$6\\text{CO}_2 + 6\\text{H}_2\\text{O} + \\text{photons} \\xrightarrow{\\text{chlorophyll}} \\text{C}_6\\text{H}_{12}\\text{O}_6 + 6\\text{O}_2$$\n' +
+        '- **Inputs:** Carbon Dioxide (absorbed via stomata) + Water (absorbed via root xylem) + Sunlight.\n' +
+        '- **Outputs:** Glucose (sugar fuel) + Molecular Oxygen ($O_2$ byproduct released into the atmosphere).\n\n' +
+        '#### 2. The Two Stages of Photosynthesis\n' +
+        '1. **Light-Dependent Reactions (In Thylakoid Membranes):**\n' +
+        '   - Chlorophyll pigments absorb photons (principally blue ~430nm and red ~660nm wavelengths).\n' +
+        '   - Water is split via **photolysis** ($2H_2O \\to O_2 + 4H^+ + 4e^-$).\n' +
+        '   - Electron transport drives photophosphorylation, producing **ATP** and **NADPH**.\n' +
+        '2. **Light-Independent Reactions / Calvin Cycle (In Chloroplast Stroma):**\n' +
+        '   - Enzyme **RuBisCO** fixes atmospheric $\\text{CO}_2$ to ribulose 1,5-bisphosphate (RuBP).\n' +
+        '   - Utilizes ATP and NADPH from stage 1 to synthesize glyceraldehyde 3-phosphate (G3P), which forms glucose.\n\n' +
+        '[[btn:🧬 DNA & Genetics|explain dna structure]]\n' +
+        '[[btn:🫀 Human Circulatory System|how does human heart work]]';
+    }
+  },
+
+  // 14. DNA STRUCTURE & GENETICS
+  {
+    id: 'dna_genetics',
+    match: function(q) {
+      return /(dna|deoxyribonucleic|double\s*helix|watson\s*and\s*crick|crispr|gene\s*editing|nucleotide)/i.test(q) ||
+             /[\u0900-\u097F]*(डिएनए|जीन|जेनेटिक्स)/.test(q);
+    },
+    title: 'DNA Molecular Structure, Central Dogma & CRISPR',
+    category: 'Molecular Biology & Genetics',
+    synthesize: function(q, lang) {
+      return '### 🧬 DNA (Deoxyribonucleic Acid): Structure & Genetic Code\n\n' +
+        '**DNA** is the molecule that carries genetic instructions for development, functioning, growth, and reproduction in all known living organisms.\n\n' +
+        '#### 1. Double-Helix Structure (Watson, Crick & Franklin, 1953)\n' +
+        '- **Backbone:** Alternating deoxyribose sugar and phosphate groups linked by phosphodiester bonds.\n' +
+        '- **Nitrogenous Base Pairs (Chargaff\'s Complementary Rules):**\n' +
+        '  - **Adenine (A)** pairs with **Thymine (T)** via 2 hydrogen bonds ($A = T$).\n' +
+        '  - **Cytosine (C)** pairs with **Guanine (G)** via 3 hydrogen bonds ($C \\equiv G$).\n' +
+        '  *(In RNA, Thymine is replaced by Uracil, $U$).*\n\n' +
+        '#### 2. The Central Dogma of Molecular Biology\n' +
+        '$$\\text{DNA} \\xrightarrow{\\text{Transcription}} \\text{mRNA} \\xrightarrow{\\text{Translation}} \\text{Protein}$$\n' +
+        '1. **Transcription (Nucleus):** RNA Polymerase transcribes DNA template into messenger RNA (mRNA).\n' +
+        '2. **Translation (Ribosome):** Transfer RNA (tRNA) reads 3-nucleotide **codons** to assemble chains of amino acids into functional proteins.\n\n' +
+        '#### 3. CRISPR-Cas9 Gene Editing\n' +
+        'Discovered from bacterial adaptive immune systems against viral phages (Jennifer Doudna & Emmanuelle Charpentier, Nobel Prize 2020). Utilizes a guide RNA (gRNA) to target specific genomic sequences and the Cas9 endonuclease to cut double-stranded DNA, enabling precise site-specific gene knockouts or insertions.\n\n' +
+        '[[btn:🌿 Photosynthesis Mechanism|how does photosynthesis work]]\n' +
+        '[[btn:🫀 Human Heart Anatomy|how does human heart work]]';
+    }
+  },
+
+  // 15. HUMAN HEART & CIRCULATORY SYSTEM
+  {
+    id: 'human_heart',
+    match: function(q) {
+      return /(human\s*heart|circulatory\s*system|heart\s*chambers|how\s*does\s*the\s*heart\s*work|blood\s*flow)/i.test(q) ||
+             /[\u0900-\u097F]*(मुटु|मानव\s*मुटु|रक्तसञ्चार)/.test(q);
+    },
+    title: 'Human Heart Anatomy & Circulatory Dynamics',
+    category: 'Human Physiology',
+    synthesize: function(q, lang) {
+      return '### 🫀 The Human Heart & Double-Loop Circulation\n\n' +
+        'The human heart is a muscular organ roughly the size of a fist that beats ~100,000 times per day, pumping approximately 7,500 liters of blood through over 100,000 km of blood vessels.\n\n' +
+        '#### 1. The Four Heart Chambers\n' +
+        '1. **Right Atrium:** Receives deoxygenated blood returning from the body via superior and inferior vena cava.\n' +
+        '2. **Right Ventricle:** Pumps deoxygenated blood through the pulmonary valve into pulmonary arteries toward the lungs for gas exchange.\n' +
+        '3. **Left Atrium:** Receives freshly oxygenated blood from the lungs via four pulmonary veins.\n' +
+        '4. **Left Ventricle:** The thickest, most muscular chamber; pumps oxygenated blood under high systemic pressure into the **Aorta** to supply the entire body.\n\n' +
+        '#### 2. Blood Flow Path (Complete Sequence)\n' +
+        '$$\\text{Body} \\to \\text{Vena Cava} \\to \\text{RA} \\to \\text{Tricuspid Valve} \\to \\text{RV} \\to \\text{Lungs} \\to \\text{LA} \\to \\text{Mitral Valve} \\to \\text{LV} \\to \\text{Aorta} \\to \\text{Systemic Organs}$$\n\n' +
+        '#### 3. Electrical Conduction (The Heart\'s Clock)\n' +
+        '- The **Sinoatrial (SA) Node** (the natural pacemaker in the right atrium) fires electrical impulses.\n' +
+        '- Signal travels through the **Atrioventricular (AV) Node**, down the **Bundle of His**, and spreads through **Purkinje fibers**, triggering synchronized ventricular contraction.\n\n' +
+        '[[btn:🧠 Human Brain & Nervous System|how does the brain work]]\n' +
+        '[[btn:🌿 Photosynthesis Mechanism|how does photosynthesis work]]';
+    }
+  },
+
+  // 16. HUMAN BRAIN & NERVOUS SYSTEM
+  {
+    id: 'human_brain_nervous',
+    match: function(q) {
+      return /(human\s*brain|nervous\s*system|neuron|synapse|neurotransmitter|how\s*does\s*the\s*brain\s*work)/i.test(q) ||
+             /[\u0900-\u097F]*(मस्तिष्क|स्नायु\s*प्रणाली|न्युरोन)/.test(q);
+    },
+    title: 'Human Brain, Neurons & Synaptic Transmission',
+    category: 'Human Neurobiology',
+    synthesize: function(q, lang) {
+      return '### 🧠 The Human Brain & Neural Network Architecture\n\n' +
+        'The human brain contains approximately **86 billion neurons** connected by over **100 trillion synaptic junctions**, consuming ~20% of the body\'s metabolic energy while accounting for only 2% of body mass.\n\n' +
+        '#### 1. Major Anatomical Divisions\n' +
+        '- **Cerebrum (Cerebral Cortex):** Divided into two hemispheres and four lobes:\n' +
+        '  - *Frontal Lobe:* Executive function, planning, decision-making, motor control.\n' +
+        '  - *Parietal Lobe:* Sensory processing (somatosensory), spatial awareness.\n' +
+        '  - *Temporal Lobe:* Auditory perception, language comprehension (Wernicke\'s area), memory encoding (Hippocampus).\n' +
+        '  - *Occipital Lobe:* Visual cortex processing.\n' +
+        '- **Cerebellum:** Coordinates balance, fine motor skills, and procedural muscle memory.\n' +
+        '- **Brainstem (Medulla, Pons, Midbrain):** Autonomic survival functions (heart rate, respiration, blood pressure, digestion).\n\n' +
+        '#### 2. Neuron Structure & Action Potentials\n' +
+        '- **Dendrites:** Branching inputs receiving chemical signals.\n' +
+        '- **Axon:** Insulated by **Myelin Sheath** (Schwann cells), transmitting action potentials via rapid $Na^+/K^+$ ion exchange along Nodes of Ranvier at speeds up to 120 m/s.\n' +
+        '- **Chemical Synapse:** Action potential reaches axon terminal, causing calcium influx and exocytosis of neurotransmitters (Dopamine, Serotonin, Acetylcholine, GABA, Glutamate) across the 20nm synaptic cleft.\n\n' +
+        '[[btn:🫀 Human Heart & Circulation|how does human heart work]]\n' +
+        '[[btn:🤖 Neural Networks in AI|how do transformers work]]';
+    }
+  },
+
+  // 17. SPEED OF LIGHT
+  {
+    id: 'speed_of_light',
+    match: function(q) {
+      return /(speed\s*of\s*light|how\s*fast\s*is\s*light|value\s*of\s*c)/i.test(q) ||
+             /[\u0900-\u097F]*(प्रकाशको\s*गति)/.test(q);
+    },
+    title: 'The Speed of Light ($c$) in Vacuum',
+    category: 'Universal Constants',
+    synthesize: function(q, lang) {
+      return '### ⚡ The Speed of Light in Vacuum ($c$)\n\n' +
+        '$$c = 299,792,458\\text{ meters per second} \\quad (\\approx 3.00 \\times 10^8\\text{ m/s})$$\n\n' +
+        '- **In Imperial Units:** Approximately **186,282 miles per second** or **1.08 billion km/h**.\n' +
+        '- **Universal Significance:** In physics, $c$ is not merely the speed of optical light; it is the fundamental speed limit of information, causality, and spacetime itself. Any massless particle (photons, gravitons) must travel precisely at $c$.\n' +
+        '- **In Fiber Optics:** Light travels slower inside glass silica fiber cores ($n \\approx 1.467$) at approximately **$204,000\\text{ km/s}$** (~5 microseconds per km of latency).\n\n' +
+        '[[btn:🌌 Theory of Relativity|explain theory of relativity]]\n' +
+        '[[btn:📡 Fiber Optic GPON Networking|explain gpon technology]]';
+    }
+  },
+
+  // 18. MOUNT EVEREST & NEPAL GEOGRAPHY
+  {
+    id: 'mount_everest',
+    match: function(q) {
+      return /(mount\s*everest|sagarmatha|chomolungma|height\s*of\s*everest|highest\s*peak)/i.test(q) ||
+             /[\u0900-\u097F]*(सगरमाथा|माउन्ट\s*एभरेष्ट|सगरमाथाको\s*उचाइ)/.test(q);
+    },
+    title: 'Mount Everest (Sagarmatha / Chomolungma) — Earth\'s Highest Peak',
+    category: 'World Geography & Earth Science',
+    synthesize: function(q, lang) {
+      return '### 🏔️ Mount Everest (Sagarmatha / Chomolungma)\n\n' +
+        '- **Official Elevation:** **8,848.86 meters (29,031.7 feet)** above sea level (jointly measured by Nepal and China in 2020).\n' +
+        '- **Location:** In the Mahalangur Himal sub-range of the Himalayas on the international border between **Nepal** (Koshi Province) and China (Tibet Autonomous Region).\n' +
+        '- **Names:**\n' +
+        '  - **Nepali:** **सगरमाथा (Sagarmatha)** — *"Forehead of the Sky"* (coined by historian Baburam Acharya in 1956).\n' +
+        '  - **Tibetan:** **Chomolungma (ཇོ་མོ་གླང་མ)** — *"Goddess Mother of the World"*.\n' +
+        '  - **English:** Named in 1865 after Sir George Everest, British Surveyor General of India.\n' +
+        '- **First Historic Ascent:** Conquered on **May 29, 1953**, by **Tenzing Norgay Sherpa** (Nepal) and **Sir Edmund Hillary** (New Zealand) via the South Col route.\n' +
+        '- **Geological Tectonics:** Formed by the ongoing collision between the Indian Plate and the Eurasian Plate, rising ~4 mm per year.\n\n' +
+        '[[btn:🇳🇵 Learn About Nepal|capital of nepal]]\n' +
+        '[[btn:🌍 7 Continents & Oceans|explain continents and oceans]]';
+    }
+  },
+
+  // 19. CONTINENTS & OCEANS
+  {
+    id: 'continents_oceans',
+    match: function(q) {
+      return /(7\s*continents|seven\s*continents|continents\s*and\s*oceans|five\s*oceans|deepest\s*ocean|largest\s*continent)/i.test(q) ||
+             /[\u0900-\u097F]*(महादेश|महासागर)/.test(q);
+    },
+    title: 'The 7 Continents & 5 Oceans of Planet Earth',
+    category: 'World Geography',
+    synthesize: function(q, lang) {
+      return '### 🌍 Earth\'s 7 Continents & 5 Oceans\n\n' +
+        '#### The 7 Continents (by land area):\n' +
+        '1. **Asia:** 44.58M $\\text{km}^2$ — Largest and most populous continent (~60% of world population).\n' +
+        '2. **Africa:** 30.37M $\\text{km}^2$ — Second largest; home to 54 sovereign countries and the Nile River.\n' +
+        '3. **North America:** 24.71M $\\text{km}^2$ — Encompasses Canada, United States, Mexico, and Caribbean.\n' +
+        '4. **South America:** 17.84M $\\text{km}^2$ — Dominated by the Amazon River and Andes mountain chain.\n' +
+        '5. **Antarctica:** 14.20M $\\text{km}^2$ — Coldest, driest (polar desert), and windiest continent; covered in 98% ice.\n' +
+        '6. **Europe:** 10.18M $\\text{km}^2$ — Second smallest continent by area, bordered by the Arctic, Atlantic, and Mediterranean.\n' +
+        '7. **Australia / Oceania:** 8.60M $\\text{km}^2$ — Smallest continent; includes mainland Australia, New Zealand, and Pacific islands.\n\n' +
+        '#### The 5 Oceans (covering 71% of Earth\'s surface):\n' +
+        '1. **Pacific Ocean:** Largest and deepest; contains the **Mariana Trench** (Challenger Deep at 10,994 m / 36,070 ft).\n' +
+        '2. **Atlantic Ocean:** Second largest; separates the Americas from Europe and Africa; features Mid-Atlantic Ridge.\n' +
+        '3. **Indian Ocean:** Warmest ocean; bordered by Asia, Africa, and Australia.\n' +
+        '4. **Southern (Antarctic) Ocean:** Encircles Antarctica south of $60^\\circ\\text{S}$ latitude.\n' +
+        '5. **Arctic Ocean:** Smallest and shallowest ocean, centered around the North Pole.\n\n' +
+        '[[btn:🏔️ Mount Everest & Himalayas|tell me about mount everest]]\n' +
+        '[[btn:🏛️ Explore World Capitals|capital of france]]';
+    }
+  },
+
+  // 20. WORLD WAR I & II
+  {
+    id: 'world_wars',
+    match: function(q) {
+      return /(world\s*war\s*1|world\s*war\s*2|ww1|ww2|first\s*world\s*war|second\s*world\s*war)/i.test(q) ||
+             /[\u0900-\u097F]*(पहिलो\s*विश्वयुद्ध|दोस्रो\s*विश्वयुद्ध)/.test(q);
+    },
+    title: 'World War I (1914–1918) & World War II (1939–1945)',
+    category: 'World History',
+    synthesize: function(q, lang) {
+      return '### ⚔️ World War I and World War II Summary\n\n' +
+        '#### 1. World War I (1914–1918)\n' +
+        '- **Trigger:** Assassination of Archduke Franz Ferdinand of Austria in Sarajevo on June 28, 1914.\n' +
+        '- **Combatants:**\n' +
+        '  - *Allied Powers:* Great Britain, France, Russia (until 1917), Italy (1915+), United States (1917+), Japan.\n' +
+        '  - *Central Powers:* Germany, Austria-Hungary, Ottoman Empire, Bulgaria.\n' +
+        '- **Characteristics:** Trench warfare on the Western Front, first widespread deployment of chemical gas, tanks, and combat aircraft.\n' +
+        '- **Conclusion:** Armistice of November 11, 1918; **Treaty of Versailles (1919)** redrew the map of Europe and created the League of Nations.\n\n' +
+        '#### 2. World War II (1939–1945)\n' +
+        '- **Trigger:** Nazi Germany\'s invasion of Poland on September 1, 1939.\n' +
+        '- **Combatants:**\n' +
+        '  - *Axis Powers:* Nazi Germany, Imperial Japan, Fascist Italy.\n' +
+        '  - *Allied Powers:* Great Britain, Soviet Union, United States (after Pearl Harbor, Dec 1941), China, Free France.\n' +
+        '- **Casualties:** 70–85 million fatalities (making it the deadliest conflict in human history), including 6 million Jews murdered during the Holocaust.\n' +
+        '- **Major Turning Points:** Battle of Stalingrad (1942–43), Battle of Midway (1942), D-Day Normandy Landings (June 6, 1944).\n' +
+        '- **Conclusion:** Germany surrendered on V-E Day (May 8, 1945). Atomic bombs dropped on Hiroshima and Nagasaki (Aug 1945); Japan formally surrendered on September 2, 1945. Led to the founding of the **United Nations (1945)** and onset of the Cold War.\n\n' +
+        '[[btn:🌐 The United Nations (UN)|explain united nations]]\n' +
+        '[[btn:🏭 The Industrial Revolution|explain industrial revolution]]';
+    }
+  },
+
+  // 21. UNITED NATIONS
+  {
+    id: 'united_nations',
+    match: function(q) {
+      return /(united\s*nations|un\s*headquarters|security\s*council|permanent\s*members\s*un)/i.test(q) ||
+             /[\u0900-\u097F]*(संयुक्त\s*राष्ट्र\s*संघ|युएन)/.test(q);
+    },
+    title: 'The United Nations (UN): Structure & Governance',
+    category: 'International Relations',
+    synthesize: function(q, lang) {
+      return '### 🇺🇳 The United Nations (UN)\n\n' +
+        '- **Founded:** **October 24, 1945** in San Francisco, California (replacing the ineffective League of Nations following World War II).\n' +
+        '- **Headquarters:** New York City (international territory), with main offices in Geneva, Nairobi, and Vienna.\n' +
+        '- **Membership:** **193 sovereign Member States** (plus 2 permanent non-member observer states: Holy See / Vatican and State of Palestine).\n\n' +
+        '#### 1. Core Principal Organs\n' +
+        '1. **General Assembly (UNGA):** The main deliberative assembly where all 193 member states have 1 equal vote.\n' +
+        '2. **Security Council (UNSC):** Responsible for international peace and security. Has **15 members**:\n' +
+        '   - **5 Permanent Members (P5) with Veto Power:** United States, United Kingdom, France, Russia, China.\n' +
+        '   - **10 Non-Permanent Members:** Elected for two-year terms by the General Assembly.\n' +
+        '3. **International Court of Justice (ICJ):** Judicial body located at the Peace Palace in The Hague, Netherlands.\n' +
+        '4. **Secretariat:** Led by the UN Secretary-General (currently António Guterres of Portugal).\n\n' +
+        '[[btn:⚔️ World War II Origins|explain world war 2]]\n' +
+        '[[btn:🌍 World Geography & Capitals|capital of switzerland]]';
+    }
+  },
+
+  // 22. INDUSTRIAL REVOLUTION & INTERNET INVENTION
+  {
+    id: 'industrial_revolution',
+    match: function(q) {
+      return /(industrial\s*revolution|invention\s*of\s*the\s*steam\s*engine|who\s*invented\s*the\s*internet|tim\s*berners[\s\-]lee|world\s*wide\s*web)/i.test(q) ||
+             /[\u0900-\u097F]*(औद्योगिक\s*क्रान्ति|इन्टरनेटको\s*अविष्कार)/.test(q);
+    },
+    title: 'The Industrial Revolution & Invention of the World Wide Web',
+    category: 'History of Technology',
+    synthesize: function(q, lang) {
+      return '### ⚙️ Technological Revolutions: Industry to the World Wide Web\n\n' +
+        '#### 1. The First Industrial Revolution (~1760–1840)\n' +
+        '- **Birthplace:** Great Britain, powered by mechanized steam engines (refined by **James Watt** in 1776), coal smelting of pig iron, and mechanized textile spinning (Spinning Jenny).\n' +
+        '- **Impact:** Transitioned agrarian human economies to machine manufacturing, factories, urban growth, and locomotive railways.\n\n' +
+        '#### 2. The Digital Information Revolution & Invention of the Web\n' +
+        '- **ARPANET (1969):** The US Department of Defense funded the precursor to the Internet, inventing packet-switching and TCP/IP (developed by **Vint Cerf** and **Bob Kahn**).\n' +
+        '- **The World Wide Web (1989):** Invented by British computer scientist **Sir Tim Berners-Lee** at CERN in Geneva, Switzerland. He authored the first:\n' +
+        '  - **HTML** (HyperText Markup Language)\n' +
+        '  - **HTTP** (HyperText Transfer Protocol)\n' +
+        '  - **URI / URL** (Universal Resource Identifiers)\n' +
+        '  - The first web server (`info.cern.ch`) and first browser in late 1990.\n\n' +
+        '[[btn:🌐 How Does the Internet Work?|how does the internet work]]\n' +
+        '[[btn:📡 OSI 7-Layer Model|explain osi 7 layer model]]';
+    }
+  },
+
+  // 23. OPERATING SYSTEMS & CONCURRENCY
+  {
+    id: 'operating_systems',
+    match: function(q) {
+      return /(what\s*is\s*an\s*operating\s*system|kernel\s*vs\s*user\s*space|process\s*vs\s*thread|deadlock.*coffman|virtual\s*memory|paging\s*mmu)/i.test(q) ||
+             /[\u0900-\u097F]*(अपरेटिङ\s*सिस्टम|प्रोसेस\s*र\s*थ्रेड)/.test(q);
+    },
+    title: 'Operating Systems: Kernel, Virtual Memory & Concurrency',
+    category: 'Computer Systems',
+    synthesize: function(q, lang) {
+      return '### 💻 Operating Systems Architecture & Core Internals\n\n' +
+        'An **Operating System (OS)** is system software that acts as an intermediary between computer hardware and user applications, managing CPU, memory, storage, and I/O devices.\n\n' +
+        '#### 1. Dual-Mode Operation & Kernel Space\n' +
+        '- **Kernel Space (Ring 0):** Unrestricted access to physical CPU instructions and memory. Manages device drivers, process schedulers, and page tables.\n' +
+        '- **User Space (Ring 3):** Isolated application environment. Applications request hardware services strictly through **System Calls** (`fork`, `execve`, `read`, `write`, `mmap`).\n\n' +
+        '#### 2. Process vs. Thread\n' +
+        '- **Process:** An independent running program with its own private virtual address space (Text, Data, Heap, Stack) and file descriptor table.\n' +
+        '- **Thread:** The smallest schedulable unit of CPU execution. Multiple threads within the same process share the heap and memory space, making thread context switching much faster than process switches.\n\n' +
+        '#### 3. Virtual Memory & Paging\n' +
+        '- The **Memory Management Unit (MMU)** hardware translates virtual addresses into physical RAM addresses using multi-level page tables.\n' +
+        '- **TLB (Translation Lookaside Buffer):** High-speed hardware cache for address translations.\n' +
+        '- **Page Fault:** Triggered when an accessed memory page is not currently in physical RAM (swapped out to SSD/disk).\n\n' +
+        '#### 4. The 4 Coffman Conditions for Deadlock\n' +
+        'A deadlock can only occur if all four conditions hold simultaneously:\n' +
+        '1. *Mutual Exclusion* | 2. *Hold and Wait* | 3. *No Preemption* | 4. *Circular Wait*.\n\n' +
+        '[[btn:📂 Data Structures & Big-O|explain data structures]]\n' +
+        '[[btn:📡 Networking & OSI Model|explain osi 7 layer model]]';
+    }
+  },
+
+  // 24. DATA STRUCTURES & ALGORITHMS
+  {
+    id: 'data_structures',
+    match: function(q) {
+      return /(data\s*structures|hash\s*table|binary\s*search\s*tree|quicksort|mergesort|big[\s\-]o\s*notation)/i.test(q) ||
+             /[\u0900-\u097F]*(डाटा\s*स्ट्रक्चर|अल्गोरिदम)/.test(q);
+    },
+    title: 'Data Structures, Sorting Algorithms & Big-O Complexity',
+    category: 'Computer Science',
+    synthesize: function(q, lang) {
+      return '### 🌲 Data Structures, Algorithms & Big-O Asymptotics\n\n' +
+        '#### 1. Common Data Structures Complexity Table\n' +
+        '| Data Structure | Access | Search | Insertion | Deletion | Space |\n' +
+        '|---|---|---|---|---|---|\n' +
+        '| **Array** | $O(1)$ | $O(n)$ | $O(n)$ | $O(n)$ | $O(n)$ |\n' +
+        '| **Singly Linked List** | $O(n)$ | $O(n)$ | $O(1)$ (head) | $O(1)$ (head) | $O(n)$ |\n' +
+        '| **Hash Table** | N/A | $O(1)$ avg | $O(1)$ avg | $O(1)$ avg | $O(n)$ |\n' +
+        '| **Binary Search Tree** | $O(\\log n)$ | $O(\\log n)$ | $O(\\log n)$ | $O(\\log n)$ | $O(n)$ |\n' +
+        '| **Red-Black / AVL Tree** | $O(\\log n)$ | $O(\\log n)$ | $O(\\log n)$ | $O(\\log n)$ | $O(n)$ |\n\n' +
+        '#### 2. Classic Sorting Algorithms\n' +
+        '- **QuickSort:** Divide-and-conquer using pivot partitioning. Average: $O(n \\log n)$, Worst: $O(n^2)$, In-place ($O(\\log n)$ auxiliary stack).\n' +
+        '- **MergeSort:** Recursive halving and merging. Guaranteed $O(n \\log n)$, Stable, requires $O(n)$ extra memory.\n' +
+        '- **TimSort:** Hybrid merge + insertion sort used as the default engine in Python (`sorted()`) and Java (`Arrays.sort()`).\n\n' +
+        '```python\n' +
+        'def binary_search(arr: list[int], target: int) -> int:\n' +
+        '    """O(log n) time, O(1) space iterative binary search."""\n' +
+        '    low, high = 0, len(arr) - 1\n' +
+        '    while low <= high:\n' +
+        '        mid = (low + high) // 2\n' +
+        '        if arr[mid] == target:\n' +
+        '            return mid\n' +
+        '        elif arr[mid] < target:\n' +
+        '            low = mid + 1\n' +
+        '        else:\n' +
+        '            high = mid - 1\n' +
+        '    return -1\n' +
+        '```\n\n' +
+        '[[btn:💻 Operating System Architecture|explain operating system]]\n' +
+        '[[btn:🔐 Cryptography & Hashing|explain rsa cryptography]]';
+    }
+  },
+
+  // 25. DATABASES: SQL VS NOSQL & ACID
+  {
+    id: 'databases_sql_nosql',
+    match: function(q) {
+      return /(sql\s*vs\s*nosql|acid\s*properties|cap\s*theorem|database\s*indexing|b[\s\+]tree)/i.test(q) ||
+             /[\u0900-\u097F]*(डेटाबेस|एसक्युएल)/.test(q);
+    },
+    title: 'Databases: Relational vs NoSQL, ACID & CAP Theorem',
+    category: 'Software Engineering & Databases',
+    synthesize: function(q, lang) {
+      return '### 🗄️ Relational vs. NoSQL Databases, ACID & CAP Theorem\n\n' +
+        '#### 1. SQL (Relational) vs. NoSQL Comparison\n' +
+        '- **Relational / SQL (PostgreSQL, MySQL, SQLite):** Structured tabular schemas with foreign keys, strict normalization (3NF/BCNF), and B+ Tree indexes.\n' +
+        '- **NoSQL (Document: MongoDB, Key-Value: Redis, Columnar: Cassandra):** Schema-flexible, horizontally scalable, optimized for unstructured or high-velocity data.\n\n' +
+        '#### 2. ACID Guarantees in Relational Databases\n' +
+        '- **Atomicity:** All operations in a transaction succeed completely or roll back entirely (*All-or-Nothing*).\n' +
+        '- **Consistency:** Data must obey all declared constraints, cascades, and validation triggers.\n' +
+        '- **Isolation:** Concurrent transactions execute without cross-contamination (Read Committed, Repeatable Read, Serializable).\n' +
+        '- **Durability:** Committed transactions survive sudden hardware crashes and power loss (Write-Ahead Logging / WAL).\n\n' +
+        '#### 3. The CAP Theorem (Brewer\'s Theorem)\n' +
+        'In a distributed network partitioned by network failure, you can choose at most **two** out of three:\n' +
+        '- **Consistency (C):** Every read receives the most recent write.\n' +
+        '- **Availability (A):** Every non-failing node returns a non-error response.\n' +
+        '- **Partition Tolerance (P):** The system continues operating despite dropped or delayed network packets.\n\n' +
+        '[[btn:🌐 Microservices & System Design|explain microservices]]\n' +
+        '[[btn:🌲 Data Structures & Trees|explain data structures]]';
+    }
+  },
+
+  // 26. SYSTEM DESIGN: REST, GRAPHQL, GRPC
+  {
+    id: 'system_design_apis',
+    match: function(q) {
+      return /(rest\s*vs\s*graphql|grpc|microservices\s*vs\s*monolith|message\s*queue|kafka)/i.test(q);
+    },
+    title: 'System Design: REST, GraphQL, gRPC & Microservices',
+    category: 'Distributed Systems',
+    synthesize: function(q, lang) {
+      return '### 🏗️ Modern System Design: API Paradigms & Architecture\n\n' +
+        '| Paradigm | Transport | Serialization | Over-fetching / Under-fetching | Best Fit |\n' +
+        '|---|---|---|---|---|\n' +
+        '| **REST** | HTTP/1.1 or 2 | JSON | Frequent (fixed endpoint contracts) | Public CRUD APIs, Webhooks |\n' +
+        '| **GraphQL** | HTTP POST | JSON | None (client asks for exact fields) | Rich frontends, Mobile clients |\n' +
+        '| **gRPC** | HTTP/2 | Binary Protobuf | Ultra-compact typed schema | High-throughput internal microservices |\n\n' +
+        '#### Core Distributed Architectural Patterns:\n' +
+        '- **Microservices vs. Monolith:** Monoliths provide single-repo simplicity for early startups; microservices enable independent deployments across large cross-functional teams at the cost of distributed tracing and eventual consistency complexity.\n' +
+        '- **Event-Driven Architecture (Apache Kafka / RabbitMQ):** Decouples services asynchronously using immutable append-only commit logs. Producers publish events without waiting for consumers, buffering peak traffic bursts.\n' +
+        '- **Distributed Caching (Redis):** Employs Cache-Aside or Write-Through caching patterns with TTL expiry to relieve database read bottlenecks.\n\n' +
+        '[[btn:💻 Operating Systems & Concurrency|explain operating system]]\n' +
+        '[[btn:🗄️ SQL vs NoSQL Databases|explain sql vs nosql]]';
+    }
+  },
+
+  // 27. CRYPTOGRAPHY: AES, RSA & TLS
+  {
+    id: 'cryptography_security',
+    match: function(q) {
+      return /(cryptography|rsa\s*encryption|aes[\s\-]256|symmetric\s*vs\s*asymmetric|tls\s*handshake|public\s*key|how\s*does\s*rsa\s*work)/i.test(q) ||
+             /[\u0900-\u097F]*(क्रिप्टोग्राफी|इन्क्रिप्शन)/.test(q);
+    },
+    title: 'Modern Cryptography: AES, RSA, Elliptic Curves & TLS',
+    category: 'Cybersecurity & Mathematics',
+    synthesize: function(q, lang) {
+      return '### 🔐 Modern Cryptography: AES, RSA & TLS 1.3\n\n' +
+        '#### 1. Symmetric vs. Asymmetric Cryptography\n' +
+        '- **Symmetric (e.g. AES-256, ChaCha20):** Both parties share a single secret key. Extremely fast, hardware-accelerated via AES-NI instructions. Used for bulk data and disk encryption.\n' +
+        '- **Asymmetric / Public-Key (e.g. RSA, ECC Curve25519):** Uses a mathematically linked key pair:\n' +
+        '  - **Public Key:** Freely distributed; anyone can encrypt messages or verify signatures.\n' +
+        '  - **Private Key:** Kept strictly secret; only the owner can decrypt or create digital signatures.\n\n' +
+        '#### 2. The RSA Algorithm Mechanics (Rivest, Shamir, Adleman)\n' +
+        'Relies on the computational hardness of **factoring the product of two very large prime numbers** ($p$ and $q$):\n' +
+        '1. Compute modulus $n = p \\times q$ and Euler\'s totient $\\phi(n) = (p-1)(q-1)$.\n' +
+        '2. Choose public exponent $e$ (commonly 65537) coprime to $\\phi(n)$.\n' +
+        '3. Compute private exponent $d$ such that $d \\cdot e \\equiv 1 \\pmod{\\phi(n)}$.\n' +
+        '4. **Encryption:** $C \\equiv M^e \\pmod n$ \\quad | \\quad **Decryption:** $M \\equiv C^d \\pmod n$.\n\n' +
+        '#### 3. TLS 1.3 Handshake (HTTPS Security)\n' +
+        'Modern web HTTPS establishes secure sessions in **1 round trip (1-RTT)**:\n' +
+        '- Client sends `ClientHello` with supported cipher suites and key share.\n' +
+        '- Server responds with `ServerHello`, certificate, and Diffie-Hellman key share to establish **Perfect Forward Secrecy (PFS)**—ensuring that if server keys are compromised in the future, past recorded traffic remains uncrackable.\n\n' +
+        '[[btn:📡 OSI 7-Layer Reference Model|explain osi 7 layer model]]\n' +
+        '[[btn:🌐 How DNS Resolution Works|how does dns work]]';
+    }
+  },
+
+  // 28. OSI 7-LAYER REFERENCE MODEL
+  {
+    id: 'osi_model',
+    match: function(q) {
+      return /(osi\s*model|osi\s*7\s*layer|7\s*layers\s*of\s*osi|open\s*systems\s*interconnection)/i.test(q) ||
+             /[\u0900-\u097F]*(ओएसआई\s*मोडेल)/.test(q);
+    },
+    title: 'The OSI 7-Layer Reference Model (Complete Standard)',
+    category: 'Computer Networking',
+    synthesize: function(q, lang) {
+      return '### 🌐 The OSI 7-Layer Reference Model (ISO/IEC 7498-1)\n\n' +
+        'The **Open Systems Interconnection (OSI)** model provides a conceptual framework standardizing telecommunication and networking protocols into 7 distinct functional layers:\n\n' +
+        '| Layer # | Layer Name | Protocol Data Unit (PDU) | Primary Protocols | Hardware / Devices |\n' +
+        '|---|---|---|---|---|\n' +
+        '| **Layer 7** | **Application** | Data | HTTP/HTTPS, DNS, SSH, FTP, SMTP, BGP | Browsers, Web Servers, Apps |\n' +
+        '| **Layer 6** | **Presentation** | Data | TLS/SSL, ASCII, JSON, JPEG, Gzip | Compression & Encryption Engines |\n' +
+        '| **Layer 5** | **Session** | Data | RPC, NetBIOS, PPTP, Sockets | Session checkpoints & tokens |\n' +
+        '| **Layer 4** | **Transport** | Segment (TCP) / Datagram (UDP) | TCP, UDP, QUIC, SCTP | Layer 4 Load Balancers, Firewalls |\n' +
+        '| **Layer 3** | **Network** | Packet | IPv4, IPv6, ICMP, IPsec, OSPF | Core Routers, Layer 3 Switches |\n' +
+        '| **Layer 2** | **Data Link** | Frame | Ethernet (802.3), Wi-Fi (802.11), VLAN (802.1Q), ARP | Layer 2 Switches, Bridges, OLT/ONT |\n' +
+        '| **Layer 1** | **Physical** | Bit | 1000BASE-T, GPON (G.984), Fiber Optics, Cat6 | Cables, SFP Transceivers, Hubs |\n\n' +
+        '#### Mnemonic to Remember:\n' +
+        '- **Top to Bottom (7 to 1):** *"All People Seem To Need Data Processing"*\n' +
+        '- **Bottom to Top (1 to 7):** *"Please Do Not Throw Sausage Pizza Away"*\n\n' +
+        '[[btn:🔄 TCP vs UDP & Handshake|explain tcp vs udp]]\n' +
+        '[[btn:🌐 How DNS Resolution Works|how does dns work]]';
+    }
+  },
+
+  // 29. TCP VS UDP & 3-WAY HANDSHAKE
+  {
+    id: 'tcp_vs_udp',
+    match: function(q) {
+      return /(tcp\s*vs\s*udp|difference\s*between\s*tcp\s*and\s*udp|3[\s\-]way\s*handshake|three[\s\-]way\s*handshake|tcp\s*handshake)/i.test(q) ||
+             /[\u0900-\u097F]*(टिसिपी\s*र\s*युडिपि)/.test(q);
+    },
+    title: 'TCP vs. UDP & The TCP 3-Way Handshake',
+    category: 'Computer Networking',
+    synthesize: function(q, lang) {
+      return '### 🔄 TCP vs. UDP & The TCP 3-Way Handshake\n\n' +
+        '#### 1. Fundamental Protocol Differences\n' +
+        '| Feature | TCP (Transmission Control Protocol) | UDP (User Datagram Protocol) |\n' +
+        '|---|---|---|\n' +
+        '| **Connection** | Connection-Oriented (requires handshake) | Connectionless (fire and forget) |\n' +
+        '| **Reliability** | Guaranteed (ACKs, sequence numbers, retransmissions) | Best-Effort (packets can drop or reorder) |\n' +
+        '| **Header Size** | 20–60 Bytes | 8 Bytes (lightweight) |\n' +
+        '| **Flow & Congestion**| Built-in (Sliding Window, BBR, Cubic) | None (application must manage flow) |\n' +
+        '| **Best Use Cases** | Web (HTTP), Email (SMTP), File transfer (FTP/SSH) | VoIP, Gaming, Video streaming, DNS, QUIC |\n\n' +
+        '#### 2. The TCP 3-Way Handshake (SYN $\\to$ SYN-ACK $\\to$ ACK)\n' +
+        '```text\n' +
+        'Client                               Server\n' +
+        '  |                                     |\n' +
+        '  | -------- SYN (seq = x) -----------> |  1. Client sends SYN (requests sync)\n' +
+        '  |                                     |\n' +
+        '  | <--- SYN-ACK (seq=y, ack=x+1) ----- |  2. Server acknowledges and sends own SYN\n' +
+        '  |                                     |\n' +
+        '  | -------- ACK (seq=x+1, ack=y+1) --> |  3. Client acknowledges; socket is ESTABLISHED\n' +
+        '  v                                     v\n' +
+        '```\n' +
+        '#### 3. Connection Teardown (4-Way FIN)\n' +
+        'Graceful termination uses four packets: `FIN` $\\to$ `ACK` $\\to$ `FIN` $\\to$ `ACK`.\n\n' +
+        '[[btn:📡 OSI 7-Layer Reference Model|explain osi 7 layer model]]\n' +
+        '[[btn:🌐 How DNS Resolution Works|how does dns work]]';
+    }
+  },
+
+  // 30. DNS RESOLUTION ARCHITECTURE
+  {
+    id: 'dns_architecture',
+    match: function(q) {
+      return /(how\s*does\s*dns\s*work|dns\s*resolution|domain\s*name\s*system|dns\s*records|root\s*nameservers)/i.test(q) ||
+             /[\u0900-\u097F]*(डिएनएस|डोमेन\s*नेम)/.test(q);
+    },
+    title: 'How DNS (Domain Name System) Works: The Complete Resolution Chain',
+    category: 'Internet Architecture',
+    synthesize: function(q, lang) {
+      return '### 🌐 How DNS Resolution Works: Step-by-Step Flow\n\n' +
+        'The **Domain Name System (DNS)** is the phonebook of the Internet, translating human-friendly hostnames (`gautambhuwan.com.np`) into machine-routable IP addresses (`104.21.72.19`).\n\n' +
+        '#### 1. The 4-Step Hierarchy\n' +
+        '1. **Local Resolver / Browser Cache:** Checked first in memory.\n' +
+        '2. **Recursive DNS Resolver (e.g. 1.1.1.1, 8.8.8.8):** Queries the hierarchy on behalf of client.\n' +
+        '3. **Root Nameservers (`.`):** 13 global root server IP addresses (managed by ICANN/IANA across hundreds of Anycast clusters), directing queries to Top-Level Domain (TLD) servers.\n' +
+        '4. **TLD Nameservers:** Manages specific extensions (e.g. `.com`, `.org`, `.np`).\n' +
+        '5. **Authoritative Nameservers:** Holds the master DNS zone file with actual records.\n\n' +
+        '#### 2. Essential DNS Record Types\n' +
+        '- **A Record:** Maps hostname to an **IPv4** address (`192.0.2.1`).\n' +
+        '- **AAAA Record:** Maps hostname to a **128-bit IPv6** address (`2001:db8::1`).\n' +
+        '- **CNAME:** Canonical name / alias pointing one domain name to another domain.\n' +
+        '- **MX Record:** Mail Exchange server priorities for email routing.\n' +
+        '- **TXT Record:** Arbitrary text used for SPF email security, DKIM signatures, and domain ownership verification.\n' +
+        '- **PTR Record:** Reverse DNS lookup (IP to domain).\n\n' +
+        '[[btn:🔄 TCP vs UDP & Handshake|explain tcp vs udp]]\n' +
+        '[[btn:🔐 TLS & HTTPS Cryptography|explain rsa cryptography]]';
+    }
+  },
+
+  // 31. GPON & FIBER OPTICS
+  {
+    id: 'gpon_fiber',
+    match: function(q) {
+      return /(gpon|fiber\s*optic|olt|onu|ont|optical\s*power|dbm|splitters\s*1:32|ftth)/i.test(q) ||
+             /[\u0900-\u097F]*(जिपोन|अप्टिकल\s*फाइबर|ओएलटी)/.test(q);
+    },
+    title: 'GPON (Gigabit Passive Optical Network) & FTTH Architecture',
+    category: 'Telecommunications & Fiber Networks',
+    synthesize: function(q, lang) {
+      return '### 💡 GPON (ITU-T G.984) Architecture & FTTH Standards\n\n' +
+        '**GPON (Gigabit Passive Optical Network)** is the premier telecommunications standard delivering fiber-to-the-home (FTTH) broadband with zero active powered electronics between the central office and subscriber premises.\n\n' +
+        '#### 1. Bandwidth & Wavelength Division Multiplexing (WDM)\n' +
+        '- **Downstream:** **2.488 Gbps** on **1490 nm** wavelength (Continuous TDM Broadcast).\n' +
+        '- **Upstream:** **1.244 Gbps** on **1310 nm** wavelength (TDMA with Dynamic Bandwidth Allocation / DBA).\n' +
+        '- **Optional RF Video / CATV:** Broadcast on **1550 nm** wavelength.\n\n' +
+        '#### 2. Network Components\n' +
+        '- **OLT (Optical Line Terminal):** Carrier equipment inside ISP datacenter (Huawei, ZTE, Nokia).\n' +
+        '- **ODN (Optical Distribution Network):** Completely passive glass fiber infrastructure using optical prism splitters (1:8, 1:16, 1:32, 1:64).\n' +
+        '- **ONT / ONU (Optical Network Terminal):** Customer CPE modem converting optical signals to Ethernet.\n\n' +
+        '#### 3. Optical Power Budget Classes\n' +
+        '- **Class B+:** OLT Tx $+1.5$ to $+5\\text{ dBm}$ | ONU Rx sensitivity $-8$ to $-28\\text{ dBm}$.\n' +
+        '- **Class C+:** OLT Tx $+3.0$ to $+7\\text{ dBm}$ | ONU Rx sensitivity $-8$ to $-32\\text{ dBm}$.\n' +
+        '- **Target Subscriber Signal:** **$-18\\text{ to } -23\\text{ dBm}$** is optimal. Below $-27\\text{ dBm}$ causes high FEC errors and packet drops.\n\n' +
+        '[[btn:🔧 Generate Huawei OLT Config|Generate Huawei GPON OLT service-port config]]\n' +
+        '[[btn:📡 OSI 7-Layer Model|explain osi 7 layer model]]';
+    }
+  }
+];
+
+// ─── CAPITAL LOOKUP MATCHER ──────────────────────────────────────────────────
+function matchWorldCapital(q) {
+  var clean = q.toLowerCase().replace(/[\?\.!,]/g, ' ').trim();
+  var capMatch = clean.match(/(?:what\s+is\s+the\s+capital\s+of|capital\s+of|capital\s+city\s+of)\s+([a-zA-Z\s]+)/i) ||
+                 clean.match(/([a-zA-Z\s]+)\s+(?:capital|capital\s+city)/i);
+
+  var countryQuery = '';
+  if (capMatch && capMatch[1]) {
+    countryQuery = capMatch[1].trim();
+  } else {
+    // Check if query is just a country name with the word capital
+    for (var k in GAM_WORLD_CAPITALS) {
+      if (clean.indexOf(k) !== -1 && (clean.indexOf('capital') !== -1 || clean.indexOf('rajdhani') !== -1 || clean.indexOf('राजधानी') !== -1)) {
+        countryQuery = k;
+        break;
+      }
+    }
+  }
+
+  if (countryQuery && GAM_WORLD_CAPITALS[countryQuery]) {
+    return GAM_WORLD_CAPITALS[countryQuery];
+  }
+
+  // Also check if any key is directly contained in the string
+  for (var cKey in GAM_WORLD_CAPITALS) {
+    if (new RegExp('\\b' + cKey + '\\b', 'i').test(clean) && (clean.includes('capital') || clean.includes('राजधानी'))) {
+      return GAM_WORLD_CAPITALS[cKey];
+    }
+  }
+
+  return null;
+}
+
+// ─── MASTER FACTUAL RETRIEVAL FUNCTION ───────────────────────────────────────
+function queryFactualKnowledge(q, lang) {
+  if (!q || typeof q !== 'string') return null;
+  var qTrim = q.trim();
+
+  // 1. Check World Capitals Dictionary
+  var capHit = matchWorldCapital(qTrim);
+  if (capHit) {
+    var capResp = '### 🏛️ Capital of ' + capHit.country + '\n\n' +
+      'The capital city of **' + capHit.country + '** is **' + capHit.capital + '**.\n\n' +
+      '- **Region:** ' + capHit.region + '\n' +
+      '- **Official Currency:** ' + capHit.currency + '\n' +
+      '- **Key Fact:** ' + capHit.fact + '\n\n' +
+      '[[btn:🌍 Explore 7 Continents|explain 7 continents]]\n' +
+      '[[btn:🏔️ Tell Me About Mount Everest|tell me about mount everest]]';
+
+    if (lang === 'ne') {
+      capResp = '### 🏛️ ' + capHit.country + ' को राजधानी\n\n' +
+        '**' + capHit.country + '** को राजधानी शहर **' + capHit.capital + '** हो।\n\n' +
+        '- **क्षेत्र:** ' + capHit.region + '\n' +
+        '- **मुद्रा:** ' + capHit.currency + '\n' +
+        '- **थप जानकारी:** ' + capHit.fact + '\n\n' +
+        '[[btn:🌍 विश्वका ७ महादेशहरू|explain 7 continents]]\n' +
+        '[[btn:🏔️ सगरमाथाको विवरण|tell me about mount everest]]';
+    }
+
+    if (typeof GAM_CONTEXT !== 'undefined') {
+      GAM_CONTEXT.recordTurn('user', qTrim);
+      GAM_CONTEXT.recordTurn('assistant', capResp);
+      GAM_CONTEXT.lastEntity = capHit.country;
+      GAM_CONTEXT.lastTopic = 'capital_of_' + capHit.country;
+    }
+
+    return {
+      found: true,
+      title: 'Capital of ' + capHit.country,
+      category: 'World Geography',
+      response: capResp
+    };
+  }
+
+  // 2. Check Factual Knowledge Graph Nodes
+  for (var i = 0; i < GAM_FACTS_GRAPH.length; i++) {
+    var node = GAM_FACTS_GRAPH[i];
+    if (typeof node.match === 'function' && node.match(qTrim)) {
+      var text = node.synthesize(qTrim, lang);
+
+      if (typeof GAM_CONTEXT !== 'undefined') {
+        GAM_CONTEXT.recordTurn('user', qTrim);
+        GAM_CONTEXT.recordTurn('assistant', text);
+        GAM_CONTEXT.lastEntity = node.title;
+        GAM_CONTEXT.lastTopic = node.id;
+      }
+
+      return {
+        found: true,
+        id: node.id,
+        title: node.title,
+        category: node.category,
+        response: text
+      };
+    }
+  }
+
+  return null;
+}
+
 function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
   if (!prompt || typeof prompt !== 'string') return null;
 
@@ -3180,6 +4251,12 @@ function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
   var followUpResult = resolveFollowUpAndContext(prompt, lang);
   if (followUpResult) {
     return followUpResult;
+  }
+
+  // ── 00b. UNIVERSAL FACTUAL KNOWLEDGE & ENCYCLOPEDIC LOOKUP ────────────────
+  var factDirect = queryFactualKnowledge(prompt, lang);
+  if (factDirect && factDirect.found) {
+    return factDirect;
   }
   var p = prompt.trim();
   var pLower = p.toLowerCase();
@@ -5719,6 +6796,12 @@ function processOfflineAIQueryCore(q) {
     return omniGen;
   }
 
+  // ── 18c. ENCYCLOPEDIC KNOWLEDGE GRAPH ──
+  var factCore = queryFactualKnowledge(q, currentLang);
+  if (factCore && factCore.found) {
+    return factCore;
+  }
+
   // ── 19. TOPIC NOT FOUND → Request switch to Online ────────────────────────
   var notFoundText = isHi
     ? 'ℹ️ **यह विषय आपके वर्तमान स्थानीय ऑफ़लाइन नॉलेज पैक में उपलब्ध नहीं है।**\n\n' +
@@ -6208,20 +7291,18 @@ var SAMPLE_IMAGES = {
 };
 
 function getGeminiApiKey() {
-  return localStorage.getItem('gemini_api_key') || '';
+  return getEffectiveGeminiKey();
 }
 
 function promptGeminiKey() {
-  var current = getGeminiApiKey();
-  var key = prompt('Enter your Google Gemini API Key (optional, for Gemini Imagen 3 & Veo):\nLeave blank to use the free Zero-Key Online Tier.', current);
+  var current = getEffectiveGeminiKey();
+  var key = prompt('Enter your Google Gemini API Key (for direct frontier reasoning & Imagen/Veo):\nLeave blank to use the built-in edge knowledge engine & free online tier.', current);
   if (key !== null) {
-    key = key.trim();
-    if (key) {
-      localStorage.setItem('gemini_api_key', key);
+    saveEffectiveGeminiKey(key);
+    if (key.trim()) {
       alert('Google Gemini API Key configured! ✨');
     } else {
-      localStorage.removeItem('gemini_api_key');
-      alert('Switched to Free Zero-Key Online Tier (Pollinations Flux).');
+      alert('Switched to Local Edge Knowledge Engine & Free Online Tier.');
     }
     updateStudioProviderBadge();
   }
@@ -10324,6 +11405,16 @@ function synthesizeSmartResponse(heading, mainText, bullets, q, lang, imgUrl, is
     return respText;
   }
 
+  // Check if universal factual knowledge exists
+  var factSynth = queryFactualKnowledge(q, lang);
+  if (factSynth && factSynth.found) {
+    var fText = factSynth.response;
+    if (imgUrl && !fText.includes(imgUrl) && isRelevantImage(heading, q)) {
+      fText = '![' + heading + '](' + imgUrl + ')\n\n' + fText;
+    }
+    return fText;
+  }
+
   // Clean raw Wikipedia text:
   // Remove phonetic pronunciation, citation brackets, dates of birth clutter, and LaTeX math debris
   var cleaned = (mainText || '')
@@ -11029,8 +12120,9 @@ function executeSend(userText, wasSpoken) {
     })
     .catch(function(err) {
       // Python backend not running — try Gemini API directly (requires GEMINI_API_KEY)
-      if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
-        var geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_API_KEY;
+      var effKey = getEffectiveGeminiKey();
+      if (effKey && effKey.length > 10) {
+        var geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + effKey;
         var isReasoningModel = (activeModelId === 'reasoner' || activeModelId === 'r1');
         var isCoderModel = (activeModelId === 'coder');
         var sysPrompt = 'You are GAM.AI, an intelligent assistant developed by Vhuwon Mathers.';
@@ -11689,11 +12781,32 @@ if ('speechSynthesis' in window) {
           🍏
         </div>
         <div>
-          <h2 style="font-size:1.25rem; font-weight:800; color:#f8fafc; margin:0;">Install on iPhone & iPad</h2>
-          <div style="font-size:0.78rem; color:#38bdf8; font-weight:600;">Direct Installation • No App Store Required • 100% Offline</div>
+          <h2 style="font-size:1.25rem; font-weight:800; color:#f8fafc; margin:0;">Install GAM.AI on Mobile</h2>
+          <div style="font-size:0.78rem; color:#38bdf8; font-weight:600;">Direct Installation • Android APK & iOS IPA / Profile • 100% Offline</div>
         </div>
       </div>
       <button onclick="closeModal('modal-ios-install')" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; padding:4px 8px;">✕</button>
+    </div>
+
+    <!-- ANDROID APK DIRECT DOWNLOAD -->
+    <div style="background:#1e293b; border:1px solid rgba(56,189,248,0.4); border-radius:14px; padding:16px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong style="color:#38bdf8; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
+          <span>🤖</span> Android Direct APK (v1.6.4)
+        </strong>
+        <span style="font-size:0.68rem; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:10px; font-weight:700;">OFFICIAL RELEASE</span>
+      </div>
+      <p style="font-size:0.83rem; color:#cbd5e1; line-height:1.45; margin:0 0 10px 0;">
+        Directly download and install the standalone Android APK on any smartphone, tablet, or Android TV. 100% offline edge AI.
+      </p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.4.apk" class="btn btn-primary" style="flex:1; text-align:center; padding:10px 14px; font-size:0.82rem; font-weight:700; background:#38bdf8; border-color:#38bdf8; color:#0f172a; text-decoration:none; border-radius:8px; display:inline-block;" download>
+          📦 Download APK (v1.6.4)
+        </a>
+        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-latest.apk" class="btn btn-secondary" style="flex:1; text-align:center; padding:10px 14px; font-size:0.82rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
+          ⚡ Latest Build (.apk)
+        </a>
+      </div>
     </div>
 
     <!-- OPTION 1: 1-TAP PROFILE (RECOMMENDED) -->
@@ -11745,10 +12858,10 @@ if ('speechSynthesis' in window) {
         Download the standalone <code>.ipa</code> binary package to install via AltStore, SideStore, Scarlet, TrollStore, or Sideloadly.
       </p>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.3.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
-          📦 Download IPA (v1.6.3)
+        <a href="https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.4.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid var(--border); color:#fff; background:#0f172a;" download>
+          📦 Download IPA (v1.6.4)
         </a>
-        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.3.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
+        <a href="altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.4.ipa" class="btn btn-secondary" style="flex:1; text-align:center; padding:8px 12px; font-size:0.8rem; font-weight:600; text-decoration:none; border-radius:8px; border:1px solid #38bdf8; color:#38bdf8; background:rgba(56,189,248,0.1);">
           ⚡ Open in AltStore
         </a>
       </div>
