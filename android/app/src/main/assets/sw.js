@@ -1,5 +1,5 @@
-// GAM.AI Universal Offline Service Worker v1.7.0
-const CACHE_NAME = 'gam-ai-cache-v1.7.0';
+// GAM.AI Universal Offline Service Worker v1.7.1
+const CACHE_NAME = 'gam-ai-cache-v1.7.1';
 const OFFLINE_URLS = [
   './',
   './index.html',

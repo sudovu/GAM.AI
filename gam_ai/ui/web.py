@@ -171,6 +171,19 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(body)
 
+        elif parsed.path == "/version.json":
+            version_path = os.path.join(get_ui_dir(), "version.json")
+            if os.path.exists(version_path):
+                self._send_static(version_path, "application/json", "no-cache, must-revalidate")
+            else:
+                self._send_json({
+                    "app": "GAM.AI",
+                    "version": "1.7.1",
+                    "build": 15,
+                    "release_date": "2026-10-30",
+                    "channel": "stable",
+                })
+
         elif parsed.path == "/three.min.js":
             three_path = os.path.join(get_ui_dir(), "three.min.js")
             if os.path.exists(three_path):

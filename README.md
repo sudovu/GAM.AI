@@ -117,14 +117,14 @@ Install GAM.AI directly on iOS without Xcode, a Mac, or the App Store:
   - Open [https://gautambhuwan.com.np/gam-ai/](https://gautambhuwan.com.np/gam-ai/) in Safari on iPhone or iPad.
   - Tap the **Share** button (`⎋`), scroll down, and tap **"Add to Home Screen"** (`➕`).
 - **Method 3: Standalone `.ipa` Sideloading**:
-  - Download the standalone [iOS IPA (`gam-ai-v1.6.0.ipa`)](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa)
-  - Install via [AltStore (1-Tap)](altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.ipa), SideStore, Scarlet, Sideloadly, or TrollStore.
+  - Download the standalone [iOS IPA (`gam-ai-v1.7.1.ipa`)](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1.ipa)
+  - Install via [AltStore (1-Tap)](altstore://install?url=https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1.ipa), SideStore, Scarlet, Sideloadly, or TrollStore.
 - **Method 4: Apple OTA Manifest**:
   - Open `itms-services://?action=download-manifest&url=https://gautambhuwan.com.np/downloads/gam-ai/manifest.plist` in Safari for native direct system install prompt.
 
 ### 🤖 Android (Phones, Tablets & Foldables)
-- Download the compiled, code-signed [GAM.AI Universal Release APK (`gam-ai-v1.6.0.apk`)](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.6.0.apk) (Android 7.0+).
-- Sideload via `adb install -r gam-ai-v1.6.0.apk` or tap directly in your Android file manager.
+- Download the compiled, code-signed [GAM.AI Universal Release APK (`gam-ai-v1.7.1.apk`)](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1.apk) (Android 7.0+).
+- Sideload via `adb install -r gam-ai-v1.7.1.apk` or tap directly in your Android file manager.
 
 ### 💻 Windows (10 / 11 / Server x64)
 - Download the standalone portable executable [`gam-ai.exe`](https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.exe). Zero installation or Python runtime required.

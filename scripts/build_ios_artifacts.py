@@ -29,7 +29,7 @@ WEBSITE_ROOT = r"C:\Users\Sudo\Projects\gautambhuwan.com.np"
 WEBSITE_DOWNLOADS = os.path.join(WEBSITE_ROOT, "downloads", "gam-ai") if os.path.isdir(WEBSITE_ROOT) else None
 WEBSITE_GAM_AI = os.path.join(WEBSITE_ROOT, "gam-ai") if os.path.isdir(WEBSITE_ROOT) else None
 
-VERSION = "1.6.2"
+VERSION = "1.7.1"
 BUNDLE_ID = "com.gamai.app"
 APP_NAME = "GAM.AI"
 APP_URL = "https://gautambhuwan.com.np/gam-ai/"
@@ -238,7 +238,7 @@ def build_manifest_plist():
         print(f"  -> Generated: {p}")
 
 def build_ipa():
-    print("[4/5] Building iOS Application Package (gam-ai-v1.6.0.ipa)...")
+    print("[4/5] Building iOS Application Package (gam-ai-v1.7.1.ipa)...")
     build_temp = os.path.join(DIST_DIR, "ipa_build")
     payload_dir = os.path.join(build_temp, "Payload")
     app_dir = os.path.join(payload_dir, f"{APP_NAME}.app")
@@ -256,7 +256,7 @@ def build_ipa():
         "CFBundleName": APP_NAME,
         "CFBundlePackageType": "APPL",
         "CFBundleShortVersionString": VERSION,
-        "CFBundleVersion": "11",
+        "CFBundleVersion": "15",
         "LSRequiresIPhoneOS": True,
         "UIRequiresFullScreen": True,
         "UIStatusBarStyle": "UIStatusBarStyleLightContent",

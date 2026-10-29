@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gam-ai"
-version = "1.7.0"
+version = "1.7.1"
 description = "Micro, Local-First, Resource-Efficient AI Assistant for Android, iOS, Windows, macOS, Linux, and Tablets"
 readme = "README.md"
 authors = [{ name = "GAM.AI Team" }]

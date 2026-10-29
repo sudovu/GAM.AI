@@ -1,0 +1,30 @@
+{
+  "app": "GAM.AI",
+  "version": "1.7.1",
+  "build": 15,
+  "release_date": "2026-10-30",
+  "channel": "stable",
+  "notes": "Settings Install App entry removed, iOS IPA link refreshed, cross-platform version tracking, WebView answer-reveal hardening.",
+  "platforms": {
+    "android": {
+      "version": "1.7.1",
+      "build": 15,
+      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1.apk"
+    },
+    "ios": {
+      "version": "1.7.1",
+      "build": 15,
+      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1.ipa",
+      "profile": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.mobileconfig"
+    },
+    "windows": {
+      "version": "1.7.1",
+      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1-windows.exe"
+    },
+    "web": {
+      "version": "1.7.1",
+      "url": "https://gautambhuwan.com.np/gam-ai/",
+      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1-web.zip"
+    }
+  }
+}

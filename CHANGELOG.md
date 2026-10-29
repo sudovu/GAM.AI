@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.1] - 2026-10-30
+### Settings, iOS Install & Cross-Platform Version Tracking
+- **Phone screen fix**: The assistant reply typewriter reveal no longer stalls in backgrounded Android WebViews. It skips animation when the page is hidden, finishes on `visibilitychange`, and has a watchdog fallback so answers are never left blank.
+- **Settings cleanup**: Removed the duplicate `Install App` button from the sidebar and the header overflow menu. Install/download options now live under **Settings → Version & Updates → Downloads & Platforms**.
+- **iOS link refresh**: The IPA download and AltStore one-tap install now point to `gam-ai-v1.7.1.ipa` instead of the stale `v1.6.4` build.
+- **Version & Updates card**: Settings now shows installed version, build number, release date, platform and a **Check for Updates** button.
+- **`version.json` manifest**: Added a shared release manifest served at `/version.json` and published with the web app, so Android, iOS, Windows, PWA and the website all report the same version.
+- **Unified release**: Android `versionCode 15` / `versionName 1.7.1`, iOS build `15`, service-worker cache `gam-ai-cache-v1.7.1`.
+
 ## [1.7.0] - 2026-10-29
 ### Responsive & Generative Interface
 - **Adaptive Layouts Across Every Screen**:
