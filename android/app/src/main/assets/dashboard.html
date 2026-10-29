@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#090d16">
 <meta name="description" content="GAM.AI — Universal Local-First AI Assistant">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,13 +16,16 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 <link rel="manifest" href="manifest.json">
 <title>GAM.AI — Local-First Intelligent Assistant</title>
-<script src="three.min.js"></script>
+<!-- Deferred so the first paint is instant on phones and low-end hardware. -->
+<script src="three.min.js" defer></script>
 <script>
-  if (typeof THREE === 'undefined') {
-    var cdnThree = document.createElement('script');
-    cdnThree.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-    document.head.appendChild(cdnThree);
-  }
+  window.addEventListener('load', function() {
+    if (typeof THREE === 'undefined' && navigator.onLine) {
+      var cdnThree = document.createElement('script');
+      cdnThree.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      document.head.appendChild(cdnThree);
+    }
+  });
 </script>
 <style>
   :root, body.theme-cyberpunk {
@@ -905,6 +908,193 @@
     font-weight: 700;
   }
 
+  /* ════════════════════════════════════════════════════════════════════
+     2026 RESPONSIVE & GENERATIVE UI LAYER
+     Fluid layouts, touch-first controls, full-screen mobile modals and
+     a generative typewriter reveal for assistant responses.
+     ════════════════════════════════════════════════════════════════════ */
+  :root {
+    --header-h: 54px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --touch: 44px;
+  }
+  #main-viewport, .chat-thread-width, .header-left, .header-right { min-width: 0; }
+  .top-header { gap: 8px; }
+  .header-left { flex: 0 1 auto; }
+  .header-right { position: relative; flex: 0 1 auto; flex-wrap: nowrap; }
+  .icon-btn, .chat-tool-btn, .ctrl-btn, .lang-selector-pill, .mode-pill, .hamburger-btn,
+  .btn-action, .menu-action-btn, .chip-card, .skill-pill-btn { touch-action: manipulation; }
+
+  /* Generative typewriter caret */
+  .msg-content.gen-typing::after {
+    content: ""; display: inline-block; width: 0.5em; height: 1.02em;
+    margin-left: 2px; vertical-align: -0.16em; border-radius: 2px;
+    background: var(--accent); opacity: .85;
+    animation: genCaret .72s steps(2, start) infinite;
+  }
+  @keyframes genCaret { 50% { opacity: 0; } }
+  .msg-content.gen-typing { will-change: contents; pointer-events: none; }
+
+  /* Generative loading shimmer */
+  .gen-shimmer { display: flex; flex-direction: column; gap: 9px; width: 100%; padding: 4px 0; }
+  .gen-shimmer i {
+    display: block; height: 11px; border-radius: 6px;
+    background: linear-gradient(90deg, rgba(148,163,184,.10) 25%, rgba(56,189,248,.32) 37%, rgba(148,163,184,.10) 63%);
+    background-size: 400% 100%; animation: genShimmer 1.15s linear infinite;
+  }
+  .gen-shimmer i:nth-child(2) { width: 86%; }
+  .gen-shimmer i:nth-child(3) { width: 62%; }
+  @keyframes genShimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+  /* Mobile header overflow menu */
+  #btn-header-more { display: none; font-size: 1.2rem; line-height: 1; }
+  #header-overflow-menu {
+    display: none; position: absolute; top: calc(100% + 8px); right: 0; z-index: 600;
+    min-width: 210px; padding: 6px; flex-direction: column; gap: 2px;
+    background: var(--sidebar-bg); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.62);
+  }
+  #header-overflow-menu.open { display: flex; animation: genReveal .16s ease-out both; }
+  #header-overflow-menu button {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px;
+    padding: 8px 12px; border: 0; border-radius: 8px; background: none;
+    color: var(--text-main); font: inherit; font-size: .88rem; text-align: left; cursor: pointer;
+  }
+  #header-overflow-menu button:hover, #header-overflow-menu button:focus-visible { background: var(--card-hover); }
+
+  /* Composer generative controls */
+  .chat-tool-btn.enhance-btn { color: #c084fc; background: rgba(168, 85, 247, .12); }
+  .chat-tool-btn.enhance-btn:hover { background: rgba(168, 85, 247, .26); color: #fff; }
+  .chat-tool-btn.enhance-btn.busy { animation: pulse-recording 1s infinite; pointer-events: none; }
+
+  /* Generative idea synthesizer */
+  .gen-ideas-row { display: flex; justify-content: center; margin: 10px 0 2px; }
+  .gen-ideas-btn {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
+    padding: 8px 16px; border-radius: 999px; cursor: pointer;
+    border: 1px dashed rgba(168,85,247,.55); color: #d8b4fe;
+    background: rgba(168,85,247,.10); font-size: .82rem; font-weight: 700;
+    transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  }
+  .gen-ideas-btn:hover { background: rgba(168,85,247,.22); border-style: solid; transform: translateY(-1px); }
+  .chip-card.gen-fresh { animation: genReveal .3s ease both; }
+  @keyframes genReveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+  /* Tablet */
+  @media (max-width: 1100px) {
+    #ram-meter, #token-meter { display: none !important; }
+    .header-right { gap: 6px; }
+  }
+
+  /* Compact header: move secondary actions into the ⋯ menu */
+  @media (max-width: 900px) {
+    #btn-header-new-chat, #btn-home, #btn-theme-toggle, #btn-header-settings { display: none; }
+    #btn-header-more { display: inline-flex; align-items: center; justify-content: center; }
+    .model-pill select { max-width: 46vw; }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    :root { --header-h: 52px; }
+    .top-header { padding: 0 10px; }
+    .header-right { gap: 5px; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 7px; }
+    .lang-selector-pill { padding: 4px 8px; }
+    .chat-thread-width { padding: 0 12px; }
+    #chat-scroll-area { padding: 10px 0 6px 0; }
+    .hero-welcome { margin: 16px auto 12px auto; }
+    .hero-welcome h2 { font-size: clamp(1.3rem, 6.4vw, 1.7rem); }
+    .hero-welcome p { font-size: .86rem; }
+    .mode-switch-bar {
+      display: flex; width: 100%; justify-content: flex-start; overflow-x: auto;
+      border-radius: 14px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .mode-switch-bar::-webkit-scrollbar { display: none; }
+    .mode-pill { padding: 8px 12px; white-space: nowrap; font-size: .8rem; }
+    .quick-chips-grid { grid-template-columns: 1fr; gap: 8px; }
+    .chip-card { padding: 11px 13px; }
+    .msg-row { gap: 8px; }
+    .avatar { width: 28px; height: 28px; font-size: .75rem; border-radius: 7px; }
+    .msg-bubble { max-width: calc(100% - 36px); font-size: .92rem; padding: 10px 13px; }
+    .msg-bubble.user { max-width: 88%; }
+    .msg-action-bar { gap: 5px; }
+    .msg-btn-action { min-height: 34px; }
+    .msg-footer-mode { font-size: .7rem; }
+    .msg-translate-popover { left: auto; right: 0; }
+    .input-container { padding: 6px 10px max(10px, var(--safe-bottom)) 10px; }
+    .chat-input-pill { gap: 4px; padding: 5px 8px; border-radius: 22px; min-height: 50px; }
+    .chat-tool-btn { width: 38px; height: 38px; }
+    textarea#prompt-input { font-size: 16px; line-height: 1.35; max-height: 34dvh; }
+    .chat-right-actions { gap: 2px; }
+    button#send-btn.chat-send-btn { width: 38px; height: 38px; }
+
+    /* Full-screen, native-feeling modals on phones */
+    .modal-overlay { align-items: stretch; justify-content: stretch; }
+    .modal-box, .modal-box.music-modal-box {
+      width: 100% !important; max-width: 100% !important;
+      height: 100dvh; max-height: 100dvh !important;
+      border-radius: 0 !important; border-left: 0; border-right: 0;
+      padding: calc(14px + env(safe-area-inset-top)) 14px calc(20px + var(--safe-bottom)) 14px !important;
+      overscroll-behavior: contain;
+    }
+    .modal-header {
+      position: sticky; top: calc(-14px - env(safe-area-inset-top)); z-index: 5;
+      background: var(--sidebar-bg); padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .model-card { padding: 12px; }
+    .music-tabs { padding-bottom: 8px; scrollbar-width: none; }
+    .music-tabs::-webkit-scrollbar { display: none; }
+    .music-grid { grid-template-columns: 1fr !important; }
+    .btn-action, .new-chat-btn, .menu-action-btn, .history-item { min-height: 44px; }
+    table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { white-space: nowrap; }
+    svg.network-diagram { height: auto; }
+    #mini-audio-bar { bottom: calc(78px + var(--safe-bottom)); }
+  }
+
+  /* Small phones */
+  @media (max-width: 430px) {
+    .model-pill { padding: 2px 6px; }
+    .model-pill select { max-width: 42vw; font-size: .8rem; padding-right: 20px; }
+    .status-badge { padding: 3px 8px; font-size: .72rem; }
+    .header-right { gap: 4px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .lang-selector-pill { font-size: .72rem; padding: 4px 7px; }
+    #btn-creative-studio { display: none; }
+    .avatar { display: none; }
+    .msg-bubble { max-width: 100%; }
+    .msg-bubble.user { max-width: 94%; }
+    .msg-action-bar .msg-btn-action { font-size: .7rem; padding: 4px 7px; }
+    .hero-welcome h2 { font-size: 1.28rem; }
+    .chip-card { border-radius: 10px; }
+  }
+
+  /* Landscape phones / short viewports */
+  @media (max-height: 520px) and (orientation: landscape) {
+    .hero-welcome { margin: 6px auto; }
+    .hero-welcome h2 { font-size: 1.15rem; }
+    .hero-welcome p, .skills-strip, .gen-ideas-row { display: none; }
+    .mode-switch-bar { margin: 6px auto; }
+    .input-container { padding-bottom: max(6px, var(--safe-bottom)); }
+    .modal-box { height: 100dvh; max-height: 100dvh !important; }
+  }
+
+  /* Touch devices: no sticky hover transforms */
+  @media (hover: none) {
+    .icon-btn:hover, .chat-tool-btn:hover, .msg-btn-action:hover, .chip-card:hover,
+    .mode-pill:hover, .skill-pill-btn:hover { transform: none; }
+  }
+
+  /* Respect reduced-motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important; scroll-behavior: auto !important;
+    }
+    .gen-shimmer { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -914,7 +1104,7 @@
   <div class="brand">
     <div class="brand-title">GAM<span>.AI</span></div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <div class="badge-nano">v1.6.4</div>
+      <div class="badge-nano">v1.7.0</div>
       <button class="mobile-close-btn" id="btn-close-sidebar" onclick="closeSidebar()" style="display:none; background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;" title="Close Sidebar">✕</button>
     </div>
   </div>
@@ -997,6 +1187,14 @@
       <div class="status-badge" id="token-meter" title="Continuous Token Safety: Never runs out of tokens" style="border-color: rgba(16,185,129,0.5); color: #10b981;">&#9679; Safe Tokens</div>
       <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
       <button class="icon-btn" id="btn-header-settings" title="Settings">⚙️</button>
+      <button class="icon-btn" id="btn-header-more" onclick="toggleHeaderMenu(event)" aria-label="More actions" aria-expanded="false" aria-controls="header-overflow-menu">⋯</button>
+      <div id="header-overflow-menu" role="menu" onclick="event.stopPropagation()">
+        <button role="menuitem" onclick="clearChatConversation(true); closeHeaderMenu();">🗑️ New Conversation</button>
+        <button role="menuitem" onclick="returnToHomeMenu(); closeHeaderMenu();">🏠 Home Menu</button>
+        <button role="menuitem" onclick="cycleTheme(); closeHeaderMenu();">🎨 Switch Theme</button>
+        <button role="menuitem" onclick="showModal('modal-settings'); closeHeaderMenu();">⚙️ Settings</button>
+        <button role="menuitem" onclick="showModal('modal-ios-install'); closeHeaderMenu();">📲 Install App</button>
+      </div>
     </div>
   </div>
 
@@ -1014,6 +1212,9 @@
         </div>
 
         <div class="quick-chips-grid" id="chips-container"></div>
+        <div class="gen-ideas-row">
+          <button type="button" class="gen-ideas-btn" onclick="generateFreshIdeas()" title="Synthesize new ideas for this mode">✨ Generate new ideas</button>
+        </div>
 
         <!-- 2026 AGENTIC SKILLS STRIP -->
         <div style="margin-top: 18px; text-align: left;">
@@ -1045,6 +1246,7 @@
       <button class="chat-tool-btn camera-btn" id="btn-lens-camera" title="Google Lens / Camera Visual Search" onclick="openGoogleLens()">
         📷
       </button>
+      <button class="chat-tool-btn enhance-btn" id="btn-enhance-prompt" title="Generatively expand your prompt" aria-label="Enhance prompt" onclick="enhanceComposerPrompt()">✨</button>
       <textarea id="prompt-input" rows="1" placeholder="Message GAM.AI..."></textarea>
       <div class="chat-right-actions">
         <button class="chat-tool-btn mic-btn" id="btn-voice-input" title="Tap to Speak (English / हिंदी / नेपाली)">
@@ -1355,7 +1557,7 @@
           <div style="font-size:1.15rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span>Vhuwon Mathers</span>
             <span style="font-size:0.72rem; background:rgba(56,189,248,0.15); color:var(--accent); padding:2px 8px; border-radius:999px; border:1px solid rgba(56,189,248,0.3);">@sudovu</span>
-            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.6.4</span>
+            <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:999px; border:1px solid rgba(16,185,129,0.3);">v1.7.0</span>
           </div>
           <div style="font-size:0.84rem; color:var(--accent); margin-top:2px; font-weight:600;">
             Creator & Lead Architect of GAM.AI
@@ -3184,7 +3386,8 @@ function restoreSavedChatIfAny() {
           sourceTag: item.meta ? item.meta.sourceTag : '💾 Local Device Engine',
           latencyMs: item.meta ? item.meta.latencyMs : '0.4',
           query: item.query || '',
-          skipRecord: true
+          skipRecord: true,
+          animate: false
         });
       }
     });
@@ -9631,6 +9834,63 @@ function generateRelatedSearchTipsHtml(q, lang) {
   return html;
 }
 
+// ── Generative Typewriter Reveal ──────────────────────────────────────
+// Progressively reveals the already-rendered HTML text nodes. The markup,
+// code cards, action buttons and event listeners stay fully intact.
+function revealGenerativeContent(contentId, opts) {
+  opts = opts || {};
+  var el = document.getElementById(contentId);
+  if (!el || opts.disabled) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var nodes = [];
+  var total = 0;
+  var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+  var n;
+  while ((n = walker.nextNode())) {
+    if (n.nodeValue && n.nodeValue.length) {
+      nodes.push({ node: n, text: n.nodeValue });
+      total += n.nodeValue.length;
+    }
+  }
+  if (total < 24 || !nodes.length) return;
+
+  for (var i = 0; i < nodes.length; i++) { nodes[i].node.nodeValue = ''; }
+  el.classList.add('gen-typing');
+
+  var totalNodes = nodes.length;
+  var nodeIdx = 0;
+  var charIdx = 0;
+  var perFrame = Math.max(2, Math.ceil(total / 110));
+  var frame = 0;
+  var scroller = document.getElementById('chat-scroll-area');
+
+  function tick() {
+    var budget = perFrame;
+    while (budget > 0 && nodeIdx < totalNodes) {
+      var item = nodes[nodeIdx];
+      var remain = item.text.length - charIdx;
+      if (remain <= 0) { nodeIdx++; charIdx = 0; continue; }
+      var take = Math.min(budget, remain);
+      charIdx += take;
+      budget -= take;
+      item.node.nodeValue = item.text.slice(0, charIdx);
+      if (charIdx >= item.text.length) { nodeIdx++; charIdx = 0; }
+    }
+    if (++frame % 6 === 0 && scroller) {
+      var nearBottom = (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight) < 240;
+      if (nearBottom) scroller.scrollTop = scroller.scrollHeight;
+    }
+    if (nodeIdx < totalNodes) {
+      requestAnimationFrame(tick);
+    } else {
+      el.classList.remove('gen-typing');
+      if (typeof opts.onDone === 'function') opts.onDone();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
 function renderAssistantMessage(opts) {
   opts = opts || {};
   var q = opts.query || lastUserQuery || '';
@@ -9749,7 +10009,11 @@ function renderAssistantMessage(opts) {
 
   stream.innerHTML += msgHtml;
   var scroller = document.getElementById('chat-scroll-area');
-  scroller.scrollTop = scroller.scrollHeight;
+  if (scroller) scroller.scrollTop = scroller.scrollHeight;
+
+  if (opts.animate !== false) {
+    revealGenerativeContent('content-' + msgId);
+  }
 
   if (opts.shouldReadAloud) {
     // Android WebView requires a delay before speechSynthesis.speak()
@@ -11879,6 +12143,7 @@ function executeSend(userText, wasSpoken) {
   var hw = document.getElementById('hero-welcome');
   if (hw) hw.style.display = 'none';
   document.getElementById('prompt-input').value = '';
+  if (typeof autoGrowComposer === 'function') autoGrowComposer();
 
   var stream = document.getElementById('messages-stream');
   GAM_CONTEXT.recordTurn('user', q, q);
@@ -11897,7 +12162,7 @@ function executeSend(userText, wasSpoken) {
     '<div class="message-wrapper" id="' + loadId + '">' +
       '<div class="msg-row">' +
         '<div class="avatar ai">G</div>' +
-        '<div class="msg-bubble ai" style="color:var(--accent);">' + processingText + '</div>' +
+        '<div class="msg-bubble ai"><div class="gen-shimmer" aria-hidden="true"><i></i><i></i><i></i></div><div style="color:var(--accent); font-size:0.8rem; margin-top:6px;">' + processingText + '</div></div>' +
       '</div>' +
     '</div>';
 
@@ -12188,10 +12453,13 @@ function executeSend(userText, wasSpoken) {
 
 document.getElementById('send-btn').addEventListener('click', function() { executeSend(); });
 document.getElementById('prompt-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
     e.preventDefault();
     executeSend();
   }
+});
+document.getElementById('prompt-input').addEventListener('input', function() {
+  if (typeof autoGrowComposer === 'function') autoGrowComposer();
 });
 
 function submitQuick(promptText) {
@@ -12619,6 +12887,216 @@ function stopAllAudio() {
   if (miniBar) miniBar.style.display = 'none';
   manageWakeLock(false);
   updateMusicUI(false);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// 2026 RESPONSIVE & GENERATIVE HELPERS
+// Mobile header menu, auto-growing composer, generative prompt expansion
+// and an on-device idea synthesizer.
+// ════════════════════════════════════════════════════════════════════════
+
+function toggleHeaderMenu(e) {
+  if (e) e.stopPropagation();
+  var menu = document.getElementById('header-overflow-menu');
+  var btn = document.getElementById('btn-header-more');
+  if (!menu) return;
+  var open = menu.classList.toggle('open');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function closeHeaderMenu() {
+  var menu = document.getElementById('header-overflow-menu');
+  var btn = document.getElementById('btn-header-more');
+  if (menu) menu.classList.remove('open');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('header-overflow-menu');
+  var btn = document.getElementById('btn-header-more');
+  if (!menu || !menu.classList.contains('open')) return;
+  if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+  closeHeaderMenu();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeHeaderMenu();
+});
+
+function autoGrowComposer() {
+  var el = document.getElementById('prompt-input');
+  if (!el) return;
+  el.style.height = 'auto';
+  var cap = Math.max(72, Math.round(window.innerHeight * 0.34));
+  el.style.height = Math.min(el.scrollHeight, cap) + 'px';
+}
+
+function setComposerValue(text) {
+  var el = document.getElementById('prompt-input');
+  if (!el) return;
+  el.value = text;
+  autoGrowComposer();
+  try {
+    el.focus();
+    el.setSelectionRange(text.length, text.length);
+  } catch (err) {}
+}
+
+function localGenerativeEnhance(base) {
+  var b = base.trim().replace(/\s+/g, ' ');
+  var isNet = /(ospf|bgp|vlan|trunk|gpon|olt|ont|ont|router|switch|subnet|firewall|cisco|huawei|mikrotik|fortigate|dhcp|dns|mtu)/i.test(b);
+  var isCode = /(code|script|function|class|bug|error|python|javascript|typescript|html|css|sql|api|regex|docker|react)/i.test(b);
+  var isStudy = currentPersona === 'student' || /(explain|teach|learn|study|student|grade|class|homework)/i.test(b);
+  var prompt = b.charAt(0).toUpperCase() + b.slice(1);
+  if (!/[.!?]$/.test(prompt)) prompt += '.';
+
+  var lines = [prompt, ''];
+  if (isNet) {
+    lines.push('Include:');
+    lines.push('- The most likely root cause and a quick sanity check');
+    lines.push('- Vendor-specific CLI for Cisco, Huawei or MikroTik where relevant');
+    lines.push('- Verification commands plus a safe rollback step');
+  } else if (isCode) {
+    lines.push('Requirements:');
+    lines.push('- Complete, runnable code with clear comments');
+    lines.push('- Key design decisions, edge cases and error handling');
+    lines.push('- A minimal test or usage example');
+  } else if (isStudy) {
+    lines.push('Explain it like this:');
+    lines.push('- Start with one simple real-world analogy');
+    lines.push('- Then walk through it step by step');
+    lines.push('- Finish with 3 quick revision points');
+  } else {
+    lines.push('Please provide:');
+    lines.push('- A concise direct answer first');
+    lines.push('- Key details as short bullets or a compact table');
+    lines.push('- One practical example or next step');
+  }
+  return lines.join('\n');
+}
+
+function enhanceComposerPrompt() {
+  var el = document.getElementById('prompt-input');
+  if (!el) return;
+  var base = el.value.trim();
+  if (!base) {
+    showToast(currentLang === 'hi' ? 'पहले एक छोटा विचार लिखें, फिर ✨ दबाएं' :
+              currentLang === 'ne' ? 'पहिले सानो विचार लेख्नुहोस्, त्यसपछि ✨ थिच्नुहोस्' :
+              'Type a quick idea first, then tap ✨');
+    el.focus();
+    return;
+  }
+  var btn = document.getElementById('btn-enhance-prompt');
+  if (btn) btn.classList.add('busy');
+  setTimeout(function() {
+    setComposerValue(localGenerativeEnhance(base));
+    if (btn) btn.classList.remove('busy');
+    showToast(currentLang === 'hi' ? '✨ प्रॉम्प्ट विस्तारित — समीक्षा करें और भेजें' :
+              currentLang === 'ne' ? '✨ प्रम्प्ट विस्तार गरियो — समीक्षा गरी पठाउनुहोस्' :
+              '✨ Prompt expanded — review it, then send');
+  }, 220);
+}
+
+var GEN_IDEA_POOLS = {
+  general: [
+    { t: '✍️ Launch Announcement', d: 'Crisp product copy with a strong hook', q: 'Write a concise launch announcement for a local-first AI assistant' },
+    { t: '✈️ Weekend Escape Plan', d: 'A realistic two-day itinerary', q: 'Plan a budget-friendly two-day weekend trip' },
+    { t: '🧠 Explain a Complex Topic', d: 'Plain-language explainer with an analogy', q: 'Explain how large language models work in plain language' },
+    { t: '📧 Polite Follow-up', d: 'Professional email that gets a reply', q: 'Draft a polite follow-up email about a pending project update' },
+    { t: '📊 Decision Matrix', d: 'Compare options and recommend one', q: 'Compare buying a laptop vs a tablet for study and work, then recommend one' },
+    { t: '🍳 15-Minute Recipe', d: 'Use common kitchen ingredients', q: 'Give me a 15-minute high-protein recipe using common ingredients' },
+    { t: '🎯 Weekly Focus Plan', d: 'Turn goals into a realistic schedule', q: 'Create a seven-day plan to improve focus and productivity' },
+    { t: '💡 Explain Like I am 12', d: 'Simple words, real examples', q: 'Explain quantum computing like I am 12 years old' }
+  ],
+  student: [
+    { t: '🪐 Solar System Basics', d: 'Planets, orbits and gravity', q: 'Explain the solar system, planets and gravity for a grade 6 student' },
+    { t: '➗ Fractions Made Easy', d: 'Visual, step-by-step practice', q: 'Teach me fractions with simple visual examples and practice questions' },
+    { t: '🌱 Photosynthesis', d: 'How plants turn light into food', q: 'Explain photosynthesis step by step for a class 7 student' },
+    { t: '⚙️ Newton’s Laws', d: 'Everyday examples of motion', q: 'Explain Newton’s three laws of motion with everyday examples' },
+    { t: '📝 Essay Outline', d: 'Structure, thesis and evidence', q: 'Help me outline a five-paragraph essay about climate change' },
+    { t: '📅 Exam Study Plan', d: 'A realistic revision timetable', q: 'Create a seven-day exam revision plan for three subjects' },
+    { t: '🔤 Vocabulary Builder', d: 'Ten useful words with sentences', q: 'Give me ten useful English vocabulary words with example sentences' },
+    { t: '🏛️ History Timeline', d: 'Key events in a clean timeline', q: 'Summarize the key events of the Industrial Revolution as a timeline' }
+  ],
+  neteng: [
+    { t: '🧭 OSPF Neighbor Stuck', d: 'Diagnose EXSTART and two-way states', q: 'An OSPF neighbor is stuck in EXSTART. Explain the likely causes and fixes with Cisco and Huawei commands' },
+    { t: '🔀 VLAN Trunk Mismatch', d: 'Native VLAN and allowed lists', q: 'Troubleshoot a VLAN trunk mismatch between Cisco and Huawei switches' },
+    { t: '💡 GPON Power Budget', d: 'Splitter loss and healthy dBm', q: 'Explain the GPON optical power budget with splitter loss and healthy dBm ranges' },
+    { t: '🌐 BGP Best Path', d: 'Walk through route selection', q: 'Walk through the BGP best-path selection process with a practical example' },
+    { t: '🛡️ FortiGate Policy', d: 'LAN to WAN policy with NAT', q: 'Generate a FortiGate LAN-to-WAN firewall policy with NAT and logging' },
+    { t: '📶 MikroTik Queue Tree', d: 'Fair PCQ bandwidth shaping', q: 'Configure a MikroTik queue tree with PCQ for fair bandwidth sharing' },
+    { t: '🔒 DHCP Snooping', d: 'Trusted ports and ARP inspection', q: 'Configure DHCP snooping and dynamic ARP inspection on a Cisco access switch' },
+    { t: '🧮 Subnet Practice', d: 'Hosts, masks and broadcast', q: 'Calculate the host range, netmask and broadcast for 192.168.10.0/27 and explain the steps' }
+  ],
+  coder: [
+    { t: '🐍 Python REST API', d: 'A minimal typed FastAPI service', q: 'Write a minimal typed FastAPI service with one endpoint and tests' },
+    { t: '🐞 Debug a Stack Trace', d: 'Root cause and a safe fix', q: 'Help me debug a Python stack trace and explain the root cause' },
+    { t: '🗄️ Optimize a SQL Query', d: 'Indexes, plans and rewrites', q: 'Show me how to optimize a slow SQL query using indexes and query plans' },
+    { t: '⚛️ React Component', d: 'Accessible, responsive and typed', q: 'Build an accessible responsive React component with TypeScript' },
+    { t: '🔍 Regex Explainer', d: 'Build and explain a pattern', q: 'Write a regex to validate email addresses and explain each part' },
+    { t: '🧪 Unit Test Suite', d: 'Edge cases and clear assertions', q: 'Write a unit test suite for a function with clear edge cases' },
+    { t: '🐳 Dockerfile Review', d: 'Smaller, safer production image', q: 'Review and improve a Dockerfile for a smaller, safer production image' },
+    { t: '📈 Algorithm Complexity', d: 'Big-O with a worked example', q: 'Explain time and space complexity with a worked algorithm example' }
+  ]
+};
+
+var GEN_IDEA_TWISTS = {
+  general: ['', ' Keep it concise, under 300 words.', ' Include a short comparison table.', ' Add one practical example.'],
+  student: ['', ' Use a simple everyday analogy.', ' Add three quick revision questions.', ' Keep it friendly for grade 6.'],
+  neteng: ['', ' Include vendor-specific CLI commands.', ' Add verification commands.', ' Note rollback and safety steps.'],
+  coder: ['', ' Include tests.', ' Explain the complexity.', ' Add error handling.']
+};
+
+function generateFreshIdeas() {
+  var c = document.getElementById('chips-container');
+  if (!c) return;
+  var persona = (currentPersona === 'neteng' || currentPersona === 'engineer') ? 'neteng' :
+                (currentPersona === 'coder') ? 'coder' :
+                (currentPersona === 'student') ? 'student' : 'general';
+  var pool = (GEN_IDEA_POOLS[persona] || GEN_IDEA_POOLS.general).slice();
+  var twists = GEN_IDEA_TWISTS[persona] || GEN_IDEA_TWISTS.general;
+  for (var i = pool.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+  }
+  var twist = twists[Math.floor(Math.random() * twists.length)];
+  var picks = pool.slice(0, 4);
+
+  c.innerHTML = '';
+  picks.forEach(function(chip, index) {
+    var div = document.createElement('div');
+    div.className = 'chip-card gen-fresh';
+    div.style.animationDelay = (index * 45) + 'ms';
+    div.innerHTML = '<div class="chip-title">' + chip.t + '</div><div class="chip-desc">' + chip.d + '</div>';
+    div.onclick = function() { submitQuick(chip.q + twist); };
+    c.appendChild(div);
+  });
+  showToast(currentLang === 'hi' ? '✨ नए विचार तैयार' : currentLang === 'ne' ? '✨ नयाँ विचार तयार' : '✨ Fresh ideas generated');
+}
+
+// Keep the composer sized correctly after rotation / keyboard changes and
+// shrink the app shell above the on-screen keyboard on iOS/Android.
+function syncViewportForKeyboard() {
+  var vv = window.visualViewport;
+  var root = document.getElementById('main-viewport');
+  if (!vv || !root) return;
+  // Pinch-zoom (not a keyboard) must never be treated as a height change.
+  if (vv.scale > 1.01) { root.style.height = ''; return; }
+  var keyboard = window.innerHeight - vv.height;
+  if (keyboard > 120) {
+    root.style.height = Math.max(240, Math.round(vv.height)) + 'px';
+  } else {
+    root.style.height = '';
+  }
+  autoGrowComposer();
+}
+
+window.addEventListener('resize', function() { syncViewportForKeyboard(); });
+window.addEventListener('orientationchange', function() {
+  setTimeout(autoGrowComposer, 180);
+});
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() { syncViewportForKeyboard(); });
+  window.visualViewport.addEventListener('scroll', function() { syncViewportForKeyboard(); });
 }
 
 // ── Boot Initialization ──────────────────────────────────────────────────

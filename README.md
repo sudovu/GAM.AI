@@ -181,5 +181,18 @@ python scripts/run_cli.py
 
 ---
 
-## 8. License
+## 8. Responsive & Generative Interface
+
+The dashboard is built mobile-first and works as a PWA on phones, tablets, foldables and desktops:
+
+- **Fluid layout**: compact header with a `⋯` overflow menu, full-screen safe-area-aware modals, 44 px touch targets and landscape-specific tuning.
+- **Composer**: auto-grows as you type, keeps 16 px text on mobile (no iOS focus zoom) and tracks the on-screen keyboard via `visualViewport`.
+- **Generative replies**: assistant answers stream in with a DOM-level typewriter reveal while loading uses a generative shimmer placeholder.
+- **Generative prompt tools**: tap `✨` in the composer to expand a rough idea into a structured, persona-aware prompt, or tap **Generate new ideas** for fresh suggestion cards.
+- **Performance**: Three.js is deferred, and the embedded web server serves gzip-compressed, ETag-validated static assets for fast first paint and repeat loads.
+- **Accessibility**: pinch-to-zoom is enabled and `prefers-reduced-motion` disables typewriter/shimmer animations.
+
+---
+
+## 9. License
 MIT License. See [LICENSE](LICENSE) for details.

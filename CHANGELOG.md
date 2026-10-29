@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.7.0] - 2026-10-29
+### Responsive & Generative Interface
+- **Adaptive Layouts Across Every Screen**:
+  - Fluid header with a compact `⋯` overflow menu on phones, so model, mode, language and generative actions always fit without horizontal overflow.
+  - Full-screen, safe-area-aware modals on mobile with sticky headers, scrollable bodies and 44 px touch targets.
+  - Reworked chat bubbles, avatars, hero, mode switcher, suggestion chips, tables and code blocks for narrow and landscape viewports.
+  - Composer now auto-grows, uses 16 px text to prevent iOS focus zoom, and respects the on-screen keyboard via `visualViewport`.
+  - Restored pinch-to-zoom accessibility by removing `maximum-scale` / `user-scalable=no`.
+- **Generative Chat Experience**:
+  - Assistant replies now stream in with a real DOM-level typewriter reveal (markup, code cards and action buttons stay intact).
+  - Generative shimmer placeholder replaces the static "Processing..." bubble.
+  - New `✨` composer action expands a rough idea into a structured, persona-aware prompt fully offline.
+  - New "Generate new ideas" synthesiser produces fresh, shuffled suggestion cards for General, Student, NetEng and Coder modes.
+- **Faster First Paint & Repeat Loads**:
+  - Three.js is now deferred, so the dashboard paints instantly on low-end phones.
+  - The embedded web server gzip-compresses HTML/JS and serves ETag-validated `304` responses.
+  - Added missing `/dashboard.html` and `/icons/*` static routes so the PWA manifest icons load correctly.
+- **Accessibility**: `prefers-reduced-motion` disables typewriter/shimmer animations, and touch devices no longer get sticky hover transforms.
+
 ## [2.5.0] - 2026-09-12
 ### Multi-Platform Production Release & Multi-Turn Contextual Persistence
 - **All-Platform Ready-to-Install Packaging**:

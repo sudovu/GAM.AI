@@ -5,6 +5,7 @@ import json
 import urllib.parse
 import urllib.request
 import os
+import gzip
 import threading
 import time
 import sys
@@ -28,6 +29,29 @@ def get_ui_dir() -> str:
     return os.path.dirname(__file__)
 
 _HTML_PATH = os.path.join(get_ui_dir(), "dashboard.html")
+
+# In-memory static asset cache. The dashboard is a single ~760 KB HTML file, so
+# caching the bytes and serving them gzip-compressed makes first load and
+# repeat loads dramatically faster on phones and low-bandwidth links.
+_STATIC_CACHE: Dict[str, Any] = {}
+_STATIC_CACHE_LOCK = threading.Lock()
+_MAX_STATIC_CACHE_ENTRIES = 32
+
+
+def _read_static(path: str) -> bytes:
+    st = os.stat(path)
+    key = (st.st_mtime_ns, st.st_size)
+    with _STATIC_CACHE_LOCK:
+        hit = _STATIC_CACHE.get(path)
+        if hit and hit[0] == key:
+            return hit[1]
+    with open(path, "rb") as f:
+        data = f.read()
+    with _STATIC_CACHE_LOCK:
+        if len(_STATIC_CACHE) >= _MAX_STATIC_CACHE_ENTRIES:
+            _STATIC_CACHE.pop(next(iter(_STATIC_CACHE)), None)
+        _STATIC_CACHE[path] = (key, data)
+    return data
 
 DOWNLOAD_STATUS: Dict[str, Dict[str, Any]] = {}
 
@@ -82,78 +106,98 @@ class GAMAIWebHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", "0")
         self.end_headers()
 
+    def _send_static(self, path: str, content_type: str, cache_control: str = "public, max-age=3600", allow_gzip: bool = True):
+        """Serve a static file with gzip, ETag validation and long-lived caching."""
+        try:
+            raw = _read_static(path)
+            st = os.stat(path)
+        except OSError:
+            self.send_error(404, "Not Found")
+            return
+
+        etag = '"%x-%x"' % (st.st_mtime_ns, st.st_size)
+        if self.headers.get("If-None-Match") == etag:
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            self.send_header("Cache-Control", cache_control)
+            self.end_headers()
+            return
+
+        accept_encoding = (self.headers.get("Accept-Encoding") or "").lower()
+        use_gzip = allow_gzip and len(raw) > 1024 and "gzip" in accept_encoding
+        body = gzip.compress(raw, compresslevel=6) if use_gzip else raw
+
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", cache_control)
+        self.send_header("ETag", etag)
+        self.send_header("Vary", "Accept-Encoding")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        if use_gzip:
+            self.send_header("Content-Encoding", "gzip")
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path in ("/", "/index.html"):
-            try:
-                with open(_HTML_PATH, "r", encoding="utf-8") as f:
-                    content = f.read()
-            except Exception:
-                content = "<h1>GAM.AI Universal Dashboard</h1>"
-
-            body = content.encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
-            self.send_header("Pragma", "no-cache")
-            self.send_header("Expires", "0")
-            self.end_headers()
-            self.wfile.write(body)
+        if parsed.path in ("/", "/index.html", "/dashboard.html"):
+            if os.path.exists(_HTML_PATH):
+                self._send_static(_HTML_PATH, "text/html; charset=utf-8", "no-cache, must-revalidate")
+            else:
+                body = b"<h1>GAM.AI Universal Dashboard</h1>"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
 
         elif parsed.path == "/manifest.json":
             manifest_path = os.path.join(get_ui_dir(), "manifest.json")
-            body = b'{"name":"GAM.AI","short_name":"GAM.AI","start_url":"/","display":"standalone"}'
             if os.path.exists(manifest_path):
-                with open(manifest_path, "rb") as f:
-                    body = f.read()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/manifest+json")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+                self._send_static(manifest_path, "application/manifest+json", "public, max-age=3600")
+            else:
+                self._send_json({"name": "GAM.AI", "short_name": "GAM.AI", "start_url": "/", "display": "standalone"})
 
         elif parsed.path == "/sw.js":
             sw_path = os.path.join(get_ui_dir(), "sw.js")
-            body = b'// GAM.AI Service Worker'
             if os.path.exists(sw_path):
-                with open(sw_path, "rb") as f:
-                    body = f.read()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/javascript")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+                self._send_static(sw_path, "application/javascript", "no-cache, must-revalidate")
+            else:
+                body = b'// GAM.AI Service Worker'
+                self.send_response(200)
+                self.send_header("Content-Type", "application/javascript")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
 
         elif parsed.path == "/three.min.js":
             three_path = os.path.join(get_ui_dir(), "three.min.js")
             if os.path.exists(three_path):
-                with open(three_path, "rb") as f:
-                    body = f.read()
-                self.send_response(200)
-                self.send_header("Content-Type", "application/javascript")
-                self.send_header("Content-Length", str(len(body)))
-                self.send_header("Access-Control-Allow-Origin", "*")
-                self.send_header("Cache-Control", "public, max-age=31536000")
-                self.end_headers()
-                self.wfile.write(body)
+                self._send_static(three_path, "application/javascript", "public, max-age=31536000, immutable")
             else:
                 self.send_response(404)
                 self.end_headers()
 
+        elif parsed.path.startswith("/icons/"):
+            rel = parsed.path[len("/icons/"):]
+            safe = os.path.normpath(rel).replace("\\", "/")
+            if safe.startswith("..") or "/" in safe or not safe:
+                self.send_error(404, "Not Found")
+                return
+            icon_path = os.path.join(get_ui_dir(), "icons", safe)
+            if os.path.exists(icon_path):
+                ctype = "image/png" if safe.lower().endswith(".png") else "application/octet-stream"
+                self._send_static(icon_path, ctype, "public, max-age=604800")
+            else:
+                self.send_error(404, "Not Found")
+
         elif parsed.path in ("/developer.jpg", "/developer.jpeg"):
             dev_path = os.path.join(get_ui_dir(), "developer.jpg")
             if os.path.exists(dev_path):
-                with open(dev_path, "rb") as f:
-                    body = f.read()
-                self.send_response(200)
-                self.send_header("Content-Type", "image/jpeg")
-                self.send_header("Content-Length", str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
+                self._send_static(dev_path, "image/jpeg", "public, max-age=86400")
             else:
-                self.send_response(404)
-                self.end_headers()
+                self.send_error(404, "Not Found")
 
         elif parsed.path == "/api/generate/proxy-image":
             query_params = urllib.parse.parse_qs(parsed.query)
