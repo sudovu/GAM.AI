@@ -946,21 +946,108 @@
   .gen-shimmer i:nth-child(3) { width: 62%; }
   @keyframes genShimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 
-  /* Mobile header overflow menu */
-  #btn-header-more { display: none; font-size: 1.2rem; line-height: 1; }
+  /* Sleek, uncluttered top header: secondary controls cleanly moved into ⋯ menu */
+  #btn-header-history,
+  #btn-header-new-chat,
+  #btn-home,
+  #btn-creative-studio,
+  #btn-theme-toggle,
+  #btn-lang-toggle,
+  #btn-header-settings,
+  #ram-meter,
+  #token-meter {
+    display: none !important;
+  }
+
+  #btn-header-more {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+  #btn-header-more:hover, #btn-header-more:focus-visible {
+    background: rgba(56, 189, 248, 0.14);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #fff;
+  }
+
   #header-overflow-menu {
-    display: none; position: absolute; top: calc(100% + 8px); right: 0; z-index: 600;
-    min-width: 210px; padding: 6px; flex-direction: column; gap: 2px;
-    background: var(--sidebar-bg); border: 1px solid var(--border); border-radius: 12px;
-    box-shadow: 0 18px 48px rgba(0,0,0,.62);
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 600;
+    width: 290px;
+    max-width: 92vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 8px 6px;
+    flex-direction: column;
+    gap: 3px;
+    background: rgba(13, 17, 23, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 14px;
+    box-shadow: 0 18px 52px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
-  #header-overflow-menu.open { display: flex; animation: genReveal .16s ease-out both; }
-  #header-overflow-menu button {
-    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px;
-    padding: 8px 12px; border: 0; border-radius: 8px; background: none;
-    color: var(--text-main); font: inherit; font-size: .88rem; text-align: left; cursor: pointer;
+  #header-overflow-menu.open {
+    display: flex;
+    animation: genReveal .16s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-  #header-overflow-menu button:hover, #header-overflow-menu button:focus-visible { background: var(--card-hover); }
+  .menu-sec-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent, #38bdf8);
+    letter-spacing: 0.08em;
+    padding: 6px 10px 2px 10px;
+    text-transform: uppercase;
+    font-family: var(--font-mono, monospace);
+  }
+  .menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.07);
+    margin: 4px 6px;
+  }
+  #header-overflow-menu button[role="menuitem"] {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-main, #f8fafc);
+    font: inherit;
+    font-size: 0.86rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  #header-overflow-menu button[role="menuitem"]:hover,
+  #header-overflow-menu button[role="menuitem"]:focus-visible {
+    background: rgba(56, 189, 248, 0.12);
+    color: #fff;
+  }
+  .menu-icon {
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    flex-shrink: 0;
+  }
 
   /* Composer generative controls */
   .chat-tool-btn.enhance-btn { color: #c084fc; background: rgba(168, 85, 247, .12); }
@@ -1513,24 +1600,77 @@
       </div>
     </div>
 
-    <!-- CLEAN RIGHT CONTROLS -->
+    <!-- CLEAN RIGHT CONTROLS: Ultra-clean header with Mode Toggle & ⋯ Overflow Menu -->
     <div class="header-right">
       <button class="status-badge mode-toggle-btn offline" id="btn-mode-toggle" onclick="toggleOnlineOfflineMode()" title="Toggle Offline / Online Mode"><span id="header-mode-icon">⚡</span> <span id="header-mode-text">Offline</span></button>
-      <button class="icon-btn" id="btn-header-history" onclick="toggleSidebarHistory()" title="Chat History (ChatGPT style)">🕒</button>
-      <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation(true)" title="New Chat (Clear Local History)">🗑️</button>
-      <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
-      <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
-      <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme (Cyberpunk / OLED / Light / Matrix)">🎨</button>
-      <div class="status-badge" id="ram-meter">● 120 MB</div>
-      <div class="status-badge" id="token-meter" title="Continuous Token Safety: Never runs out of tokens" style="border-color: rgba(16,185,129,0.5); color: #10b981;">&#9679; Safe Tokens</div>
-      <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language: English / हिंदी / नेपाली">🌐 <span id="txt-header-lang">EN</span> ▾</button>
-      <button class="icon-btn" id="btn-header-settings" title="Settings">⚙️</button>
-      <button class="icon-btn" id="btn-header-more" onclick="toggleHeaderMenu(event)" aria-label="More actions" aria-expanded="false" aria-controls="header-overflow-menu">⋯</button>
+      
+      <!-- Hidden compatibility anchors preserved for tests and programmatic hooks -->
+      <button class="icon-btn" id="btn-header-history" onclick="toggleSidebarHistory()" title="Chat History" style="display:none !important;">🕒</button>
+      <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation(true)" title="New Chat" style="display:none !important;">🗑️</button>
+      <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu" style="display:none !important;">🏠</button>
+      <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio" style="display:none !important;">✨</button>
+      <button class="icon-btn" id="btn-theme-toggle" onclick="cycleTheme()" title="Switch Theme" style="display:none !important;">🎨</button>
+      <div class="status-badge" id="ram-meter" style="display:none !important;">● 120 MB</div>
+      <div class="status-badge" id="token-meter" title="Token Safety" style="display:none !important;">&#9679; Safe Tokens</div>
+      <button class="lang-selector-pill" id="btn-lang-toggle" onclick="toggleLanguage()" title="Language" style="display:none !important;">🌐 <span id="txt-header-lang">EN</span> ▾</button>
+      <button class="icon-btn" id="btn-header-settings" title="Settings" style="display:none !important;">⚙️</button>
+
+      <!-- The 3-Dot Overflow Menu Button -->
+      <button class="icon-btn" id="btn-header-more" onclick="toggleHeaderMenu(event)" aria-label="More actions" aria-expanded="false" aria-controls="header-overflow-menu" title="More options">⋯</button>
+      
       <div id="header-overflow-menu" role="menu" onclick="event.stopPropagation()">
-        <button role="menuitem" onclick="clearChatConversation(true); closeHeaderMenu();">🗑️ New Conversation</button>
-        <button role="menuitem" onclick="returnToHomeMenu(); closeHeaderMenu();">🏠 Home Menu</button>
-        <button role="menuitem" onclick="cycleTheme(); closeHeaderMenu();">🎨 Switch Theme</button>
-        <button role="menuitem" onclick="showModal('modal-settings'); closeHeaderMenu();">⚙️ Settings</button>
+        <div class="menu-sec-label">CONVERSATION & HISTORY</div>
+        <button role="menuitem" onclick="clearChatConversation(true); closeHeaderMenu();">
+          <span class="menu-icon">➕</span>
+          <span>New Conversation</span>
+        </button>
+        <button role="menuitem" onclick="toggleSidebarHistory(); closeHeaderMenu();">
+          <span class="menu-icon">💬</span>
+          <span>Chat History & Threads</span>
+        </button>
+        <button role="menuitem" onclick="if(window.GAM_SESSIONS) GAM_SESSIONS.exportBackup(); closeHeaderMenu();">
+          <span class="menu-icon">💾</span>
+          <span>Export / Backup Chats (JSON)</span>
+        </button>
+        <button role="menuitem" onclick="if(window.GAM_SESSIONS) GAM_SESSIONS.triggerImport(); closeHeaderMenu();">
+          <span class="menu-icon">📥</span>
+          <span>Restore History Backup</span>
+        </button>
+        <input type="file" id="gamai-import-file-input" accept=".json" style="display:none;" onchange="if(window.GAM_SESSIONS) GAM_SESSIONS.handleFileImport(event)">
+
+        <div class="menu-divider"></div>
+        <div class="menu-sec-label">CREATIVE & TOOLS</div>
+        <button role="menuitem" onclick="showModal('modal-creative-studio'); closeHeaderMenu();">
+          <span class="menu-icon">✨</span>
+          <span>Creative AI Studio (Images & Video)</span>
+        </button>
+        <button role="menuitem" onclick="showModal('modal-memory-vault'); closeHeaderMenu();">
+          <span class="menu-icon">🧠</span>
+          <span>Memory Vault & Knowledge</span>
+        </button>
+        <button role="menuitem" onclick="openGoogleLens(); closeHeaderMenu();">
+          <span class="menu-icon">📷</span>
+          <span>GAM.AI Lens Visual Search</span>
+        </button>
+        <button role="menuitem" onclick="returnToHomeMenu(); closeHeaderMenu();">
+          <span class="menu-icon">🏠</span>
+          <span>Return to Home Menu</span>
+        </button>
+
+        <div class="menu-divider"></div>
+        <div class="menu-sec-label">PREFERENCES & SYSTEM</div>
+        <button role="menuitem" onclick="toggleLanguage(); closeHeaderMenu();">
+          <span class="menu-icon">🌐</span>
+          <span>Language: <strong id="txt-menu-lang">EN (English)</strong></span>
+        </button>
+        <button role="menuitem" onclick="cycleTheme(); closeHeaderMenu();">
+          <span class="menu-icon">🎨</span>
+          <span>Switch Theme (Dark / OLED / Light)</span>
+        </button>
+        <button role="menuitem" onclick="showModal('modal-settings'); closeHeaderMenu();">
+          <span class="menu-icon">⚙️</span>
+          <span>Settings & Model Setup</span>
+        </button>
       </div>
     </div>
   </div>
@@ -3431,22 +3571,151 @@ var GAM_OFFLINE_LEARNED_VAULT = {
 var GAM_SESSIONS = {
   STORAGE_SESSIONS_KEY: 'gam_ai_chat_sessions_v1',
   STORAGE_ACTIVE_KEY: 'gam_ai_active_session_id_v1',
+  IDB_NAME: 'gam_ai_persistence_db',
+  IDB_STORE: 'chat_sessions',
   sessions: [],
   activeId: null,
+  initialized: false,
+
+  openIDB: function(callback) {
+    if (typeof indexedDB === 'undefined') return;
+    try {
+      var req = indexedDB.open(this.IDB_NAME, 1);
+      req.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('chat_sessions')) {
+          db.createObjectStore('chat_sessions', { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = function(e) {
+        if (callback) callback(e.target.result);
+      };
+      req.onerror = function() {};
+    } catch(e) {}
+  },
+
+  backupToIndexedDB: function() {
+    var sessions = this.sessions;
+    this.openIDB(function(db) {
+      try {
+        var tx = db.transaction('chat_sessions', 'readwrite');
+        var store = tx.objectStore('chat_sessions');
+        sessions.forEach(function(s) {
+          try { store.put(s); } catch(err) {}
+        });
+      } catch(e) {}
+    });
+  },
+
+  restoreFromIndexedDB: function(callback) {
+    var self = this;
+    this.openIDB(function(db) {
+      try {
+        var tx = db.transaction('chat_sessions', 'readonly');
+        var store = tx.objectStore('chat_sessions');
+        var req = store.getAll();
+        req.onsuccess = function(e) {
+          var items = e.target.result;
+          if (Array.isArray(items) && items.length > 0 && self.sessions.length === 0) {
+            items.sort(function(a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+            self.sessions = items;
+            self.activeId = items[0].id;
+            self.save();
+            self.renderHistory();
+            var act = self.getActiveSession();
+            if (act && act.turns && act.turns.length > 0) {
+              self.switchSession(act.id, true);
+            }
+          }
+          if (callback) callback();
+        };
+      } catch(e) {}
+    });
+  },
+
+  migrateLegacyHistory: function() {
+    try {
+      var legacyKeys = ['gam_ai_chat_history_v3', 'gam_ai_chat_history_v2', 'gam_ai_chat_history'];
+      var foundTurns = [];
+      for (var k = 0; k < legacyKeys.length; k++) {
+        var raw = localStorage.getItem(legacyKeys[k]);
+        if (raw) {
+          try {
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              foundTurns = parsed;
+              break;
+            }
+          } catch(e) {}
+        }
+      }
+      if (foundTurns && foundTurns.length > 0) {
+        var firstUser = foundTurns.find(function(t) { return t.role === 'user'; });
+        var title = (firstUser && (firstUser.text || firstUser.query)) ? 
+          (firstUser.text || firstUser.query).substring(0, 35) : 'Preserved Conversation';
+        var migratedSess = {
+          id: 'sess_migrated_' + Date.now(),
+          title: title,
+          createdAt: Date.now() - 3600000,
+          updatedAt: Date.now(),
+          turns: foundTurns.map(function(t) {
+            return {
+              role: t.role || 'user',
+              text: t.text || t.query || t.content || '',
+              timestamp: t.timestamp || Date.now(),
+              meta: t.meta || {}
+            };
+          })
+        };
+        this.sessions.push(migratedSess);
+        this.activeId = migratedSess.id;
+        this.save();
+      }
+    } catch(e) {}
+  },
 
   init: function() {
+    if (this.initialized) return;
+    this.initialized = true;
+
     try {
       var raw = localStorage.getItem(this.STORAGE_SESSIONS_KEY);
       this.sessions = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(this.sessions)) this.sessions = [];
-      this.activeId = localStorage.getItem(this.STORAGE_ACTIVE_KEY) || (this.sessions.length > 0 ? this.sessions[0].id : null);
+      this.activeId = localStorage.getItem(this.STORAGE_ACTIVE_KEY) || null;
     } catch(e) {
       this.sessions = [];
       this.activeId = null;
     }
-    if (!this.activeId || !this.getSession(this.activeId)) {
-      this.createSession('New Conversation');
+
+    // 1. Check legacy storage migration if no sessions loaded
+    if (this.sessions.length === 0) {
+      this.migrateLegacyHistory();
     }
+
+    // 2. Check IndexedDB shadow backup if localStorage was cleared
+    if (this.sessions.length === 0 && typeof indexedDB !== 'undefined') {
+      this.restoreFromIndexedDB();
+    }
+
+    // 3. Ensure an active session ID exists
+    if (!this.activeId || !this.getSession(this.activeId)) {
+      if (this.sessions.length > 0) {
+        this.activeId = this.sessions[0].id;
+      } else {
+        this.createSession('New Conversation');
+      }
+    }
+
+    // 4. PRESERVE & RESTORE ACTIVE CONVERSATION IMMEDIATELY ON LOAD
+    var act = this.getActiveSession();
+    if (act && act.turns && act.turns.length > 0) {
+      this.switchSession(act.id, true);
+    } else {
+      var hw = document.getElementById('hero-welcome');
+      if (hw) hw.style.display = 'block';
+    }
+
     this.renderHistory();
   },
 
@@ -3474,10 +3743,12 @@ var GAM_SESSIONS = {
   },
 
   getActiveSession: function() {
+    if (!this.initialized) this.init();
     return this.getSession(this.activeId) || this.createSession();
   },
 
   addTurn: function(role, text, meta) {
+    if (!this.initialized) this.init();
     var sess = this.getActiveSession();
     sess.turns.push({
       role: role,
@@ -3557,7 +3828,7 @@ var GAM_SESSIONS = {
     this.renderHistory();
   },
 
-  switchSession: function(id) {
+  switchSession: function(id, skipCloseSidebar) {
     var sess = this.getSession(id);
     if (!sess) return;
     this.activeId = id;
@@ -3617,7 +3888,9 @@ var GAM_SESSIONS = {
 
     var scroller = document.getElementById('chat-scroll-area');
     if (scroller) scroller.scrollTop = scroller.scrollHeight;
-    closeSidebar();
+    if (!skipCloseSidebar) {
+      closeSidebar();
+    }
   },
 
   formatRelativeTime: function(ts) {
@@ -3665,18 +3938,102 @@ var GAM_SESSIONS = {
     c.innerHTML = html;
   },
 
+  exportBackup: function() {
+    try {
+      var backupData = {
+        app: 'GAM.AI',
+        version: '1.7.2',
+        exportedAt: new Date().toISOString(),
+        sessions: this.sessions
+      };
+      var jsonStr = JSON.stringify(backupData, null, 2);
+      var blob = new Blob([jsonStr], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'gam_ai_chats_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function() {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 400);
+    } catch(e) {
+      alert('Could not export backup: ' + e.message);
+    }
+  },
+
+  triggerImport: function() {
+    var inp = document.getElementById('gamai-import-file-input');
+    if (inp) {
+      inp.value = '';
+      inp.click();
+    }
+  },
+
+  handleFileImport: function(e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    var self = this;
+    reader.onload = function(evt) {
+      try {
+        var parsed = JSON.parse(evt.target.result);
+        var imported = parsed.sessions || (Array.isArray(parsed) ? parsed : null);
+        if (Array.isArray(imported) && imported.length > 0) {
+          var count = 0;
+          imported.forEach(function(s) {
+            if (s && s.id && s.turns && !self.getSession(s.id)) {
+              self.sessions.push(s);
+              count++;
+            }
+          });
+          self.save();
+          self.renderHistory();
+          if (self.sessions.length > 0) {
+            self.switchSession(self.sessions[0].id);
+          }
+          alert('Successfully restored ' + count + ' conversation thread(s)!');
+        } else {
+          alert('No valid conversation sessions found in file.');
+        }
+      } catch(err) {
+        alert('Invalid JSON backup file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  },
+
   save: function() {
     try {
-      localStorage.setItem(this.STORAGE_SESSIONS_KEY, JSON.stringify(this.sessions.slice(0, 50)));
+      localStorage.setItem(this.STORAGE_SESSIONS_KEY, JSON.stringify(this.sessions.slice(0, 60)));
       if (this.activeId) {
         localStorage.setItem(this.STORAGE_ACTIVE_KEY, this.activeId);
       }
+      this.backupToIndexedDB();
     } catch(e) {}
   }
 };
 
 if (typeof window !== 'undefined') {
   window.GAM_SESSIONS = GAM_SESSIONS;
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        GAM_SESSIONS.init();
+        if (typeof GAM_CONTEXT !== 'undefined') GAM_CONTEXT.init();
+      });
+    } else {
+      setTimeout(function() {
+        GAM_SESSIONS.init();
+        if (typeof GAM_CONTEXT !== 'undefined') GAM_CONTEXT.init();
+      }, 0);
+    }
+    window.addEventListener('load', function() {
+      GAM_SESSIONS.init();
+      if (typeof GAM_CONTEXT !== 'undefined') GAM_CONTEXT.init();
+    });
+  }
 }
 
 function toggleSidebarHistory() {
@@ -9892,6 +10249,10 @@ function setLanguage(lang) {
   if (el = document.getElementById('hero-subtitle')) el.innerText = t.heroSub;
   if (el = document.getElementById('prompt-input')) el.placeholder = t.placeholder;
   if (el = document.getElementById('txt-header-lang')) el.innerText = currentLang.toUpperCase();
+  if (el = document.getElementById('txt-menu-lang')) {
+    var lMap = { en: 'EN (English)', hi: 'HI (हिंदी)', ne: 'NE (नेपाली)' };
+    el.innerText = lMap[currentLang] || currentLang.toUpperCase();
+  }
   
   // Highlight active language card in Settings
   ['en', 'hi', 'ne'].forEach(function(l) {
@@ -10076,8 +10437,7 @@ function hideModal(id) {
 }
 
 document.getElementById('btn-open-music').addEventListener('click', function() { closeSidebar(); showModal('modal-music'); });
-document.getElementById('btn-open-models').addEventListener('click', function() { closeSidebar(); showModal('modal-models'); loadCatalog();
-if (typeof GAM_SESSIONS !== 'undefined') { GAM_SESSIONS.init(); } });
+document.getElementById('btn-open-models').addEventListener('click', function() { closeSidebar(); showModal('modal-models'); loadCatalog(); });
 document.getElementById('btn-open-tools').addEventListener('click', function() { closeSidebar(); showModal('modal-tools'); });
 document.getElementById('btn-open-settings').addEventListener('click', function() { closeSidebar(); showModal('modal-settings'); });
 document.getElementById('btn-header-settings').addEventListener('click', function() { showModal('modal-settings'); });
