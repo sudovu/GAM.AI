@@ -2953,6 +2953,7 @@ var GAM_CONTEXT = {
   },
 
   updateTokenMeter: function() {
+    if (typeof document === 'undefined') return;
     var el = document.getElementById('token-meter');
     if (!el) return;
     var turns = this.history.filter(function(t){ return t.role === 'user'; }).length;
