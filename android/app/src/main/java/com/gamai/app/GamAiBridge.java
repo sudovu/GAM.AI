@@ -60,6 +60,27 @@ public class GamAiBridge {
     }
 
     @JavascriptInterface
+    public void copyToClipboard(final String text) {
+        if (text == null) return;
+        if (context instanceof MainActivity) {
+            ((MainActivity) context).runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                        if (clipboard != null) {
+                            android.content.ClipData clip = android.content.ClipData.newPlainText("GAM.AI Code", text);
+                            clipboard.setPrimaryClip(clip);
+                        }
+                    } catch (Exception e) {
+                        android.util.Log.e("GAM_AI_CLIPBOARD", "copyToClipboard failed", e);
+                    }
+                }
+            });
+        }
+    }
+
+    @JavascriptInterface
     public void requestPermissions() {
         if (context instanceof MainActivity) {
             ((MainActivity) context).runOnUiThread(new Runnable() {
