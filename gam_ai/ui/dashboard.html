@@ -1095,6 +1095,337 @@
     .gen-shimmer { display: none; }
   }
 
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     2026 CHATGPT SESSIONS, CLAUDE ARTIFACTS & DEEPSEEK THINKING STYLES
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* Chat History in Sidebar (ChatGPT style) */
+  .chat-history-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 4px;
+    margin-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+  }
+  .chat-history-group-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 10px 10px 4px 10px;
+  }
+  .chat-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    margin: 2px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-main);
+    transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    border: 1px solid transparent;
+  }
+  .chat-history-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.08);
+  }
+  .chat-history-item.active {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.35);
+    color: #38bdf8;
+    font-weight: 600;
+  }
+  .chat-history-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  .chat-history-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .chat-history-actions {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+  }
+  .chat-history-item:hover .chat-history-actions,
+  .chat-history-item.active .chat-history-actions {
+    display: flex;
+  }
+  .chat-hist-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    line-height: 1;
+  }
+  .chat-hist-btn:hover {
+    color: var(--text-main);
+    background: rgba(255,255,255,0.15);
+  }
+
+  /* User Message Actions (Edit & Copy) */
+  .msg-row.user .msg-bubble.user {
+    position: relative;
+    padding-bottom: 22px;
+  }
+  .user-msg-actions {
+    position: absolute;
+    bottom: 3px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+  }
+  .msg-row.user:hover .user-msg-actions {
+    opacity: 1;
+  }
+  .user-act-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    font-size: 0.76rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+  .user-act-btn:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* DeepSeek R1 Thinking Process Accordion */
+  .deepseek-thought-box {
+    margin: 10px 0 16px 0;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 10px;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+    transition: border-color 0.2s ease;
+  }
+  .deepseek-thought-box:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+  }
+  .thought-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    cursor: pointer;
+    background: rgba(56, 189, 248, 0.08);
+    user-select: none;
+    transition: background 0.18s;
+  }
+  .thought-header:hover {
+    background: rgba(56, 189, 248, 0.14);
+  }
+  .thought-title-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #38bdf8;
+  }
+  .thought-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+    animation: thoughtPulse 1.8s infinite ease-in-out;
+  }
+  @keyframes thoughtPulse {
+    0%, 100% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.25); opacity: 1; }
+  }
+  .thought-toggle-icon {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .thought-body {
+    padding: 12px 14px;
+    font-size: 0.84rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+    font-style: italic;
+    border-top: 1px dashed rgba(56, 189, 248, 0.2);
+    display: block;
+  }
+  .deepseek-thought-box.collapsed .thought-body {
+    display: none;
+  }
+  .deepseek-thought-box.collapsed .thought-toggle-icon {
+    transform: rotate(-90deg);
+  }
+
+  /* Claude Code Artifacts & Interactive Sandbox */
+  .claude-code-artifact {
+    margin: 14px 0;
+    border-radius: 10px;
+    background: #0d1117;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .artifact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: #161b22;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .artifact-lang-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #58a6ff;
+  }
+  .artifact-line-count {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 400;
+    text-transform: none;
+  }
+  .artifact-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .artifact-action-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e6edf3;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+  }
+  .artifact-action-btn:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.22);
+    color: #fff;
+  }
+  .artifact-action-btn.btn-preview {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+  }
+  .artifact-action-btn.btn-preview:hover {
+    background: rgba(56, 189, 248, 0.32);
+    color: #fff;
+  }
+  .claude-code-artifact pre {
+    margin: 0;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: #e6edf3;
+  }
+  .claude-code-artifact code {
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  .artifact-live-frame {
+    display: none;
+    width: 100%;
+    min-height: 280px;
+    border: none;
+    background: #ffffff;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .claude-code-artifact.preview-active .artifact-live-frame {
+    display: block;
+  }
+  .claude-code-artifact.preview-active pre {
+    display: none;
+  }
+
+  /* Continue Generating Button (ChatGPT style) */
+  .btn-continue-generating {
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #38bdf8;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    transition: all 0.18s;
+  }
+  .btn-continue-generating:hover {
+    background: rgba(56, 189, 248, 0.25);
+    color: #fff;
+  }
+
+  /* Inline User Edit Prompt Box */
+  .inline-user-edit-box {
+    margin: 6px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+  }
+  .inline-user-edit-textarea {
+    width: 100%;
+    min-height: 60px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: #fff;
+    padding: 6px 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .inline-user-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
 </style>
 </head>
 <body>
@@ -1114,15 +1445,25 @@
     <span id="txt-new-chat">New Conversation</span>
   </button>
 
-  <div class="nav-section-title" id="txt-quick-topics">Quick Topics</div>
-  <div class="history-list">
-    <div class="history-item" onclick="submitQuick('Draw a network diagram of OSPF core routers with Huawei OLT'); closeSidebar();">Network Topology Diagram</div>
-    <div class="history-item" onclick="submitQuick('FortiGate firewall policy LAN to WAN'); closeSidebar();">FortiGate LAN to WAN</div>
-    <div class="history-item" onclick="submitQuick('Calculate subnet 192.168.10.0/27'); closeSidebar();">Subnet 192.168.10.0/27</div>
-    <div class="history-item" onclick="submitQuick('Generate Huawei GPON OLT service-port config'); closeSidebar();">Huawei OLT Service-Port</div>
-    <div class="history-item" onclick="submitQuick('नमस्ते, OSPF रूटिङ कसरी काम गर्छ?'); closeSidebar();">OSPF सम्बन्धी जानकारी (नेपाली)</div>
-    <div class="history-item" onclick="submitQuick('Explain gravity and solar system for grade 6 student'); closeSidebar();">Solar System (Student Mode)</div>
+  <div class="nav-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+    <span id="txt-chat-history">💬 Chat History</span>
+    <button onclick="clearAllChatHistory()" style="background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer;" title="Clear All History">Clear All</button>
   </div>
+  <div id="chat-history-container" class="chat-history-section">
+    <!-- Populated dynamically by GAM_SESSIONS -->
+  </div>
+
+  <details style="margin: 4px 6px 10px 6px; font-size:0.8rem; color:var(--text-muted);">
+    <summary style="cursor:pointer; font-weight:600; padding:4px 0; color:var(--text-muted);">💡 Quick Prompts & Shortcuts</summary>
+    <div class="history-list" style="margin-top:6px; max-height:160px; overflow-y:auto;">
+      <div class="history-item" onclick="submitQuick('From Accessing olt to management ip & everything, i am new to this'); closeSidebar();">🔌 OLT & Management IP Guide</div>
+      <div class="history-item" onclick="submitQuick('Draw a network diagram of OSPF core routers with Huawei OLT'); closeSidebar();">Network Topology Diagram</div>
+      <div class="history-item" onclick="submitQuick('FortiGate firewall policy LAN to WAN'); closeSidebar();">FortiGate LAN to WAN</div>
+      <div class="history-item" onclick="submitQuick('Calculate subnet 192.168.10.0/27'); closeSidebar();">Subnet 192.168.10.0/27</div>
+      <div class="history-item" onclick="submitQuick('Generate Huawei GPON OLT service-port config'); closeSidebar();">Huawei OLT Service-Port</div>
+      <div class="history-item" onclick="submitQuick('नमस्ते, OSPF रूटिङ कसरी काम गर्छ?'); closeSidebar();">OSPF सम्बन्धी जानकारी (नेपाली)</div>
+    </div>
+  </details>
 
   <div class="sidebar-footer">
     <button class="menu-action-btn" id="btn-open-creative" onclick="showModal('modal-creative-studio')">
@@ -1175,6 +1516,7 @@
     <!-- CLEAN RIGHT CONTROLS -->
     <div class="header-right">
       <button class="status-badge mode-toggle-btn offline" id="btn-mode-toggle" onclick="toggleOnlineOfflineMode()" title="Toggle Offline / Online Mode"><span id="header-mode-icon">⚡</span> <span id="header-mode-text">Offline</span></button>
+      <button class="icon-btn" id="btn-header-history" onclick="toggleSidebarHistory()" title="Chat History (ChatGPT style)">🕒</button>
       <button class="icon-btn" id="btn-header-new-chat" onclick="clearChatConversation(true)" title="New Chat (Clear Local History)">🗑️</button>
       <button class="icon-btn" id="btn-home" onclick="returnToHomeMenu()" title="Return to Home Menu">🏠</button>
       <button class="icon-btn" id="btn-creative-studio" onclick="showModal('modal-creative-studio')" title="Creative AI Studio (Picture, Video, Audio, Prompts)">✨</button>
@@ -2917,6 +3259,275 @@ var GAM_OFFLINE_LEARNED_VAULT = {
 // FULL-FIDELITY CONVERSATION CONTEXT & DETAIL MEMORY ENGINE (GAM_CONTEXT v3)
 // Remembers every turn, entity, code snippet, and question regardless of size!
 // ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
+// 2026 CHATGPT-STYLE MULTI-SESSION CHAT HISTORY & CONTINUATION ENGINE
+// ════════════════════════════════════════════════════════════════════════════
+var GAM_SESSIONS = {
+  STORAGE_SESSIONS_KEY: 'gam_ai_chat_sessions_v1',
+  STORAGE_ACTIVE_KEY: 'gam_ai_active_session_id_v1',
+  sessions: [],
+  activeId: null,
+
+  init: function() {
+    try {
+      var raw = localStorage.getItem(this.STORAGE_SESSIONS_KEY);
+      this.sessions = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(this.sessions)) this.sessions = [];
+      this.activeId = localStorage.getItem(this.STORAGE_ACTIVE_KEY) || (this.sessions.length > 0 ? this.sessions[0].id : null);
+    } catch(e) {
+      this.sessions = [];
+      this.activeId = null;
+    }
+    if (!this.activeId || !this.getSession(this.activeId)) {
+      this.createSession('New Conversation');
+    }
+    this.renderHistory();
+  },
+
+  createSession: function(firstTitle) {
+    var id = 'sess_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    var newSess = {
+      id: id,
+      title: firstTitle || 'New Conversation',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      turns: []
+    };
+    this.sessions.unshift(newSess);
+    this.activeId = id;
+    this.save();
+    this.renderHistory();
+    return newSess;
+  },
+
+  getSession: function(id) {
+    for (var i = 0; i < this.sessions.length; i++) {
+      if (this.sessions[i].id === id) return this.sessions[i];
+    }
+    return null;
+  },
+
+  getActiveSession: function() {
+    return this.getSession(this.activeId) || this.createSession();
+  },
+
+  addTurn: function(role, text, meta) {
+    var sess = this.getActiveSession();
+    sess.turns.push({
+      role: role,
+      text: text,
+      timestamp: Date.now(),
+      meta: meta || {}
+    });
+    sess.updatedAt = Date.now();
+
+    // Auto-update title if it's the first user turn or default
+    if (role === 'user' && (sess.title === 'New Conversation' || sess.turns.filter(function(t){ return t.role === 'user'; }).length === 1)) {
+      var clean = text.replace(/^[#\s*`"']+|[#\s*`"']+$/g, '').trim();
+      sess.title = clean.length > 38 ? clean.substring(0, 35) + '...' : clean;
+    }
+    this.save();
+    this.renderHistory();
+  },
+
+  renameSession: function(id, newTitle) {
+    var sess = this.getSession(id);
+    if (sess && newTitle && newTitle.trim()) {
+      sess.title = newTitle.trim();
+      this.save();
+      this.renderHistory();
+      return true;
+    }
+    return false;
+  },
+
+  promptRename: function(id, e) {
+    if (e) e.stopPropagation();
+    var sess = this.getSession(id);
+    if (!sess) return;
+    var name = prompt('Rename conversation:', sess.title);
+    if (name) this.renameSession(id, name);
+  },
+
+  deleteSession: function(id, e) {
+    if (e) e.stopPropagation();
+    if (!confirm('Delete this conversation thread?')) return;
+    this.sessions = this.sessions.filter(function(s) { return s.id !== id; });
+    if (this.activeId === id) {
+      this.activeId = this.sessions.length > 0 ? this.sessions[0].id : null;
+      if (this.activeId) {
+        this.switchSession(this.activeId);
+      } else {
+        this.newChat();
+      }
+    }
+    this.save();
+    this.renderHistory();
+  },
+
+  clearAll: function() {
+    if (!confirm('Clear all conversation history? This cannot be undone.')) return;
+    this.sessions = [];
+    this.activeId = null;
+    this.save();
+    this.newChat();
+  },
+
+  newChat: function() {
+    var sess = this.createSession('New Conversation');
+    this.activeId = sess.id;
+    if (typeof GAM_CONTEXT !== 'undefined') {
+      GAM_CONTEXT.history = [];
+      GAM_CONTEXT.lastEntity = '';
+      GAM_CONTEXT.activeTopic = null;
+      GAM_CONTEXT.updateTokenMeter();
+    }
+    var stream = document.getElementById('messages-stream');
+    if (stream) stream.innerHTML = '';
+    var hw = document.getElementById('hero-welcome');
+    if (hw) hw.style.display = 'block';
+    var inp = document.getElementById('prompt-input');
+    if (inp) { inp.value = ''; inp.focus(); }
+    this.renderHistory();
+  },
+
+  switchSession: function(id) {
+    var sess = this.getSession(id);
+    if (!sess) return;
+    this.activeId = id;
+    this.save();
+    this.renderHistory();
+
+    // Reconstruct message stream
+    var stream = document.getElementById('messages-stream');
+    if (!stream) return;
+    stream.innerHTML = '';
+
+    var hw = document.getElementById('hero-welcome');
+    if (hw) {
+      hw.style.display = (sess.turns.length === 0) ? 'block' : 'none';
+    }
+
+    // Restore GAM_CONTEXT history for continuity
+    if (typeof GAM_CONTEXT !== 'undefined') {
+      GAM_CONTEXT.history = [];
+    }
+
+    for (var i = 0; i < sess.turns.length; i++) {
+      var turn = sess.turns[i];
+      if (turn.role === 'user') {
+        var userMsgId = 'usr-msg-' + i + '-' + turn.timestamp;
+        stream.innerHTML += 
+          '<div class="message-wrapper user-wrapper" id="' + userMsgId + '" data-query="' + escapeHtml(turn.text) + '">' +
+            '<div class="msg-row user">' +
+              '<div class="msg-bubble user">' +
+                '<div class="msg-text">' + escapeHtml(turn.text) + '</div>' +
+                '<div class="user-msg-actions">' +
+                  '<button class="user-act-btn" onclick="editUserPrompt(\'' + userMsgId + '\')" title="Edit query">✏️</button>' +
+                  '<button class="user-act-btn" onclick="copyUserPrompt(\'' + userMsgId + '\')" title="Copy text">📋</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        if (typeof GAM_CONTEXT !== 'undefined') {
+          GAM_CONTEXT.recordTurn('user', turn.text, turn.text);
+        }
+      } else {
+        renderAssistantMessage({
+          text: turn.text,
+          isOffline: turn.meta ? turn.meta.isOffline : true,
+          modelName: turn.meta ? turn.meta.modelName : activeModelName,
+          sourceTag: turn.meta ? turn.meta.sourceTag : '💾 Stored Chat',
+          latencyMs: turn.meta ? turn.meta.latencyMs : '0.1',
+          isNotFound: false,
+          animate: false,
+          skipRecord: true
+        });
+        if (typeof GAM_CONTEXT !== 'undefined') {
+          GAM_CONTEXT.recordTurn('assistant', turn.text, turn.meta ? turn.meta.query : '');
+        }
+      }
+    }
+
+    var scroller = document.getElementById('chat-scroll-area');
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    closeSidebar();
+  },
+
+  formatRelativeTime: function(ts) {
+    if (!ts) return '';
+    var diff = Date.now() - ts;
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    var days = Math.floor(hrs / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return days + 'd ago';
+    return new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  },
+
+  renderHistory: function() {
+    var c = document.getElementById('chat-history-container');
+    if (!c) return;
+    if (this.sessions.length === 0) {
+      c.innerHTML = '<div style="padding:12px; font-size:0.82rem; color:var(--text-muted); text-align:center;">No previous chats yet.<br>Start chatting to build your history!</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < this.sessions.length; i++) {
+      var s = this.sessions[i];
+      var isActive = (s.id === this.activeId);
+      var timeStr = this.formatRelativeTime(s.updatedAt || s.createdAt);
+
+      html += 
+        '<div class="chat-history-item ' + (isActive ? 'active' : '') + '" onclick="GAM_SESSIONS.switchSession(\'' + s.id + '\')">' +
+          '<div class="chat-history-title-wrap">' +
+            '<span>💬</span>' +
+            '<span class="chat-history-title" title="' + escapeHtml(s.title) + '">' + escapeHtml(s.title) + '</span>' +
+          '</div>' +
+          '<div style="font-size:0.7rem; color:var(--text-muted); margin-left:auto; padding-right:4px;">' + timeStr + '</div>' +
+          '<div class="chat-history-actions">' +
+            '<button class="chat-hist-btn" onclick="GAM_SESSIONS.promptRename(\'' + s.id + '\', event)" title="Rename">✏️</button>' +
+            '<button class="chat-hist-btn" onclick="GAM_SESSIONS.deleteSession(\'' + s.id + '\', event)" title="Delete">🗑️</button>' +
+          '</div>' +
+        '</div>';
+    }
+
+    c.innerHTML = html;
+  },
+
+  save: function() {
+    try {
+      localStorage.setItem(this.STORAGE_SESSIONS_KEY, JSON.stringify(this.sessions.slice(0, 50)));
+      if (this.activeId) {
+        localStorage.setItem(this.STORAGE_ACTIVE_KEY, this.activeId);
+      }
+    } catch(e) {}
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.GAM_SESSIONS = GAM_SESSIONS;
+}
+
+function toggleSidebarHistory() {
+  toggleSidebar();
+  var c = document.getElementById('chat-history-container');
+  if (c) c.scrollTop = 0;
+}
+
+function clearAllChatHistory() {
+  GAM_SESSIONS.clearAll();
+}
+
+function clearChatConversation(isNew) {
+  GAM_SESSIONS.newChat();
+}
+
+
 var GAM_CONTEXT = {
   STORAGE_HISTORY_KEY: 'gam_ai_chat_history_v3',
   STORAGE_STATE_KEY: 'gam_ai_context_state_v3',
@@ -3196,9 +3807,31 @@ function isFollowUpRequest(text) {
   if (!text || typeof text !== 'string') return false;
   var t = text.toLowerCase().trim();
 
-  // 1. Direct regex patterns for referential questions & follow-ups
+  // If query contains strong standalone domain terms, it is NOT a pure referential follow-up:
+  var domainTerms = /(olt|ont|gpon|epon|ftth|zte|huawei|cisco|mikrotik|fortigate|vlan|subnet|management\s+ip|console|baud\s*rate|pu?tty|ssh|telnet|ospf|bgp|dhcp|dns|router|switch|fiber|optical|attenuation|dbm|loss of signal|crimping|cat6|binary search|quick\s*sort|fibonacci|dijkstra|matrix|port scanner|ping sweep|python|javascript|sql|react|html|css|physics|chemistry|biology|photosynthesis|gravity|relativity|quantum|speed of|what is|how to|setup|configure|install|guide)/i;
+  if (domainTerms.test(t)) {
+    // Only allow follow-up if it explicitly asks to modify/continue previous topic
+    var explicitAction = /^(code\s+it|code\s+this|simplify|in[\s\-]depth|deep\s*dive|pros?\s+(?:and|&)\s+cons?|what\s+did\s+i\s+ask|summarize|continue|next\s+step)$/i;
+    if (!explicitAction.test(t)) {
+      return false;
+    }
+  }
+
+  // If user prompt has >= 4 words and is NOT a short referential question, do not hijack it:
+  var words = t.replace(/[^\w\s]/g, '').trim().split(/\s+/);
+  if (words.length >= 4 && !/^(explain\s+(?:this|that|it)|what\s+does\s+(?:this|that|it)\s+mean|tell\s+me\s+more\s+about\s+(?:this|that|it)|can\s+you\s+simplify\s+(?:this|that|it)|code\s+(?:this|that|it)\s+in)/i.test(t)) {
+    return false;
+  }
+
+  // Short queries under active context (1 to 3 words)
+  if (typeof GAM_CONTEXT !== 'undefined' && GAM_CONTEXT.history && GAM_CONTEXT.history.length > 0) {
+    if (words.length <= 3 && !/^(hi|hello|namaste|hey|help|bye)$/i.test(t)) {
+      return true;
+    }
+  }
+
+  // Explicit follow-up actions
   var followUpRegexes = [
-    /\b(it|this|that|these|those|them|its|the code|the script|the function|the query|the algorithm|the method|the above|previous|earlier|the second|the first)\b/i,
     /\b(in[\s\-]depth|deep\s*dive|detailed|details?|go\s*deeper|elaborate|further|expand)\b/i,
     /\b(simplify|simply|simpler|simple|for\s+a\s+beginner|eli5|plain\s+english|easy\s+terms)\b/i,
     /\b(why|why\s+so|how\s+so|how\s+come|what\s+does\s+that\s+mean|tell\s+me\s+more|give\s+(?:an?\s+)?example|examples?)\b/i,
@@ -3213,27 +3846,6 @@ function isFollowUpRequest(text) {
 
   for (var r = 0; r < followUpRegexes.length; r++) {
     if (followUpRegexes[r].test(t)) return true;
-  }
-
-  // Standalone check
-  var standaloneTopics = [
-    'binary search', 'quick sort', 'quicksort', 'bubble sort', 'merge sort',
-    'fibonacci', 'prime', 'palindrome', 'factorial', 'dijkstra', 'matrix',
-    'port scanner', 'ping sweep', 'html code', 'css code', 'sql query',
-    'subnet', 'ospf', 'bgp', 'vlan', 'trunk', 'gpon', 'olt', 'fortigate', 'mikrotik',
-    'photosynthesis', 'gravity', 'quantum', 'dna', 'mitochondria',
-    'tell me a joke', 'tell me a riddle', 'tell me a fact', 'tell me a quote'
-  ];
-  for (var s = 0; s < standaloneTopics.length; s++) {
-    if (t === standaloneTopics[s]) return false;
-  }
-
-  // Short queries under active context (1 to 3 words)
-  if (GAM_CONTEXT.history.length > 0) {
-    var words = t.replace(/[^\w\s]/g, '').trim().split(/\s+/);
-    if (words.length <= 3 && !/^(hi|hello|namaste|hey|help|bye)$/i.test(t)) {
-      return true;
-    }
   }
 
   return false;
@@ -3382,14 +3994,8 @@ function resolveFollowUpAndContext(promptText, lang) {
   }
 
   // 8. GENERAL CONTEXTUAL FALLBACK
-  return {
-    found: true,
-    title: 'Contextual Follow-up: ' + subject,
-    response: '### 💡 ' + subject + ' (Contextual Follow-Up)\n\n' +
-      'Addressing your question regarding **' + subject + '**:\n\n' +
-      'Based on our previous turn, ' + subject + ' is configured to operate with maximum reliability and deterministic performance. ' +
-      'All constraints from our prior discussion remain active.'
-  };
+  // Do not emit generic robotic boilerplate; let domain knowledge or live research handle it cleanly
+  return null;
 }
 
 function handleOmniGenerativePrompt(prompt, lang, allowUniversalFallback) {
@@ -8034,7 +8640,8 @@ function hideModal(id) {
 }
 
 document.getElementById('btn-open-music').addEventListener('click', function() { closeSidebar(); showModal('modal-music'); });
-document.getElementById('btn-open-models').addEventListener('click', function() { closeSidebar(); showModal('modal-models'); loadCatalog(); });
+document.getElementById('btn-open-models').addEventListener('click', function() { closeSidebar(); showModal('modal-models'); loadCatalog();
+if (typeof GAM_SESSIONS !== 'undefined') { GAM_SESSIONS.init(); } });
 document.getElementById('btn-open-tools').addEventListener('click', function() { closeSidebar(); showModal('modal-tools'); });
 document.getElementById('btn-open-settings').addEventListener('click', function() { closeSidebar(); showModal('modal-settings'); });
 document.getElementById('btn-header-settings').addEventListener('click', function() { showModal('modal-settings'); });
@@ -9041,6 +9648,15 @@ function renderAssistantMessage(opts) {
         sourceTag: srcTag,
         latencyMs: latency
       });
+      if (typeof GAM_SESSIONS !== 'undefined') {
+        GAM_SESSIONS.addTurn('assistant', text, {
+          modelName: modelName,
+          isOffline: isOff,
+          sourceTag: srcTag,
+          latencyMs: latency,
+          query: q
+        });
+      }
     }
   }
 
@@ -9120,6 +9736,7 @@ function renderAssistantMessage(opts) {
             '<button class="msg-btn-action" onclick="elaborateMsg(\'' + msgId + '\')" title="Explain in simpler terms with easy steps">' + elaborateLabel + '</button>' +
             '<button class="msg-btn-action" onclick="regenerateMsg(\'' + msgId + '\')" title="Regenerate this response">' + regenLabel + '</button>' +
             '<button class="msg-btn-action" onclick="copyMsgText(\'' + msgId + '\')">' + copyLabel + '</button>' +
+            '<button class="msg-btn-action" onclick="continueAssistantMsg(\'' + msgId + '\')" style="color:#38bdf8; font-weight:700;" title="Continue generating from where it left off">▶️ Continue</button>' +
           '</div>' +
           '<div class="msg-footer-mode ' + (isOff ? 'offline' : 'online') + '">' +
             '<span>' + (isOff ? '⚡ <strong>Offline Local Mode</strong> • On-Device Engine' : '🌐 <strong>Online Mode</strong> • Live Web Intelligence') + '</span>' +
@@ -9814,6 +10431,7 @@ function formatResponse(text) {
   var svgBlocks = [];
   var cardBlocks = [];
   var detailsBlocks = [];
+  var thoughtBlocks = [];
   var clean = text.split('\r\n').join('\n').split('\r').join('\n');
 
   clean = clean.replace(/<svg[\s\S]*?<\/svg>/gi, function(match) {
@@ -9824,6 +10442,22 @@ function formatResponse(text) {
   clean = clean.replace(/<details[\s\S]*?<\/details>/gi, function(match) {
     var placeholder = '___GAM_DETAILS_BLOCK_' + detailsBlocks.length + '___';
     detailsBlocks.push(match);
+    return placeholder;
+  });
+  clean = clean.replace(/<think>([\s\S]*?)<\/think>/gi, function(match, inner) {
+    var thoughtId = 'thought-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    var thoughtHtml = '<div class="deepseek-thought-box" id="' + thoughtId + '">' +
+      '<div class="thought-header" onclick="toggleDeepSeekThought(this)">' +
+        '<div class="thought-title-badge">' +
+          '<div class="thought-pulse-dot"></div>' +
+          '<span>🧠 DeepSeek-R1 Thought Process</span>' +
+        '</div>' +
+        '<span class="thought-toggle-icon">▾</span>' +
+      '</div>' +
+      '<div class="thought-body">' + inner + '</div>' +
+    '</div>';
+    var placeholder = '___GAM_THOUGHT_BLOCK_' + thoughtBlocks.length + '___';
+    thoughtBlocks.push(thoughtHtml);
     return placeholder;
   });
   clean = clean.replace(/<!--GAM_CINEMATIC_START-->([\s\S]*?)<!--GAM_CINEMATIC_END-->/gi, function(match, inner) {
@@ -9878,7 +10512,35 @@ function formatResponse(text) {
         lang = block.substring(0, firstNl).trim();
         code = block.substring(firstNl + 1);
       }
-      out += '<pre><code class="language-' + lang + '">' + escapeHtml(code) + '</code></pre>';
+
+      var artId = 'artifact-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+      if (typeof _artifactCodeStore !== 'undefined') {
+        _artifactCodeStore[artId] = code;
+      }
+      var lineCount = code.split('\n').length;
+      var canPreview = /^(html|htm|svg|xml|javascript|js|css)$/i.test(lang);
+      var canSimulate = /^(python|py|bash|sh|shell|cli|text)$/i.test(lang);
+
+      var actionBtns = '';
+      if (canPreview) {
+        actionBtns += '<button class="artifact-action-btn btn-preview" onclick="openClaudeArtifactModal(\'' + artId + '\', \'' + lang + '\')">▶️ Live Preview</button>';
+      } else if (canSimulate) {
+        actionBtns += '<button class="artifact-action-btn" onclick="runCodeSimulation(\'' + artId + '\', \'' + lang + '\')">▶️ Run</button>';
+      }
+      actionBtns += '<button class="artifact-action-btn" onclick="copyClaudeCode(\'' + artId + '\')">📋 Copy</button>';
+
+      out += 
+        '<div class="claude-code-artifact" id="' + artId + '">' +
+          '<div class="artifact-header">' +
+            '<div class="artifact-lang-tag">' +
+              '<span>💻</span>' +
+              '<span>' + escapeHtml(lang.toUpperCase()) + '</span>' +
+              '<span class="artifact-line-count">(' + lineCount + ' lines)</span>' +
+            '</div>' +
+            '<div class="artifact-actions">' + actionBtns + '</div>' +
+          '</div>' +
+          '<pre><code class="language-' + lang + '">' + escapeHtml(code) + '</code></pre>' +
+        '</div>';
     }
   }
 
@@ -9892,6 +10554,9 @@ function formatResponse(text) {
   }
   for (var c = 0; c < cardBlocks.length; c++) {
     out = out.replace('___GAM_CARD_BLOCK_' + c + '___', cardBlocks[c]);
+  }
+  for (var th = 0; th < thoughtBlocks.length; th++) {
+    out = out.replace('___GAM_THOUGHT_BLOCK_' + th + '___', thoughtBlocks[th]);
   }
 
   return svgHtml + out;
@@ -9948,6 +10613,134 @@ function getNetworkUtilityOrContextResponse(q, lang) {
   var qLower = (q || '').toLowerCase().trim();
   var isHi = (lang === 'hi');
   var isNe = (lang === 'ne');
+
+  // 0a. OLT HARDWARE ACCESS & INITIAL MANAGEMENT IP (FROM BASICS FIRST)
+  if (/(access.*olt|olt.*access|management.*ip|olt.*ip|initial.*olt|setup.*olt|olt.*setup|new\s+to\s+this.*olt|olt.*new|console.*olt|zte.*management|huawei.*management|mng1|scxn|sctm)/i.test(qLower) || 
+      (qLower.indexOf('olt') !== -1 && (qLower.indexOf('ip') !== -1 || qLower.indexOf('access') !== -1 || qLower.indexOf('new') !== -1 || qLower.indexOf('console') !== -1))) {
+    
+    var thoughtProcess = '<think>\n' +
+      '1. 🎯 Intent & Level: The user explicitly notes they are new to OLT access and management IP setup. Must begin from physical hardware layer 1 before commands.\n' +
+      '2. 🔌 Physical Layer: Explain console rollover cable, USB-to-RS232 serial adapter, Device Manager COM port detection, and PuTTY 9600 8-N-1 settings.\n' +
+      '3. 🔑 Credentials: ZTE ZXA10 (zte/zte, enable: zxr10) and Huawei SmartAX (root/adminHB54).\n' +
+      '4. 🛠️ Workflows: Method A (Out-of-Band MNG1 dedicated interface) vs Method B (In-Band management VLAN on 10GE uplink trunk).\n' +
+      '5. 🔐 Persistence & Verification: Highlight "write" command and ping tests to verify reachability.\n' +
+      '</think>\n\n';
+
+    var guideResp = thoughtProcess +
+      '### 🔌 Complete Beginner\'s Master Guide: Accessing OLT & Management IP Setup\n\n' +
+      'Welcome to optical network engineering! Here is the complete setup roadmap broken down from **physical cabling (Step 0)** all the way to **remote SSH access and verification**.\n\n' +
+      '---\n\n' +
+      '#### 🐣 1. Foundational Concept: What is an OLT & Management IP?\n' +
+      '- **OLT (Optical Line Terminal):** The central office master chassis that aggregates fiber optic distribution networks (ODN) and customer ONTs/routers onto the ISP core router.\n' +
+      '- **Management IP:** The private IP address assigned to the OLT control board (e.g. ZTE `SCXN`/`SCTM` or Huawei `SCUN`/`MPLA`) enabling engineers to remotely manage it over SSH/Telnet.\n' +
+      '- **The Beginner Catch:** A factory-fresh OLT has **no IP address on your network**. You **CANNOT** connect via Ethernet out of the box. You **must connect via Console Cable first!**\n\n' +
+      '---\n\n' +
+      '#### 🔌 2. Step 0: Physical Hardware Connection (Console Port)\n' +
+      '1. **Required Hardware:**\n' +
+      '   - **Console Cable:** RJ-45 to DB-9 rollover cable, or USB-to-RJ45 serial console cable (FTDI / CH340 chipset).\n' +
+      '   - **Laptop/PC** with **PuTTY**, **SecureCRT**, or **TeraTerm** installed.\n' +
+      '2. **Physical Cabling:**\n' +
+      '   - Plug the RJ-45 end into the port labeled **`CONSOLE`** or **`CLI`** on the active main control board.\n' +
+      '   - Plug the USB end into your laptop.\n' +
+      '3. **Find your COM Port (Windows):**\n' +
+      '   - Press `Win + X` ➔ Open **Device Manager** ➔ Expand **Ports (COM & LPT)**.\n' +
+      '   - Note your COM number (e.g., `COM3`, `COM4`, or `COM5`).\n' +
+      '4. **PuTTY Terminal Settings:**\n' +
+      '   - Connection Type: **Serial**\n' +
+      '   - Serial line: `COM3` (use your actual COM port)\n' +
+      '   - **Speed (Baud Rate): `9600`** *(Note: If you see garbled characters, switch to `115200`)*\n' +
+      '   - Data bits: **`8`** | Stop bits: **`1`** | Parity: **`None`** | Flow control: **`None`**\n' +
+      '   - Click **Open**, then press **Enter** twice! You will see the login prompt.\n\n' +
+      '---\n\n' +
+      '#### 🔑 3. Default Factory Credentials\n\n' +
+      '| Vendor & Model | Default Username | Default Password | Privileged / Enable Mode | Factory Default IP |\n' +
+      '|---|---|---|---|---|\n' +
+      '| **ZTE ZXA10 (C300/C320/C600)** | `zte` | `zte` (or `admin`) | `enable` ➔ `zxr10` (or `zte`) | `136.1.1.100/24` (MNG1) |\n' +
+      '| **Huawei SmartAX (MA5608T/MA5600T/MA5800)** | `root` | `admin` (or `adminHB54`) | `enable` ➔ `config` | `192.168.100.1/24` (ETH) |\n' +
+      '| **Fiberhome (AN5516)** | `admin` | `admin` | `enable` ➔ `admin` | `192.168.1.100/24` |\n' +
+      '| **VSOL / BDCOM** | `admin` | `admin` | `enable` ➔ `admin` | `192.168.8.100/24` |\n\n' +
+      '---\n\n' +
+      '#### 🛠️ 4. Step-by-Step Initial Configuration Walkthrough\n\n' +
+      '##### Method A: Out-of-Band (OOB) via Dedicated `MNG1` Port (Recommended for Beginners)\n' +
+      'The control board has a dedicated 10/100 Ethernet port labeled **`MNG1`** or **`ETH`**. Connect an Ethernet patch cable from your laptop directly to `MNG1`.\n\n' +
+      '```text\n' +
+      '# === ZTE ZXA10 OLT (C300 / C320 / C600) CLI ===\n\n' +
+      '# Step 1: Log in and enter configuration mode\n' +
+      'ZXAN> enable\n' +
+      'Password: zte\n' +
+      'ZXAN# configure terminal\n\n' +
+      '# Step 2: Configure the dedicated Out-of-Band MNG1 interface\n' +
+      'ZXAN(config)# interface mng1\n' +
+      'ZXAN(config-if)# ip address 192.168.10.50 255.255.255.0\n' +
+      'ZXAN(config-if)# no shutdown\n' +
+      'ZXAN(config-if)# exit\n\n' +
+      '# Step 3: Add default gateway so engineers outside the local rack can reach the OLT\n' +
+      'ZXAN(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.1\n\n' +
+      '# Step 4: Create a secure administrative user with highest privilege (Level 15)\n' +
+      'ZXAN(config)# username admin password Admin@2026 privilege 15 max-sessions 16\n\n' +
+      '# Step 5: Enable SSH and Telnet daemon\n' +
+      'ZXAN(config)# ssh server enable\n' +
+      'ZXAN(config)# telnet server enable\n\n' +
+      '# Step 6: CRUCIAL: Save configuration to permanent flash!\n' +
+      'ZXAN(config)# exit\n' +
+      'ZXAN# write\n' +
+      '[OK] Configuration saved successfully.\n' +
+      '```\n\n' +
+      '##### Method B: In-Band Management via Uplink VLAN (Standard for ISP Production)\n' +
+      'In production, management traffic travels over the main 10G uplink fiber port (e.g. port `gei_1/19/1` on uplink card `XGTO` / `GUFQ`):\n\n' +
+      '```text\n' +
+      '# Step 1: Create the Management VLAN (e.g. VLAN 100)\n' +
+      'ZXAN(config)# vlan 100\n' +
+      'ZXAN(config-vlan)# name MANAGEMENT_VLAN\n' +
+      'ZXAN(config-vlan)# exit\n\n' +
+      '# Step 2: Assign Management IP to VLAN 100 Interface (SVI)\n' +
+      'ZXAN(config)# interface vlan 100\n' +
+      'ZXAN(config-if)# ip address 10.100.1.10 255.255.255.0\n' +
+      'ZXAN(config-if)# exit\n\n' +
+      '# Step 3: Tag the Management VLAN on the Uplink Trunk Port\n' +
+      'ZXAN(config)# interface gei_1/19/1\n' +
+      'ZXAN(config-if)# switchport mode trunk\n' +
+      'ZXAN(config-if)# switchport vlan 100 tag\n' +
+      'ZXAN(config-if)# exit\n\n' +
+      '# Step 4: Set Management Gateway and Save\n' +
+      'ZXAN(config)# ip route 0.0.0.0 0.0.0.0 10.100.1.1\n' +
+      'ZXAN(config)# exit\n' +
+      'ZXAN# write\n' +
+      '```\n\n' +
+      '---\n\n' +
+      '#### 🧪 5. Testing & Verification\n' +
+      '1. **Configure your Laptop\'s Ethernet NIC:**\n' +
+      '   - IP: `192.168.10.200`\n' +
+      '   - Subnet Mask: `255.255.255.0`\n' +
+      '   - Gateway: `192.168.10.1`\n' +
+      '2. **Ping the OLT from your Laptop:**\n' +
+      '   ```text\n' +
+      '   ping 192.168.10.50\n' +
+      '   Reply from 192.168.10.50: bytes=32 time<1ms TTL=64\n' +
+      '   ```\n' +
+      '3. **Verify from OLT CLI:**\n' +
+      '   ```text\n' +
+      '   show interface mng1\n' +
+      '   show ip interface brief\n' +
+      '   show ip route\n' +
+      '   ```\n' +
+      '4. **Disconnect the Console Cable!** You can now open PuTTY, select **SSH**, type `192.168.10.50`, and log in wirelessly or across your office network.\n\n' +
+      '---\n\n' +
+      '#### ⚠️ 6. Top 3 Beginner Traps & Solutions\n\n' +
+      '| Problem / Symptom | Root Cause | Fix / Solution |\n' +
+      '|---|---|---|\n' +
+      '| **PuTTY displays weird characters, question marks, or black screen** | Baud rate mismatch | Change PuTTY speed from `9600` to `115200` (or vice-versa). Ensure Flow Control is set to `None`. |\n' +
+      '| **`Request timed out` when pinging OLT from laptop** | Laptop IP not in the same subnet as OLT MNG1 | Set your PC Ethernet adapter to static IP `192.168.10.200/24`. Turn off Windows Defender firewall temporarily for the adapter. |\n' +
+      '| **All configurations disappear when OLT is powered off and on** | Did not save configuration to non-volatile flash | Always run `write` on ZTE (or `save` on Huawei) in privileged mode before disconnecting. |\n\n' +
+      '[[btn:🔌 ZTE C320 ONU Provisioning|ZTE GPON OLT configuration for C300 C320]] [[btn:⚡ Huawei GPON Setup|Generate Huawei GPON OLT service-port config for VLAN 100]] [[btn:🛠️ Optical Power Budget|GPON optical power attenuation budget and troubleshooting]] [[btn:🧮 Subnet /24|Calculate subnet 192.168.10.0/24]]';
+
+    return {
+      found: true,
+      topic: 'OLT Initial Access & Management IP Setup Guide',
+      response: guideResp
+    };
+  }
+
 
   // 0. ROUTER & GATEWAY PROVISIONING (Hikvision, TP-Link, Tenda, Netgear, Cisco, Huawei, MikroTik, D-Link)
   var isHikvisionRouter = /(hikvision.*router|router.*hikvision|setup.*hikvision|hikvision.*setup|hikvision.*wifi|hikvision.*wireless|hikvision.*ap|hikvision.*gateway|hikvision.*camera.*router)/i.test(qLower);
@@ -12348,6 +13141,15 @@ function checkForUpdates(manual) {
   });
 }
 
+function restoreSavedChatIfAny() {
+  if (typeof GAM_SESSIONS !== 'undefined') {
+    var act = GAM_SESSIONS.getActiveSession();
+    if (act && act.turns && act.turns.length > 0) {
+      GAM_SESSIONS.switchSession(act.id);
+    }
+  }
+}
+
 populateVersionUI();
 
 applySavedThemeAndScale();
@@ -12624,6 +13426,30 @@ if ('speechSynthesis' in window) {
   }
 })();
 </script>
+
+
+<!-- Claude Code Artifact Preview Modal -->
+<div class="modal" id="modal-claude-artifact" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; background:rgba(0,0,0,0.8); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+  <div class="modal-box" style="width:92%; max-width:960px; height:85vh; display:flex; flex-direction:column; background:#0d1117; border:1px solid rgba(56,189,248,0.3); border-radius:14px; overflow:hidden; box-shadow:0 12px 48px rgba(0,0,0,0.6);">
+    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; background:#161b22; border-bottom:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.2rem;">🎨</span>
+        <span style="font-weight:700; color:#58a6ff; font-size:1rem;" id="artifact-modal-title">Claude Interactive Artifact</span>
+        <span class="badge-nano" id="artifact-modal-badge">HTML/SVG</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="artifact-action-btn" onclick="toggleArtifactModalView('preview')" id="btn-art-tab-preview" style="background:#38bdf8; color:#000;">▶️ Live Preview</button>
+        <button class="artifact-action-btn" onclick="toggleArtifactModalView('code')" id="btn-art-tab-code">💻 Source Code</button>
+        <button class="artifact-action-btn" onclick="copyModalArtifactCode()">📋 Copy</button>
+        <button class="btn-close" onclick="hideModal('modal-claude-artifact')" style="background:none; border:none; color:#cbd5e1; font-size:1.3rem; cursor:pointer; padding:2px 8px;">✕</button>
+      </div>
+    </div>
+    <div style="flex:1; position:relative; overflow:hidden; display:flex;">
+      <iframe id="artifact-modal-iframe" sandbox="allow-scripts allow-modals" style="width:100%; height:100%; border:none; background:#ffffff;"></iframe>
+      <pre id="artifact-modal-code" style="display:none; width:100%; height:100%; margin:0; padding:16px; overflow:auto; background:#0d1117; color:#e6edf3; font-family:monospace; font-size:0.9rem; line-height:1.5;"></pre>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
