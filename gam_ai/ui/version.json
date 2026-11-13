@@ -1,30 +1,30 @@
 {
   "app": "GAM.AI",
-  "version": "1.7.1",
-  "build": 15,
-  "release_date": "2026-10-30",
+  "version": "1.7.2",
+  "build": 16,
+  "release_date": "2026-11-13",
   "channel": "stable",
-  "notes": "Settings Install App entry removed, iOS IPA link refreshed, cross-platform version tracking, WebView answer-reveal hardening.",
+  "notes": "Autonomous Local AI Agent, Full-Fidelity Long-Term Memory (500+ turns), Follow-Up Context Engine, Persistent Offline Learned Knowledge Vault.",
   "platforms": {
     "android": {
-      "version": "1.7.1",
-      "build": 15,
-      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1.apk"
+      "version": "1.7.2",
+      "build": 16,
+      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.2.apk"
     },
     "ios": {
-      "version": "1.7.1",
-      "build": 15,
-      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1.ipa",
+      "version": "1.7.2",
+      "build": 16,
+      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.2.ipa",
       "profile": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai.mobileconfig"
     },
     "windows": {
-      "version": "1.7.1",
+      "version": "1.7.2",
       "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1-windows.exe"
     },
     "web": {
-      "version": "1.7.1",
+      "version": "1.7.2",
       "url": "https://gautambhuwan.com.np/gam-ai/",
-      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-v1.7.1-web.zip"
+      "file": "https://gautambhuwan.com.np/downloads/gam-ai/gam-ai-web-app.zip"
     }
   }
 }
